@@ -26,6 +26,7 @@ public sealed class FarmPatch
     public FarmLift Lift { get; } = new();
     public Window? Window { get; internal set; }
     public PetFarmArt.Land? Art { get; internal set; }
+    public PetFarmArt.DecorLayer? Decor { get; internal set; }
     public Border? Gain { get; internal set; }
     public string? Monitor { get; set; }
     public string? RestMonitor { get; set; }
@@ -103,7 +104,12 @@ public sealed partial class PetWindow
             if (patch.Window != null) continue;
             var art = new PetFarmArt.Land(patch.Kind);
             var surface = new Grid { Width = patch.ArtWidth, Height = PetFarmArt.ArtHeight };
+            bool roofed = patch.Kind == FarmPatchKind.Hearth;
+            var decor = new PetFarmArt.DecorLayer(roofed ? FarmDecorPlace.Hearth : FarmDecorPlace.Pond, patch.ArtWidth, PetFarmArt.Side + patch.Width / 2);
+            if (roofed) surface.Children.Add(decor); // The roof stands behind the pot; lilies and the bridge lie over the water.
             surface.Children.Add(art);
+            if (!roofed) surface.Children.Add(decor);
+            patch.Decor = decor;
             var text = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = patch.ArtWidth - 32 };
             var gain = FarmLabel(text);
             gain.RenderTransform = new TranslateTransform();
@@ -118,7 +124,7 @@ public sealed partial class PetWindow
             art.MouseLeftButtonUp += (_, e) => { e.Handled = true; ReleaseFarmPatch(patch); };
             art.LostMouseCapture += (_, _) => patch.Dragging = false;
             InitializeFarmPatchMenu(patch, art);
-            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Gain = null; patch.Dragging = false; patch.GainLeft = 0; };
+            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Dragging = false; patch.GainLeft = 0; };
         }
     }
 
@@ -275,6 +281,7 @@ public sealed partial class PetWindow
         patch.Art.Squash = patch.Lift.Squash;
         patch.Art.Shed = patch.Lift.Shed;
         patch.Art.InvalidateVisual();
+        RefreshFarmDecor();
     }
 
     // The pot's contents changed: nothing else about the land did.

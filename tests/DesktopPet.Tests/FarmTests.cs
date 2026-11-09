@@ -22,6 +22,76 @@ internal static class FarmTests
         Pond(check);
         Lands(check);
         Tips(check, start);
+        Decorations(check);
+    }
+
+    // What the stall sells (docs/FARM-GAME.md, finishing milestone B).
+    private static void Decorations(Action<bool, string> check)
+    {
+        var all = Enum.GetValues<FarmDecor>();
+        check(new[] { 500, 700, 800, 800, 1200, 1400 }.SequenceEqual(all.Select(PetFarm.DecorPrice)) && all.Sum(PetFarm.DecorPrice) == 5400, "Six decorations, 5400 coins in all");
+
+        var farm = new PetFarm();
+        var random = new Random(3);
+        bool two = true, none = true;
+        for (int i = 0; i < 100; i++)
+        {
+            var shown = farm.NewDecors(random);
+            two &= shown.Count == 2 && shown.Distinct().Count() == 2;
+        }
+        check(two, "A visit brings two different ones");
+        farm.Coins = 499;
+        check(!farm.BuyDecor(FarmDecor.FlowerBed) && !farm.HasDecor(FarmDecor.FlowerBed) && farm.Coins == 499, "A decoration needs its price");
+        farm.Coins = 500;
+        check(farm.BuyDecor(FarmDecor.FlowerBed) && farm.HasDecor(FarmDecor.FlowerBed) && farm.Coins == 0, "Buying pays its price");
+        farm.Coins = 500;
+        check(!farm.BuyDecor(FarmDecor.FlowerBed) && farm.Coins == 500, "It is bought once");
+        for (int i = 0; i < 100; i++) none &= !farm.NewDecors(random).Contains(FarmDecor.FlowerBed);
+        check(none, "What the farm has is not brought again");
+
+        farm.Coins = 99_999;
+        foreach (var decor in new[] { FarmDecor.WaterLily, FarmDecor.BambooFence, FarmDecor.Lantern, FarmDecor.WoodBridge }) farm.BuyDecor(decor);
+        check(farm.NewDecors(random).SequenceEqual(new[] { FarmDecor.Awning }), "One left: only that one comes");
+        farm.BuyDecor(FarmDecor.Awning);
+        check(farm.NewDecors(random).Count == 0, "All six bought: nothing more to sell");
+
+        int before = farm.Xp;
+        check(before == 0 && farm.Level == 1, "Buying gives no XP");
+        check(farm.DecorMask == 63 && farm.ShowsDecor(FarmDecor.Lantern), "What is bought is out");
+        check(farm.ShowDecor(FarmDecor.Lantern, false) && !farm.ShowsDecor(FarmDecor.Lantern) && farm.HasDecor(FarmDecor.Lantern) && farm.DecorMask == 63 - (1 << (int)FarmDecor.Lantern), "It can be put away and is still owned");
+        check(farm.ShowDecor(FarmDecor.Lantern, true) && farm.ShowsDecor(FarmDecor.Lantern), "...and brought back");
+        check(!new PetFarm().ShowDecor(FarmDecor.Lantern, true), "What the farm does not have cannot be brought out");
+        farm.ShowDecor(FarmDecor.Awning, false);
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-decor-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "farm.json");
+        Directory.CreateDirectory(folder);
+        try
+        {
+            farm.Save(path);
+            var back = PetFarm.Load(path);
+            check(back.Decors.Count == 6 && back.ShowsDecor(FarmDecor.Lantern) && !back.ShowsDecor(FarmDecor.Awning) && back.HasDecor(FarmDecor.Awning) && back.Version == 3, "They are saved, in the same file version");
+            string text = File.ReadAllText(path).Replace("\"Lantern\"", "\"FlyingCarpet\"").Replace("\"DecorsHidden\": [", "\"DecorsHidden\": [ \"Ghost\",");
+            File.WriteAllText(path, text);
+            back = PetFarm.Load(path);
+            check(back.Decors.Count == 5 && !back.Decors.Contains("FlyingCarpet") && !back.DecorsHidden.Contains("Ghost") && back.Coins == farm.Coins, "A name it does not know is dropped, nothing else");
+            File.WriteAllText(path, "{\"Version\":3,\"Coins\":7,\"Decors\":null,\"DecorsHidden\":null}");
+            back = PetFarm.Load(path);
+            check(back.Coins == 7 && back.Decors.Count == 0 && back.DecorMask == 0, "A file without them loads");
+            farm.ShowDecor(FarmDecor.WoodBridge, false);
+            farm.Decors.Remove(nameof(FarmDecor.WoodBridge));
+            farm.Save(path);
+            check(!PetFarm.Load(path).DecorsHidden.Contains(nameof(FarmDecor.WoodBridge)), "Put away but not owned is dropped");
+        }
+        finally { Directory.Delete(folder, true); }
+
+        var stall = new FarmStall();
+        stall.Arrive(new(), new() { FarmDecor.Lantern });
+        check(stall.Decors.SequenceEqual(new[] { FarmDecor.Lantern }), "The stall keeps what it brought");
+        stall.Reset();
+        check(stall.Decors.Count == 1, "...for a panel still open after it has left");
+        stall.Arrive(new());
+        check(stall.Decors.Count == 0, "A visit with nothing to sell has nothing to sell");
     }
 
     // The first-time hints (docs/FARM-GAME.md): each once, none for someone who has grown a crop.

@@ -15,13 +15,15 @@ public sealed partial class PetWindow
     private const double FarmCartRoll = 150, FarmCartGap = 4;
 
     private sealed record FarmStallRow(Border Icon, TextBlock Name, TextBlock Note, Border Deliver);
+    private sealed record FarmDecorRow(Border Row, Border Icon, TextBlock Name, TextBlock Note, Border Buy, TextBlock Price);
 
     private readonly FarmStall farmStall = new();
     private Window? farmCartWindow, farmStallWindow;
     private PetFarmStallArt? farmCartArt;
     private FrameworkElement? farmCartLabel;
-    private TextBlock? farmStallNote;
+    private TextBlock? farmStallNote, farmStallDecorTitle;
     private readonly List<FarmStallRow> farmStallRows = new();
+    private readonly List<FarmDecorRow> farmStallDecorRows = new();
     private bool farmStallPaused;
     private double farmCartRolled;
 
@@ -33,7 +35,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || FarmLandInAir
             || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None) return false;
-        farmStall.Arrive(farm.NewOffers(featureRandom));
+        farmStall.Arrive(farm.NewOffers(featureRandom), farm.NewDecors(featureRandom));
         ShowFarmCart();
         ShowFarmCartTip();
         PlayPetSound("sparkle");
@@ -149,12 +151,30 @@ public sealed partial class PetWindow
             farmStallRows.Add(new FarmStallRow(icon, FarmShopRowName(row), line, deliver));
         }
 
+        farmStallDecorTitle = PanelLine(PetUi.BodySize, true, FarmShopWidth);
+        farmStallDecorTitle.Text = L("Đồ trang trí", "Decorations");
+        farmStallDecorTitle.Margin = new Thickness(0, 12, 0, 0);
+        body.Children.Add(farmStallDecorTitle);
+        farmStallDecorRows.Clear();
+        for (int i = 0; i < PetFarm.DecorsPerVisit; i++)
+        {
+            int slot = i;
+            var line = PanelLine(PetUi.SmallSize, maxWidth: 190);
+            line.Foreground = PetUi.Game.Soft;
+            var (buy, price, _) = HudButton(() => FarmBuyDecor(slot), plain: true);
+            var icon = new Border { Width = 30, Height = 30 };
+            var row = FarmShopRow(icon, "", line, buy);
+            buy.MinWidth = 88;
+            body.Children.Add(row);
+            farmStallDecorRows.Add(new FarmDecorRow(row, icon, FarmShopRowName(row), line, buy, price));
+        }
+
         var (close, closeText, _) = HudButton(CloseFarmStall, plain: true);
         close.Margin = new Thickness(0);
         closeText.Text = L("Đóng", "Close");
 
         var window = CreateGamePanel(body, PanelActions(Array.Empty<UIElement>(), new UIElement[] { close }), "Pet farm stall", scene: PetSceneKind.Home);
-        window.Closed += (_, _) => { if (farmStallWindow == window) { farmStallWindow = null; farmStallNote = null; farmStallRows.Clear(); } };
+        window.Closed += (_, _) => { if (farmStallWindow == window) { farmStallWindow = null; farmStallNote = farmStallDecorTitle = null; farmStallRows.Clear(); farmStallDecorRows.Clear(); } };
         farmStallWindow = window;
         UpdateFarmStall();
         window.Show();
@@ -201,6 +221,57 @@ public sealed partial class PetWindow
             row.Note.Text = LF($"+{PetFarm.OfferCoins(offer)} xu · +{PetFarm.OfferXp(offer)} XP", $"+{PetFarm.OfferCoins(offer)} coins · +{PetFarm.OfferXp(offer)} XP");
             ShowFarmShopButton(row.Deliver, !paused && farm.CanDeliver(offer));
         }
+        UpdateFarmStallDecors();
+    }
+
+    private string FarmDecorName(FarmDecor decor) => decor switch
+    {
+        FarmDecor.FlowerBed => L("Luống hoa", "Flower bed"),
+        FarmDecor.WaterLily => L("Hoa súng", "Water lilies"),
+        FarmDecor.BambooFence => L("Hàng rào tre", "Bamboo fence"),
+        FarmDecor.Lantern => L("Đèn lồng", "Lantern"),
+        FarmDecor.WoodBridge => L("Cầu gỗ", "Wooden bridge"),
+        _ => L("Mái che", "Hearth roof")
+    };
+
+    private string FarmDecorSpot(FarmDecor decor) => decor switch
+    {
+        FarmDecor.WaterLily or FarmDecor.WoodBridge => L("Bày ở hồ", "Goes on the pond"),
+        FarmDecor.Awning => L("Bày ở bếp", "Goes on the hearth"),
+        _ => L("Bày ở ruộng", "Goes on the field")
+    };
+
+    private void UpdateFarmStallDecors()
+    {
+        if (farm == null || farmStallDecorTitle == null) return;
+        var decors = farmStall.Decors;
+        farmStallDecorTitle.Visibility = decors.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        for (int i = 0; i < farmStallDecorRows.Count; i++)
+        {
+            var row = farmStallDecorRows[i];
+            row.Row.Visibility = i < decors.Count ? Visibility.Visible : Visibility.Collapsed;
+            if (i >= decors.Count) continue;
+            var decor = decors[i];
+            if (!Equals(row.Icon.Tag, decor)) { row.Icon.Tag = decor; row.Icon.Child = new FarmDecorIcon(decor, 30); }
+            row.Name.Text = FarmDecorName(decor);
+            bool owned = farm.HasDecor(decor);
+            int price = PetFarm.DecorPrice(decor), missing = price - farm.Coins;
+            row.Note.Text = owned || missing <= 0 ? FarmDecorSpot(decor) : LF($"Còn thiếu {missing} xu", $"{missing} coins short");
+            row.Price.Text = owned ? L("Đã mua", "Bought") : FarmPriceText(price);
+            ShowFarmShopButton(row.Buy, !paused && farm.CanBuyDecor(decor));
+        }
+    }
+
+    // Like delivering: it may be finished in a panel still open after the stall has left.
+    public bool FarmBuyDecor(int slot)
+    {
+        if (farm == null || paused || slot < 0 || slot >= farmStall.Decors.Count || (!farmStall.Here && farmStallWindow == null)) return false;
+        var decor = farmStall.Decors[slot];
+        if (!farm.BuyDecor(decor)) return false;
+        ShowFarmLabel(PetFarm.TileCount / 2, LF($"Đã mua {FarmDecorName(decor)}!", $"Bought: {FarmDecorName(decor)}!"), FarmGainSeconds);
+        PlayPetSound("sparkle");
+        FarmChanged();
+        return true;
     }
 
     // Only when the good changes: this runs every second.

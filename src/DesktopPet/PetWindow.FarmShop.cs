@@ -24,6 +24,9 @@ public sealed partial class PetWindow
     private bool farmShopPaused;
     private TextBlock? farmShopWeather;
     private WeatherKind? farmShopSky;
+    private sealed record FarmDecorToggle(FarmDecor Decor, Border Button, FrameworkElement Icon, UIElement Slash);
+    private readonly List<FarmDecorToggle> farmShopDecors = new();
+    private TextBlock? farmShopDecorNote;
 
     public bool FarmShopOpen => farmShopWindow != null;
     // A battle panel sits in the same place: the shop gives way to it.
@@ -107,6 +110,8 @@ public sealed partial class PetWindow
         farmShopScareNote.Foreground = PetUi.Game.Soft;
         body.Children.Add(FarmShopRow(new FarmScarecrowIcon(30), L("Bù nhìn", "Scarecrow"), farmShopScareNote, farmShopScareButton));
 
+        body.Children.Add(FarmDecorPanel());
+
         var (sellAll, sellAllText, _) = HudButton(() => FarmSellAll(), plain: true);
         farmShopSellAll = sellAll; farmShopSellAllText = sellAllText;
         var (close, closeText, _) = HudButton(CloseFarmShop, plain: true);
@@ -119,6 +124,62 @@ public sealed partial class PetWindow
         UpdateFarmShop();
         window.Show();
         PlaceGamePanel(window);
+    }
+
+    // One row for all six: more rows would not fit on a low screen.
+    private Border FarmDecorPanel()
+    {
+        var name = PanelLine(PetUi.BodySize, true, FarmShopWidth - 18);
+        name.Text = L("Đồ trang trí", "Decorations");
+        name.HorizontalAlignment = HorizontalAlignment.Left;
+        farmShopDecorNote = PanelLine(PetUi.SmallSize, maxWidth: FarmShopWidth - 18);
+        farmShopDecorNote.Foreground = PetUi.Game.Soft;
+        farmShopDecorNote.HorizontalAlignment = HorizontalAlignment.Left;
+        var grid = new System.Windows.Controls.Primitives.UniformGrid { Rows = 1, Margin = new Thickness(0, 5, 0, 0) };
+        farmShopDecors.Clear();
+        foreach (var decor in Enum.GetValues<FarmDecor>())
+        {
+            var chosen = decor;
+            var (button, _, _) = HudButton(() => FarmToggleDecor(chosen), plain: true);
+            var icon = new FarmDecorIcon(decor, 34);
+            var slash = new Path { Data = Geometry.Parse("M5,33 L33,5"), Stroke = PetUi.Game.Soft, StrokeThickness = 3, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, Width = 38, Height = 38, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
+            button.Child = new Grid { Children = { icon, slash } };
+            button.MinWidth = 0;
+            button.Padding = new Thickness(3);
+            button.Margin = new Thickness(2, 0, 2, 0);
+            button.BorderThickness = new Thickness(1.5);
+            ToolTipService.SetShowOnDisabled(button, true);
+            grid.Children.Add(button);
+            farmShopDecors.Add(new FarmDecorToggle(decor, button, icon, slash));
+        }
+        return new Border { Background = PrepCardBack, CornerRadius = new CornerRadius(9), Padding = new Thickness(10, 6, 8, 6), Margin = new Thickness(0, 6, 0, 0), Child = new StackPanel { Children = { name, farmShopDecorNote, grid } } };
+    }
+
+    private void UpdateFarmShopDecors()
+    {
+        if (farm == null || farmShopDecorNote == null) return;
+        int owned = farmShopDecors.Count(item => farm.HasDecor(item.Decor));
+        farmShopDecorNote.Text = owned > 0
+            ? LF($"Có {owned}/{farmShopDecors.Count} · bấm để cất hoặc bày lại", $"{owned} of {farmShopDecors.Count} · click to put away or bring out")
+            : L("Xe hàng lưu động có bán", "Sold by the traveling stall");
+        foreach (var item in farmShopDecors)
+        {
+            bool has = farm.HasDecor(item.Decor), shown = farm.ShowsDecor(item.Decor);
+            item.Button.ToolTip = has ? FarmDecorName(item.Decor) : $"{FarmDecorName(item.Decor)} · {FarmPriceText(PetFarm.DecorPrice(item.Decor))}";
+            item.Button.BorderBrush = shown ? PetUi.Game.Gold : Brushes.Transparent;
+            item.Icon.Opacity = shown ? 1 : has ? 0.5 : 0.7;
+            item.Slash.Visibility = has && !shown ? Visibility.Visible : Visibility.Collapsed;
+            ShowFarmShopButton(item.Button, !paused && has);
+        }
+    }
+
+    // Puts it away or brings it back. False when the farm does not have it.
+    public bool FarmToggleDecor(FarmDecor decor)
+    {
+        if (farm == null || paused || !farm.ShowDecor(decor, !farm.ShowsDecor(decor))) return false;
+        PlayPetSound("pop");
+        FarmChanged();
+        return true;
     }
 
     private static Border FarmShopRow(FrameworkElement icon, string name, TextBlock note, Border button, Border? second = null)
@@ -194,6 +255,8 @@ public sealed partial class PetWindow
         farmShopScarePrice!.Text = farm.Scarecrow ? L("Đã có", "Owned") : FarmPriceText(PetFarm.ScarecrowPrice);
         ShowFarmShopButton(farmShopScareButton!, !paused && !farm.Scarecrow && farm.Coins >= PetFarm.ScarecrowPrice);
 
+        UpdateFarmShopDecors();
+
         farmShopSellAllText!.Text = LF($"Bán hết · +{farm.StockValue} xu", $"Sell all · +{farm.StockValue}");
         ShowFarmShopButton(farmShopSellAll!, !paused && farm.StockValue > 0);
     }
@@ -209,6 +272,8 @@ public sealed partial class PetWindow
         farmShopXpFill = null;
         farmShopRows.Clear();
         farmShopFishRows.Clear();
+        farmShopDecors.Clear();
+        farmShopDecorNote = null;
     }
 
     public int FarmSell(FarmCrop crop) => FarmSold(farm == null || paused ? 0 : farm.Sell(crop));

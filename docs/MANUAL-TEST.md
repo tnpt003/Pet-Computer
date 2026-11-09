@@ -1399,3 +1399,16 @@ Ruộng đã từng trồng sẽ không có nhãn trên ô đầu. Muốn thử 
 - [ ] Nhãn ẩn khi Pause, Quiet, app toàn màn hình, nhấc ruộng; hiện lại sau đó
 - [ ] Bấm xuyên qua nhãn vẫn tới ô ruộng; mèo đang ngủ không bị đánh thức
 - [ ] Đổi sang tiếng Việt và tiếng Nhật: nhãn không tràn, DPI 125–200% vẫn đúng chỗ
+
+## Nông trại — Xe bán đồ trang trí (09/11)
+
+Muốn thử không tốn công kiếm xu: đặt biến môi trường `PET_DATA_DIRECTORY` tới một thư mục riêng, sửa `Coins` trong `farm.json` ở đó rồi mở `artifacts\win-x64\DesktopPet.exe`, dữ liệu thật không bị đụng.
+
+- [ ] Xe đến có đúng 2 món chưa có; thiếu xu thì nút mờ và ghi còn thiếu bao nhiêu; mua xong đồ hiện ngay trên đúng vùng đất
+- [ ] Nhìn từng món trên desktop thật: Hàng rào tre có rối với hàng rào ô khóa không, Mái che có sát nồi quá không, Cầu gỗ có che phao câu không
+- [ ] Nhấc và thả Ruộng, Bếp, Hồ: đồ đi theo khớp với đất, không giật, không bị cắt ở mép trên
+- [ ] Bấm vào đồ trang trí không làm gì, ô ruộng vẫn bấm đúng ô; mèo đi trước đồ
+- [ ] Kho: bấm biểu tượng để cất rồi bày lại, món đã cất có gạch chéo; đóng mở lại app vẫn đúng
+- [ ] Mua khi mèo ngủ không đánh thức; Pause thì không mua, không bật/tắt được
+- [ ] Đổi sang tiếng Việt và tiếng Nhật: tên món và nút không tràn; DPI 125–200% và màn thấp vẫn cuộn được
+- [ ] Chơi vài ngày: 5.400 xu có vừa không, món đầu có đến sớm đủ để thấy thích không

@@ -225,6 +225,7 @@ public sealed partial class PetFarm
         if (string.IsNullOrWhiteSpace(HearthMonitor)) HearthMonitor = null;
         if (string.IsNullOrWhiteSpace(PondMonitor)) PondMonitor = null;
         TipsSeen = (TipsSeen ?? new()).Where(tip => !string.IsNullOrWhiteSpace(tip)).Distinct().ToList();
+        NormalizeDecors();
     }
 
     private static Dictionary<string, int> CleanCounts(Dictionary<string, int>? counts) =>

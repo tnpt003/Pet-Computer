@@ -161,6 +161,8 @@ public sealed partial class PetWindow
         }
     }
 
+    private PetFarmArt.DecorLayer? farmDecorBack, farmDecorFront;
+
     private void DrawFarmLift()
     {
         if (farmArt == null) return;
@@ -176,6 +178,7 @@ public sealed partial class PetWindow
         farmArt.BirdTime = farmBird.Time;
         farmArt.BirdFlying = !farmBird.Perched;
         farmArt.InvalidateVisual();
+        RefreshFarmDecor();
     }
 
     private void CreateFarmWindow()
@@ -187,7 +190,11 @@ public sealed partial class PetWindow
         var gain = FarmLabel(gainText);
         gain.RenderTransform = new TranslateTransform();
         var surface = new Grid { Width = PetFarmArt.ArtWidth, Height = PetFarmArt.ArtHeight };
+        farmDecorBack = new PetFarmArt.DecorLayer(FarmDecorPlace.FieldBack, PetFarmArt.ArtWidth, PetFarmArt.Side + PetFarmArt.PlotWidth / 2);
+        farmDecorFront = new PetFarmArt.DecorLayer(FarmDecorPlace.FieldFront, PetFarmArt.ArtWidth, PetFarmArt.Side + PetFarmArt.PlotWidth / 2);
+        surface.Children.Add(farmDecorBack);
         surface.Children.Add(art);
+        surface.Children.Add(farmDecorFront);
         var chipRow = new Grid { Width = FarmChipWidth, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, IsHitTestVisible = false };
         chipRow.Children.Add(chip);
         var gainRow = new Grid { Width = FarmChipWidth, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top, IsHitTestVisible = false };
@@ -214,7 +221,7 @@ public sealed partial class PetWindow
         CreateFarmPatchWindows();
         farmWindow.Closed += (_, _) =>
         {
-            farmWindow = null; farmArt = null; farmSurface = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
+            farmWindow = null; farmArt = null; farmDecorBack = farmDecorFront = null; farmSurface = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
             farmDragging = false; farmHover = farmPressTile = -1; farmChipShown = null; farmEffectsRunning = false; farmGainLeft = 0;
         };
     }
@@ -351,6 +358,22 @@ public sealed partial class PetWindow
         farmArt.HoverTile = farmHover;
         farmArt.Lift = farmLift.Height;
         farmArt.InvalidateVisual();
+        RefreshFarmDecor();
+    }
+
+    // What is out and how each land is standing; the layers draw again only if that changed.
+    private void RefreshFarmDecor()
+    {
+        if (farm == null) return;
+        int shown = farm.DecorMask;
+        if (farmArt != null)
+        {
+            var pose = new FarmLandPose(farmArt.Lift, farmArt.ShakeX, farmArt.Tilt, farmArt.Squash);
+            farmDecorBack?.Show(pose, shown);
+            farmDecorFront?.Show(pose, shown);
+        }
+        foreach (var patch in farmPatches)
+            if (patch.Art is { } land) patch.Decor?.Show(new FarmLandPose(land.Lift, land.ShakeX, land.Tilt, land.Squash), shown);
     }
 
     private void StartFarmEffect(int index, FarmEffect effect)

@@ -334,7 +334,21 @@ internal static class FarmChecks
         farm.Stock.Clear();
         tick();
 
+        // Decorations in the store: one row, what is out, what is put away, what is not owned.
+        var toggles = Field<System.Collections.IList>(window, "farmShopDecors");
+        check(toggles.Count == 6 && !window.FarmToggleDecor(FarmDecor.Lantern), "Six places in the store; what is not owned cannot be brought out");
+        farm.Decors.AddRange(new[] { nameof(FarmDecor.Lantern), nameof(FarmDecor.WoodBridge) });
+        Call(window, "FarmChanged");
+        check(window.FarmToggleDecor(FarmDecor.WoodBridge) && farm.HasDecor(FarmDecor.WoodBridge) && !farm.ShowsDecor(FarmDecor.WoodBridge) && PetFarm.Load(path).DecorsHidden.Count == 1, "Put away from the store, and saved");
+        panel.UpdateLayout();
+        var shopArea = Field<Area>(window, "bounds");
+        check(panel.Top >= shopArea.Top - 1 && panel.Top + panel.ActualHeight <= shopArea.Bottom + 1 && Math.Abs(panel.ActualWidth - width) < 1, $"With its decorations the shop still fits ({panel.ActualWidth:F0}x{panel.ActualHeight:F0})");
+        SetField(window, "paused", true);
+        check(!window.FarmToggleDecor(FarmDecor.Lantern) && farm.ShowsDecor(FarmDecor.Lantern), "Pause refuses it");
+        SetField(window, "paused", false);
         Render(panel);
+        farm.Decors.Clear(); farm.DecorsHidden.Clear();
+        Call(window, "FarmChanged");
         window.CloseFarmShop();
         tick();
         check(!window.FarmShopOpen && Panel() == null, "The shop closes");
@@ -857,6 +871,8 @@ internal static class FarmChecks
         check(Part<TextBlock>(1, "Name").Text.Contains("Carp 0/3"), "Fish are named with what the store has");
         Render(panel, "farm-stall-long.png");
 
+        Decorations(window, pet, farm, stall, path, check, frames);
+
         // Leaving with the panel open: delivery goes on until it is closed.
         farm.Stock["Pumpkin"] = 2; farm.Fish["Carp"] = 3;
         stall.Step(FarmStall.StaySeconds + 1);
@@ -1036,6 +1052,82 @@ internal static class FarmChecks
         SetField(window, "farmSunUnsaved", 0.0);
         farm.Tiles[0] = new FarmTile();
         Call(window, "FarmChanged");
+    }
+
+    // What the stall sells: bought in its panel, shown on the land, no part of what a click lands on.
+    private static void Decorations(PetWindow window, PetModel pet, PetFarm farm, FarmStall stall, string path, Action<bool, string> check, Action<double> frames)
+    {
+        int coins = farm.Coins;
+        var panel = Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm stall" && w.IsLoaded);
+        check(stall.Decors.Count == 2 && stall.Decors.All(decor => !farm.HasDecor(decor)), "The stall brings two the farm does not have");
+        var first = stall.Decors[0];
+        var back = Field<PetFarmArt.DecorLayer?>(window, "farmDecorBack")!;
+        var front = Field<PetFarmArt.DecorLayer?>(window, "farmDecorFront")!;
+        var layers = new[] { back, front, window.FarmHearth.Decor!, window.FarmPond.Decor! };
+        check(layers.All(layer => !layer.IsHitTestVisible), "The drawings take no clicks");
+
+        farm.Coins = PetFarm.DecorPrice(first) - 1;
+        Call(window, "FarmChanged");
+        check(!window.FarmBuyDecor(0) && !farm.HasDecor(first) && layers.All(layer => layer.Shown == 0), "Short of coins it cannot be bought");
+        farm.Coins = PetFarm.DecorPrice(first);
+        Call(window, "FarmChanged");
+        SetField(window, "paused", true);
+        check(!window.FarmBuyDecor(0) && !farm.HasDecor(first), "Pause refuses it");
+        SetField(window, "paused", false);
+        pet.Emotions.Reset(); pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        check(window.FarmBuyDecor(0) && farm.Coins == 0 && farm.HasDecor(first), "Buying pays");
+        check(pet.Emotions.SleepLocked && pet.Action == PetAction.Sleeping, "It does not wake the cat");
+        pet.Emotions.Reset(); pet.Action = PetAction.Idle;
+        check(PetFarm.Load(path).HasDecor(first), "It is saved");
+        check(layers.All(layer => layer.Shown == 1 << (int)first), "It goes on the land at once");
+        check(!window.FarmBuyDecor(0) && farm.Coins == 0, "...and is bought once");
+        frames(0.02);
+        panel.UpdateLayout();
+        var bounds = Field<Area>(window, "bounds");
+        check(panel.Top >= bounds.Top - 1 && panel.Top + panel.ActualHeight <= bounds.Bottom + 1, $"With decorations the stall still fits ({panel.ActualHeight:F0} high)");
+        Render(panel, "farm-stall-decor.png");
+
+        farm.Decors.Clear();
+        farm.Decors.AddRange(Enum.GetNames<FarmDecor>());
+        Call(window, "FarmChanged");
+        check(layers.All(layer => layer.Shown == 63), "All six out");
+        check(window.FarmToggleDecor(FarmDecor.Awning) && window.FarmHearth.Decor!.Shown == 63 - (1 << (int)FarmDecor.Awning), "Put away, it leaves the land");
+        window.FarmToggleDecor(FarmDecor.Awning);
+        frames(0.02);
+
+        foreach (var (tone, color) in new[] { ("light", Color.FromRgb(0xE9, 0xEE, 0xF2)), ("dark", Color.FromRgb(0x24, 0x2B, 0x38)) })
+        {
+            Backed(Field<Window>(window, "farmWindow"), color, $"farm-decor-field-{tone}.png");
+            Backed(window.FarmHearth.Window!, color, $"farm-decor-hearth-{tone}.png");
+            Backed(window.FarmPond.Window!, color, $"farm-decor-pond-{tone}.png");
+        }
+        // In the air: the highest of them must stay inside the window.
+        window.FarmHearth.Art!.Lift = FarmLift.FloatHeight + FarmLift.BobHeight;
+        window.FarmHearth.Art!.InvalidateVisual();
+        window.FarmHearth.Decor!.Show(new FarmLandPose(FarmLift.FloatHeight + FarmLift.BobHeight, 0, 0, 0), 63);
+        Backed(window.FarmHearth.Window!, Color.FromRgb(0x24, 0x2B, 0x38), "farm-decor-hearth-air.png");
+        window.FarmHearth.Art!.Lift = 0;
+        window.FarmHearth.Art!.InvalidateVisual();
+
+        farm.Decors.Clear(); farm.DecorsHidden.Clear();
+        farm.Coins = coins;
+        Call(window, "FarmChanged");
+        check(layers.All(layer => layer.Shown == 0) && window.FarmHearth.Decor!.Shown == 0, "Without them the land is bare again");
+    }
+
+    private static void Backed(Window source, Color color, string name)
+    {
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not string review) return;
+        source.UpdateLayout();
+        var element = (FrameworkElement)source.Content;
+        var bitmap = new RenderTargetBitmap((int)Math.Ceiling(element.ActualWidth), (int)Math.Ceiling(element.ActualHeight), 96, 96, PixelFormats.Pbgra32);
+        var plain = new DrawingVisual();
+        using (var dc = plain.RenderOpen()) dc.DrawRectangle(new SolidColorBrush(color), null, new Rect(0, 0, element.ActualWidth, element.ActualHeight));
+        bitmap.Render(plain);
+        bitmap.Render(element);
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        Directory.CreateDirectory(review);
+        using var stream = File.Create(Path.Combine(review, name)); encoder.Save(stream);
     }
 
     private static void Render(Window panel, string name = "farm-shop.png")

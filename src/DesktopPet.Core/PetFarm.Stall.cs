@@ -93,6 +93,8 @@ public sealed class FarmStall
     private double rolled;
     // Kept after it leaves: a panel still open may finish delivering.
     public List<FarmOffer> Offers { get; private set; } = new();
+    // What this visit has for sale; kept as long as the offers are.
+    public List<FarmDecor> Decors { get; private set; } = new();
 
     public bool Here => Phase is FarmStallPhase.Arriving or FarmStallPhase.Open;
     public bool Rolling => Phase is FarmStallPhase.Arriving or FarmStallPhase.Leaving;
@@ -116,9 +118,10 @@ public sealed class FarmStall
         return Due <= 0;
     }
 
-    public void Arrive(List<FarmOffer> offers)
+    public void Arrive(List<FarmOffer> offers, List<FarmDecor>? decors = null)
     {
         Offers = offers;
+        Decors = decors ?? new();
         Phase = FarmStallPhase.Arriving;
         Left = StaySeconds;
         rolled = 0;

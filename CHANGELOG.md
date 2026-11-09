@@ -1,5 +1,61 @@
 # Nhật ký thay đổi
 
+## 1.5.1 — Đời sống ngoài trận
+
+### Tiếng Việt
+
+Bản này tập trung vào cuộc sống của mèo ngoài trận. Battle Mode không đổi luật, nông trại không cộng sức mạnh trong trận.
+
+- **Cổng phép:** cổng thỉnh thoảng tự hiện cạnh mèo, hoặc chọn "Niệm phép cổng" ở menu chuột phải. Chỉ khi bạn bấm cổng mới vào Sảnh, cổng không tự bắt đầu trận.
+- **Thời tiết quanh mèo:** nắng, mưa, tuyết, hoàng hôn, phấn hoa, đêm sao, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh, không gửi đi đâu. Tắt được trong Cài đặt → Thói quen.
+- **Nông trại trên desktop:** các vùng đất nằm sát trên thanh taskbar, bạn nhấc và đặt từng vùng ở nơi mình thích, kể cả sang màn hình khác.
+  - **Ruộng:** cày, gieo, tưới, gặt; cây không héo khi bạn vắng mặt. Có cấp nông trại, kho, xu nông trại riêng, cây theo mùa và hàng vàng.
+  - **Bếp, Hồ, Chuồng gà:** nấu món cho mèo ăn, câu cá, nuôi gà lấy trứng.
+  - **Xe hàng và mèo hàng xóm:** xe hàng ghé mua nông sản và bán đồ trang trí; mèo hàng xóm ghé xin đồ và tặng quà.
+  - **Công cụ và phân bón:** nâng cấp cuốc và bình tưới để mèo làm được nhiều ô hơn mỗi chuyến.
+  - **Biển nông trại:** gập gọn từng vùng đất cho đỡ chiếm chỗ; đồng hồ cây vẫn chạy, mèo đi làm thì vùng tự hiện.
+- **Mèo làm vườn cùng bạn:** mèo tự tưới, gặt, gieo lại, nấu ăn, câu cá và đuổi chim, bật/tắt trong Cài đặt → Thói quen. Mèo không làm khi đang ngủ, bị bế hay ở chế độ Yên lặng.
+- **Thời tiết giúp ruộng:** mưa tự tưới, nắng làm cây lớn nhanh hơn một chút.
+- **Giờ tập trung:** phiên 25 hoặc 50 phút ở menu chuột phải; mèo giữ yên lặng, hết giờ có chuông rồi nghỉ. Mỗi phiên hoàn thành cho hạt Hoa tập trung.
+- Nhật ký có thêm thẻ Nông trại và thành tích nông trại. Lần đầu dùng có nhãn chỉ bước kế tiếp.
+- Điểm còn biết khi phát hành: giá, thời gian và XP nông trại là ước tính, chưa qua chơi thử dài. Chưa nghiệm thu đầy đủ DPI khác và nhiều màn hình.
+
+### English
+
+This release is about the pet's life outside battle. Battle Mode rules are unchanged, and the farm gives no combat power.
+
+- **Magic portal:** a portal now and then appears beside the pet, or choose "Cast portal spell" from the right-click menu. Only your click opens the battle hub; a portal never starts a battle by itself.
+- **Weather around the pet:** sun, rain, snow, sunset, pollen and starry nights, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere. Turn it off in Settings → Habits.
+- **A farm on your desktop:** lands sit just above the taskbar, and you can lift each one and put it where you like, even on another monitor.
+  - **Field:** till, sow, water and harvest; crops never wither while you are away. With farm levels, a store, separate farm coins, seasonal crops and golden produce.
+  - **Hearth, Pond and Coop:** cook for your pet, go fishing, keep hens for eggs.
+  - **Stall and neighbor cat:** a cart comes to buy produce and sell decorations; a neighbor cat drops by to ask for things and leaves gifts.
+  - **Tools and fertilizer:** better hoes and watering cans let the pet work more tiles per trip.
+  - **Farm sign:** fold lands away to save space; crops keep growing, and a land appears when the pet goes to work on it.
+- **Your pet helps out:** it waters, harvests, sows again, cooks, fishes and chases birds; switch these in Settings → Habits. It does nothing while asleep, held or in Quiet mode.
+- **Weather helps the field:** rain waters it, and sunshine makes crops grow a little faster.
+- **Focus time:** 25 or 50 minute sessions from the right-click menu; the pet keeps quiet, a bell rings at the end, then a break. Every finished session gives Focus bloom seeds.
+- The Diary has a Farm card and farm achievements. First-time hints show the next step.
+- Known at release: farm prices, times and XP are estimates, not yet tested over long play. Other DPI settings and multiple monitors have not been fully checked.
+
+### 日本語
+
+今回はバトルの外でのペットの暮らしを広げるアップデートです。バトルモードのルールは変わらず、農場は戦闘力に影響しません。
+
+- **魔法のポータル:** ときどきペットのそばに現れます。右クリックメニューから呼び出すこともできます。クリックしたときだけバトルロビーが開き、勝手にバトルは始まりません。
+- **ペットのまわりの天気:** 晴れ、雨、雪、夕焼け、花粉、星空を Windows の壁紙の色から選びます。読み取るのは縮小画像の色だけで、保存も送信もしません。設定 → 習慣でオフにできます。
+- **デスクトップの農場:** タスクバーのすぐ上に土地が並びます。土地ごとに持ち上げて好きな場所へ移動でき、別のモニターにも置けます。
+  - **畑:** 耕す、種まき、水やり、収穫。留守の間に作物が枯れることはありません。農場レベル、倉庫、専用の農場コイン、季節の作物、金色の作物があります。
+  - **かまど、池、鶏小屋:** ペットに料理を作る、魚を釣る、鶏を飼って卵をとる。
+  - **屋台とご近所の猫:** 屋台が作物を買い取り、飾りを売りに来ます。ご近所の猫はおねだりに来て、お礼を置いていきます。
+  - **道具と肥料:** くわとじょうろを強化すると、ペットが一度に世話できるマスが増えます。
+  - **農場の看板:** 土地を折りたたんで場所を空けられます。作物は育ち続け、ペットが作業に行くと土地が現れます。
+- **ペットもお手伝い:** 水やり、収穫、種まき直し、料理、釣り、鳥追いをします。設定 → 習慣で切り替えられます。寝ているとき、持ち上げられているとき、静かモードのときは何もしません。
+- **天気が畑を助けます:** 雨は水やりになり、晴れると作物が少し早く育ちます。
+- **集中タイム:** 右クリックメニューから25分または50分。ペットは静かにして、終わるとベルが鳴り、休憩に入ります。セッションを終えるたびに集中の花の種がもらえます。
+- 日記に農場カードと農場の実績が加わりました。初めてのときは次の手順を案内します。
+- リリース時点の注意: 農場の価格、時間、経験値は見積もりで、長時間のプレイでは未確認です。他の DPI 設定や複数モニターの確認は完了していません。
+
 ## 1.5.0 — Slime phản công (2026-11-07)
 
 ### Tiếng Việt

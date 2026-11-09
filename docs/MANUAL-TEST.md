@@ -1234,7 +1234,7 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Đang lơ lửng, chuột phải → "Thả xuống đây": khựng lại, rơi nhanh dần, đáp "đùng" đúng chỗ (nén xuống, nảy 2 nhịp nhỏ, đất bắn hai đầu và phía trước, tiếng `squish` có đủ nặng không). Đất không bị cắt ở hai mép vùng vẽ. Thoát rồi mở lại app: ruộng ở đúng vị trí đó. Chọn "Hủy": trượt trên không về chỗ cũ rồi mới rơi
 - [ ] Mèo ngủ: bấm ruộng không đánh thức. Mèo đi ngang: đi phía trước ruộng, không đứng lên ruộng. Kéo, ném mèo qua ruộng bình thường. Kỷ vật và cổng phép đặt cạnh ruộng không che sai lớp
 - [ ] Pause: bấm và chuột phải ruộng không có tác dụng, hết Pause dùng lại được. Bật app toàn màn hình hoặc vào trận: ruộng ẩn, xong thì hiện lại (đang nhấc thì về chỗ cũ). Sảnh chiến đấu mở thì ruộng vẫn ở dưới bảng
-- [ ] Cài đặt → Thói quen → tắt "Ruộng trên desktop": ẩn, bật lại cây còn nguyên. Tooltip đủ chữ ở vi/en/ja
+- [ ] Cài đặt → Thói quen → tắt "Nông trại trên desktop": ẩn, bật lại cây còn nguyên. Tooltip đủ chữ ở vi/en/ja
 - [ ] Thử DPI 100/125/150/200%, taskbar ở cạnh khác, nhiều màn hình (ruộng đặt ở màn khác màn mèo, rút màn hình đó thì về màn chính). Xem ruộng có che thanh trạng thái app đang dùng gây khó chịu không
 
 ## 1.5.1 Mốc 4 — Mèo làm vườn cùng (08/11)
@@ -1295,6 +1295,8 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Chơi một lúc rồi góp ý nhịp lên cấp và XP từng cây
 
 ## Nông trại Mốc C — Đơn hàng (08/11)
+
+**Đã thay bằng Gian hàng lưu động (Nông trại Mốc 4), bỏ qua cả mục này.**
 
 - [ ] Mở app: chim giấy bay vào đậu trên biển ở đầu trái mảnh đất rồi đi, không có tiếng. Xem biển và chim trên hình nền thật, khi nhấc mảnh đất thì biển bay theo
 - [ ] Chuột phải → "Đơn hàng": hàng đơn ghi số có/cần và phần thưởng; ô chưa mở ghi cấp cần. Ba bảng Kho, Nấu ăn, Đơn hàng mở thay chỗ nhau
@@ -1487,3 +1489,36 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Kéo biển sang chỗ khác và sang màn hình khác; tắt mở lại app vẫn đúng trạng thái gập và vị trí
 - [ ] Mèo đang ngủ: bấm biển không đánh thức; Pause thì không gập/mở được; app toàn màn hình và vào trận thì biển ẩn, ra lại đúng trạng thái
 - [ ] DPI 125/150%, nền sáng/tối: nhãn trên biển không bị cắt, tiếng Nhật/Anh dài vẫn đọc được
+
+## 1.5.1 — Test tay rút gọn trước khi phát hành (21 mục)
+
+Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại phía trên. Mục nào lỗi thì mở mục chi tiết cùng tên để soi kỹ. Nên chơi trên dữ liệu thật của bạn; muốn thử mức cao hoặc chuồng gà ngay thì dùng `PET_DATA_DIRECTORY` riêng.
+
+**Bất biến**
+- [ ] Mèo đang ngủ: bấm ruộng, biển, xe hàng, mưa, cổng tự đóng đều không đánh thức. Click trái thức ngay và vẫn kéo được; click phải thức ngay và mở menu
+- [ ] Kéo, ném, Dizzy ở ngay cạnh các vùng đất: nhấc mượt, không nhấp nháy, swing nhẹ không Dizzy, mèo rơi và nảy đúng
+- [ ] Pause đóng băng cây, gà, phép, thời tiết, đồng hồ tập trung. Quiet chặn mọi việc mèo tự làm. App toàn màn hình và trận ẩn hết, thoát ra đúng trạng thái cũ
+- [ ] Tắt Python (`scripts/run.ps1 -NoAi` với dữ liệu riêng): mèo vẫn chạy, vẫn làm vườn
+
+**Cổng và thời tiết**
+- [ ] "Niệm phép cổng": mèo niệm, cổng hiện, bấm mới vào Sảnh, không tự bắt đầu trận. Chờ cổng tự hiện một lần trong 20–40 phút
+- [ ] Đổi wallpaper sáng, xám, tối: thời tiết đổi theo, bấm xuyên qua được, FPS không tụt rõ khi có đủ vùng đất
+- [ ] Mưa đủ 15 giây thì ruộng tự tưới; nhãn báo khi trời đổi hiện đúng và không gây khó chịu
+
+**Nông trại**
+- [ ] Người mới (dữ liệu riêng): nhãn chỉ bước ở ô đầu dẫn đủ cày → gieo → tưới → gặt, bán trong Kho, mở thêm ô
+- [ ] Nhịp mèo tự làm và ôm nông sản về giỏ: có vừa mắt không, có đi lại quá nhiều không, có bị quá ồn không
+- [ ] Bếp: mèo đổ nguyên liệu, khuấy, ăn; bị bế giữa chừng thì nồi giữ món. Hồ: mèo câu theo lệnh và tự câu, cá vào kho
+- [ ] Xe hàng đứng chỗ trống, không đè đất; lời mua, giao hàng, mua đồ trang trí, bật/tắt trong Kho đều đúng
+- [ ] Chuồng gà (cấp 3): mua, gà đi lại, thu trứng, 2 món trứng, mèo vồ gà không gây hại
+- [ ] Mùa vụ, công cụ, phân bón: đúng cây theo mùa trong menu gieo, đồ cầm đổi màu theo bậc, bón phân thấy hạt phân và cây lớn nhanh hơn
+- [ ] Mèo hàng xóm: đứng chỗ trống, bấm tặng đồ, có nhãn quà, không chạm hay đánh thức mèo
+- [ ] Nhấc, kéo, thả Ruộng, Bếp, Hồ, Chuồng, Biển; thử sang màn hình khác nếu có; tắt mở lại app đúng vị trí; mèo luôn vẽ trên kỷ vật, kỷ vật trên vùng đất
+- [ ] Biển: gập và mở từng vùng, Mở tất cả, Gập tất cả; phép có đẹp và đúng nhịp không; mèo tự đi làm thì vùng tự hiện rồi gập lại có khó chịu không
+- [ ] Nhật ký có thẻ Nông trại, thành tích không báo dồn, phần thưởng cấp 8–10 (dùng dữ liệu riêng), câu thoại lên cấp hiện đúng
+- [ ] Giờ tập trung trọn một phiên 25 phút: nhãn đếm, chuông vừa tai, vươn vai, hạt Hoa tập trung, hoa lớn và gặt được
+
+**Chung**
+- [ ] Chơi vài ngày rồi góp ý giá, thời gian, XP: mọi con số nông trại mới là ước tính
+- [ ] DPI 125/150/200%, nhiều màn hình, vi/en/ja: nhãn, bảng, biển không tràn hay bị cắt. Câu tiếng Nhật mới chưa ai duyệt
+- [ ] Mở bản 1.5.1 trên dữ liệu 1.5.0 thật (không có farm.json): không mất gì, cổng và ruộng hiện đúng; nếu cài Setup thì thử nhận cập nhật khi đã phát hành

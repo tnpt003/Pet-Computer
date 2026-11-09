@@ -1,6 +1,6 @@
 # Trạng thái hiện tại và việc tiếp theo
 
-Cập nhật: 2026-11-05 (Asia/Saigon). Bản phát hành mới nhất: 1.4.4; bản 1.5 code xong, chưa phát hành. Việc hằng ngày xem PROGRESS.md; việc trước khi phát hành 1.5.0 xem docs/UPDATE-1.5.md → Việc trước M30. File này giữ làm bản ghi kế hoạch cũ và thiết kế "mèo nói tiếng người". Máy dev chạy bản copy `artifacts\win-x64` (không cài Setup).
+Cập nhật: 2026-11-09 (Asia/Saigon). Bản phát hành mới nhất: 1.5.0; bản 1.5.1 đã chuẩn bị xong, chưa phát hành. Việc hằng ngày xem PROGRESS.md. File này giữ làm bản ghi kế hoạch cũ và thiết kế "mèo nói tiếng người". Máy dev chạy bản copy `artifacts\win-x64` (không cài Setup).
 
 > **Quy tắc 20/10:** luôn commit và publish sau mỗi mốc code hoàn chỉnh, kiểm thử đạt; chạy smoke và báo artifact. Không cần hỏi lại. Mốc tài liệu-only commit, không publish binary. Xem AGENTS.md. Không tự push/upload.
 

@@ -45,7 +45,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 - Tổng thời gian khi tưới đúng lúc: Củ cải 5 phút, Cà rốt 15 phút, Cà chua 40 phút, Bí ngô 2 giờ, chia đều 3 giai đoạn.
 - Từ Mốc 5 hạt có giá, ruộng mới có 3 ô mở và thu hoạch vào kho (xem Luật Mốc 5).
 - Lưu ở `farm.json` trong thư mục dữ liệu (có `.bak`): các ô, số đã thu hoạch, màn hình và vị trí theo tỉ lệ. Tệp của bản mới hơn thì không ghi đè.
-- Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Ruộng trên desktop" ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
+- Mặc định đặt ở 25% bề ngang màn có mèo; công tắc "Nông trại trên desktop" (đổi tên 09/11, tắt thì ẩn mọi vùng đất) ở Cài đặt → Thói quen (mặc định bật), tắt thì ẩn, cây giữ nguyên.
 - Ẩn khi app toàn màn hình hoặc trong trận; mảnh đất đang nhấc thì về chỗ cũ. Pause không nhận bấm hay di chuyển. Khi nhấc, chuột phải có "Thả xuống đây" và "Hủy" (trượt trên không về chỗ cũ tối đa 0,6 s rồi mới rơi). Kéo không vượt sang màn hình khác; màn bị rút thì về màn chính.
 - Bấm ruộng không chạm vào mèo: bấm khi mèo ngủ không đánh thức, không đổi sleep, drag, emotion. Mèo đi phía trước ruộng và không coi ruộng là bục đứng.
 

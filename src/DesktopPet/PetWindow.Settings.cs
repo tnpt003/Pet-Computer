@@ -117,8 +117,8 @@ public sealed partial class PetWindow
             ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
         form.Weather = new CheckBox { Content = L("Thời tiết quanh mèo", "Weather around the pet"), IsChecked = preferences.Weather,
             ToolTip = L("Mưa, tuyết, lá bay... quanh mèo, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh và không gửi đi đâu.", "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.") };
-        form.Farm = new CheckBox { Content = L("Ruộng trên desktop", "Field on the desktop"), IsChecked = preferences.Farm,
-            ToolTip = L("Mảnh ruộng 6 ô sát trên thanh taskbar: bấm vào ô để cày, gieo, tưới và thu hoạch. Tắt thì ẩn đi, cây vẫn được giữ nguyên.", "A six-tile field just above the taskbar: click a tile to till, sow, water and harvest. Turned off it is hidden; your crops are kept.") };
+        form.Farm = new CheckBox { Content = L("Nông trại trên desktop", "Farm on the desktop"), IsChecked = preferences.Farm,
+            ToolTip = L("Ruộng, bếp, hồ và các vùng đất khác sát trên thanh taskbar: bấm vào ô ruộng để cày, gieo, tưới và thu hoạch. Tắt thì ẩn đi, cây vẫn được giữ nguyên.", "The field, hearth, pond and other lands just above the taskbar: click a field tile to till, sow, water and harvest. Turned off they are hidden; your crops are kept.") };
         form.FarmHelper = new CheckBox { Content = L("Mèo làm vườn cùng", "Pet helps in the field"), IsChecked = preferences.FarmHelper,
             ToolTip = L("Mèo tự ra ruộng tưới hoặc gặt từng ô, nghỉ giữa các chuyến và đuổi chim. Không làm khi đang ngủ, bị kéo hay ở chế độ Yên lặng.", "The pet goes to the field to water or harvest tile by tile, resting between trips, and chases birds away. It does nothing while asleep, held or in Quiet mode.") };
         form.FarmResow = new CheckBox { Content = L("Mèo tự gieo lại", "Pet sows again"), IsChecked = preferences.FarmResow,

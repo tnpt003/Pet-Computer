@@ -1482,7 +1482,7 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Vùng đã gập không chặn chuột: bấm xuyên qua chỗ đó vào cửa sổ phía sau được
 - [ ] Icon trên biển dễ nhận ra ở kích thước thật; ô mở và ô gập phân biệt được; chấm vàng hiện khi ruộng cần tưới/gặt, nồi còn món, có trứng
 - [ ] Gập hết rồi chờ xe hàng và mèo hàng xóm: chúng vẫn đến và đứng dưới sàn như bình thường
-- [ ] Vùng gập mèo không tự tới làm; chọn Câu cá hoặc nấu món từ biển thì vùng hiện ra, mèo làm xong tự gập lại
+- [ ] Vùng gập: mèo tự đi làm thì vùng hiện ra bằng phép lúc mèo bắt đầu đi, không kêu, mèo làm xong hẳn mới gập lại (Bếp chờ ăn xong); ruộng nhiều việc thì hiện/gập theo từng chuyến có khó chịu không; mèo ngủ hoặc Yên lặng thì vùng không tự hiện; chọn Câu cá, Nấu ăn từ biển thì vùng hiện ra và có tiếng
 - [ ] Cây vẫn lớn, gà vẫn đẻ, mưa vẫn tưới khi đang gập; nhãn thu hoạch/thời tiết hiện trên biển
 - [ ] Kéo biển sang chỗ khác và sang màn hình khác; tắt mở lại app vẫn đúng trạng thái gập và vị trí
 - [ ] Mèo đang ngủ: bấm biển không đánh thức; Pause thì không gập/mở được; app toàn màn hình và vào trận thì biển ẩn, ra lại đúng trạng thái

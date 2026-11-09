@@ -9,8 +9,8 @@ namespace DesktopPet;
 
 // The farm sign (docs/FARM-GAME.md, Biển nông trại): land can be folded away so the farm takes little
 // of the screen. A folded land keeps its place and its windows, only with nothing to see or click,
-// and its clock goes on. The cat does no work of its own there; what the user asks for opens the
-// land for that job and folds it again. Clicking the sign never touches the cat.
+// and its clock goes on. It comes out when the cat sets off to work on it and folds again once the
+// cat is done. Clicking the sign never touches the cat.
 public sealed partial class PetWindow
 {
     private static readonly FarmLandSlot[] FarmLandSlots = Enum.GetValues<FarmLandSlot>();
@@ -79,8 +79,10 @@ public sealed partial class PetWindow
         }
     }
 
-    private bool FarmLandWorking(FarmLandSlot slot) => farmChores.Active && slot == (farmChores.Cooking ? FarmLandSlot.Hearth
-        : farmChores.Kind == FarmChoreKind.Fishing ? FarmLandSlot.Pond : farmChores.Kind == FarmChoreKind.Hen ? FarmLandSlot.Coop : FarmLandSlot.Field);
+    // A dish is eaten beside the hearth: the job is over when the bowl is empty.
+    private bool FarmLandWorking(FarmLandSlot slot) => (slot == FarmLandSlot.Hearth && pet.TreatRemaining > 0)
+        || (farmChores.Active && slot == (farmChores.Cooking ? FarmLandSlot.Hearth
+            : farmChores.Kind == FarmChoreKind.Fishing ? FarmLandSlot.Pond : farmChores.Kind == FarmChoreKind.Hen ? FarmLandSlot.Coop : FarmLandSlot.Field));
 
     private void StepFarmDock(double dt)
     {
@@ -145,11 +147,11 @@ public sealed partial class PetWindow
         RefreshFarmDock();
     }
 
-    // Open for the job the user asked for; it folds again when the cat is done.
-    private void BorrowFarmLand(FarmLandSlot slot)
+    // Out for this job; it folds again when the cat is done. Trips the cat starts itself make no sound.
+    private void BorrowFarmLand(FarmLandSlot slot, bool quiet = false)
     {
         if (!FarmFoldOf(slot).Borrow()) return;
-        PlayPetSound("sparkle");
+        if (!quiet) PlayPetSound("sparkle");
         MakeRoomForFarmLand(slot);
         SaveFarm();
         RefreshFarmDock();
@@ -247,18 +249,6 @@ public sealed partial class PetWindow
         else FarmToggleLand(slot);
     }
 
-    // A dish left in a folded hearth: the cat goes back to it only when asked.
-    public bool FarmCanResumePot => !paused && farm?.PotDish != null && !farmChores.Cooking && FarmAtHand && FarmHearthUsable && !FarmHearth.Fold.Showing && FarmCatCanEat;
-
-    public bool FarmResumePot()
-    {
-        if (!FarmCanResumePot) return false;
-        BorrowFarmLand(FarmLandSlot.Hearth);
-        CancelFeatureActivity();
-        farmChores.BeginCook(FarmChoreKind.Stir, farm!.PotDish!.Value, FarmSpotBeside(FarmHearthMid), byUser: true);
-        return true;
-    }
-
     private MenuItem[] FarmDockItems(MenuItem move)
     {
         var openAll = new MenuItem { Header = L("Mở tất cả vùng đất", "Open all land"), IsEnabled = !FarmLandInAir && FarmOwnedLands.Any(slot => !FarmFoldOf(slot).Showing) };
@@ -274,12 +264,6 @@ public sealed partial class PetWindow
             kitchen.Click += (_, _) => OpenFarmKitchen();
             items.Add(shop);
             items.Add(kitchen);
-            if (farm?.PotDish != null && !FarmHearth.Fold.Showing)
-            {
-                var resume = new MenuItem { Header = L("Nấu tiếp món trong nồi", "Finish the dish in the pot"), IsEnabled = FarmCanResumePot };
-                resume.Click += (_, _) => FarmResumePot();
-                items.Add(resume);
-            }
             var stall = new MenuItem { Header = L("Gian hàng", "Stall"), IsEnabled = FarmStallHere };
             stall.Click += (_, _) => OpenFarmStall();
             var fish = new MenuItem { Header = L("Câu cá", "Go fishing"), IsEnabled = FarmCanFish };

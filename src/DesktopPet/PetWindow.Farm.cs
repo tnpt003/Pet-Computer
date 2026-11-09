@@ -105,6 +105,12 @@ public sealed partial class PetWindow
         if (farm == null || farmArt == null) return;
         var grown = farm.Advance(now);
         foreach (int index in grown) StartFarmEffect(index, FarmEffect.Grow);
+        if (farm.LayEggs(now))
+        {
+            SaveFarm();
+            DrawFarmPatch(FarmCoop);
+            UpdateFarmShop();
+        }
         // The bar of a hovered tile moves on too; other tiles have nothing new to draw.
         if (grown.Count > 0 || farmHover >= 0) RefreshFarmArt();
     }

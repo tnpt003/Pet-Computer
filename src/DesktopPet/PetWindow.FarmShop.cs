@@ -19,7 +19,8 @@ public sealed partial class PetWindow
     private Border? farmShopXpFill;
     private FarmScarecrowIcon? farmShopScareIcon;
     private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareName, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
-    private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll;
+    private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll, farmShopCoopButton, farmShopEggRow, farmShopEggButton;
+    private TextBlock? farmShopCoopName, farmShopCoopNote, farmShopCoopPrice, farmShopEggCount, farmShopEggPrice;
     private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price, Border Gold, TextBlock GoldPrice)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
     private bool farmShopPaused;
@@ -43,7 +44,8 @@ public sealed partial class PetWindow
         var dishes = Enum.GetValues<FarmDish>().Where(dish => PetFarm.DishLevel(dish) == level).Select(FarmDishName);
         var fish = Enum.GetValues<FarmFish>().Where(kind => PetFarm.FishLevel(kind) == level && level > 1).Select(FarmFishName);
         var scarecrow = level == PetFarm.GoldenScarecrowLevel ? new[] { L("Bù nhìn vàng", "Golden scarecrow") } : Array.Empty<string>();
-        return string.Join(", ", crops.Concat(fish).Concat(dishes).Concat(scarecrow));
+        var coop = level == PetFarm.CoopLevel ? new[] { L("Chuồng gà", "Hen coop") } : Array.Empty<string>();
+        return string.Join(", ", crops.Concat(fish).Concat(dishes).Concat(scarecrow).Concat(coop));
     }
 
     // Each frame the field is shown.
@@ -101,6 +103,11 @@ public sealed partial class PetWindow
             body.Children.Add(FarmShopRow(new FarmFishIcon(fish, 30), FarmFishName(fish), count, button));
             farmShopFishRows.Add((fish, count, button, price));
         }
+        farmShopEggCount = PanelLine(PetUi.SmallSize, maxWidth: 170);
+        farmShopEggCount.Foreground = PetUi.Game.Soft;
+        (farmShopEggButton, farmShopEggPrice, _) = HudButton(() => FarmSellEgg(), plain: true);
+        farmShopEggRow = FarmShopRow(new FarmEggIcon(26), L("Trứng", "Eggs"), farmShopEggCount, farmShopEggButton);
+        body.Children.Add(farmShopEggRow);
 
         (farmShopTileButton, farmShopTilePrice, _) = HudButton(() => FarmOpenTile(), plain: true);
         farmShopTileNote = PanelLine(PetUi.SmallSize, maxWidth: 170);
@@ -117,6 +124,13 @@ public sealed partial class PetWindow
         var scareRow = FarmShopRow(farmShopScareIcon, "", farmShopScareNote, farmShopScareButton);
         farmShopScareName = FarmShopRowName(scareRow);
         body.Children.Add(scareRow);
+
+        (farmShopCoopButton, farmShopCoopPrice, _) = HudButton(() => FarmBuyCoopOrHen(), plain: true);
+        farmShopCoopNote = PanelLine(PetUi.SmallSize, maxWidth: 170);
+        farmShopCoopNote.Foreground = PetUi.Game.Soft;
+        var coopRow = FarmShopRow(new FarmEggIcon(26), "", farmShopCoopNote, farmShopCoopButton);
+        farmShopCoopName = FarmShopRowName(coopRow);
+        body.Children.Add(coopRow);
 
         body.Children.Add(FarmDecorPanel());
 
@@ -270,10 +284,50 @@ public sealed partial class PetWindow
         farmShopScarePrice!.Text = farm.Scarecrow ? L("Đã có", "Owned") : FarmPriceText(PetFarm.ScarecrowPrice);
         ShowFarmShopButton(farmShopScareButton!, !paused && !farm.Scarecrow && farm.Coins >= PetFarm.ScarecrowPrice);
 
+        UpdateFarmShopCoop();
         UpdateFarmShopDecors();
 
         farmShopSellAllText!.Text = LF($"Bán hết · +{farm.StockValue} xu", $"Sell all · +{farm.StockValue}");
         ShowFarmShopButton(farmShopSellAll!, !paused && farm.StockValue > 0);
+    }
+
+    private void UpdateFarmShopCoop()
+    {
+        if (farm == null || farmShopCoopName == null) return;
+        farmShopEggRow!.Visibility = farm.HasCoop ? Visibility.Visible : Visibility.Collapsed;
+        farmShopEggCount!.Text = LF($"Trong kho: {farm.EggStock}", $"In store: {farm.EggStock}");
+        farmShopEggPrice!.Text = LF($"Bán · +{PetFarm.EggPrice} xu", $"Sell · +{PetFarm.EggPrice}");
+        ShowFarmShopButton(farmShopEggButton!, !paused && farm.EggStock > 0);
+        bool locked = !farm.HasCoop && farm.Level < PetFarm.CoopLevel, full = farm.Hens >= PetFarm.MaxHens;
+        int price = farm.HasCoop ? PetFarm.HenPrice(farm.Hens) : PetFarm.CoopPrice;
+        farmShopCoopName.Text = farm.HasCoop ? L("Thêm gà", "Another hen") : L("Chuồng gà", "Hen coop");
+        farmShopCoopNote!.Text = farm.HasCoop ? LF($"Đang có {farm.Hens}/{PetFarm.MaxHens} gà", $"{farm.Hens} of {PetFarm.MaxHens} hens") : L("Gà đẻ trứng cho bếp và xe hàng", "Hens lay eggs for the hearth and the stall");
+        farmShopCoopPrice!.Text = full ? L("Đủ gà", "All here") : locked ? FarmLevelText(PetFarm.CoopLevel) : FarmPriceText(price);
+        ShowFarmShopButton(farmShopCoopButton!, !paused && !locked && !full && farm.Coins >= price);
+    }
+
+    public int FarmSellEgg() => FarmSold(farm == null || paused ? 0 : farm.SellEgg());
+
+    // The coop first; after that, more hens.
+    public bool FarmBuyCoopOrHen()
+    {
+        if (farm == null || paused) return false;
+        if (farm.HasCoop)
+        {
+            if (!farm.BuyHen()) return false;
+        }
+        else
+        {
+            if (!farm.BuyCoop(FarmNow)) return false;
+            CreateFarmPatchWindows();
+            SettleFarmPatches();
+            ShowFarmPatches();
+            PositionFarmPatches();
+        }
+        PlayPetSound("sparkle");
+        FarmChanged();
+        DrawFarmPatch(FarmCoop);
+        return true;
     }
 
     public void CloseFarmShop() => farmShopWindow?.Close();
@@ -283,7 +337,8 @@ public sealed partial class PetWindow
         farmShopWindow = null;
         farmShopScareIcon = null;
         farmShopCoins = farmShopTileName = farmShopTileNote = farmShopTilePrice = farmShopScareName = farmShopScareNote = farmShopScarePrice = farmShopSellAllText = null;
-        farmShopTileButton = farmShopScareButton = farmShopSellAll = null;
+        farmShopTileButton = farmShopScareButton = farmShopSellAll = farmShopCoopButton = farmShopEggRow = farmShopEggButton = null;
+        farmShopCoopName = farmShopCoopNote = farmShopCoopPrice = farmShopEggCount = farmShopEggPrice = null;
         farmShopLevel = farmShopNextUnlock = farmShopWeather = null;
         farmShopXpFill = null;
         farmShopRows.Clear();

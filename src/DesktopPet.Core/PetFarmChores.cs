@@ -2,7 +2,7 @@ using System;
 
 namespace DesktopPet;
 
-public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing }
+public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing, Hen }
 
 // What the renderer puts in the cat's paws while it works (PetRenderer.Farm.cs).
 public enum FarmToolPose { None, Till, Sow, Harvest, Pour, Pounce, Carry, Drop }
@@ -25,6 +25,8 @@ public sealed class FarmChores
     public const double HarvestSeconds = 1.4, HarvestHit = 0.3;
     // What it picked goes to the basket at the end of the field (docs/FARM-GAME.md).
     public const double DropSeconds = 0.5, DropHit = 0.25;
+    // Chasing the hens for fun, now and then (docs/FARM-GAME.md).
+    public const double HenSeconds = 1.2, HenHit = 0.5, HenMinSeconds = 600, HenMaxSeconds = 900;
     public const double PounceSeconds = 1, PounceHit = 0.5;
     public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
     // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
@@ -51,6 +53,7 @@ public sealed class FarmChores
     // Until the cat may fish by itself again, and until the user may send it again.
     public double FishDue { get; private set; } = FishMinSeconds;
     public double FishAgain { get; private set; }
+    public double HenDue { get; private set; } = HenMinSeconds;
     // This cast: seconds into the work when it bites, what is on the hook, and the side of the pond it fishes from.
     public double BiteAt { get; private set; }
     public FarmFish Catch { get; private set; }
@@ -63,11 +66,11 @@ public sealed class FarmChores
 
     public bool Active => Kind != FarmChoreKind.None;
     public bool Cooking => Kind is FarmChoreKind.Pour or FarmChoreKind.Stir;
-    public bool WalkedTooLong => Phase is FarmChorePhase.Walk or FarmChorePhase.Carry && Time >= (Cooking || Kind == FarmChoreKind.Fishing ? CookWalkLimitSeconds : WalkLimitSeconds);
+    public bool WalkedTooLong => Phase is FarmChorePhase.Walk or FarmChorePhase.Carry && Time >= (Cooking || Kind is FarmChoreKind.Fishing or FarmChoreKind.Hen ? CookWalkLimitSeconds : WalkLimitSeconds);
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds || Phase == FarmChorePhase.Drop && Time >= DropSeconds;
-    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, _ => PounceSeconds };
+    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, FarmChoreKind.Hen => HenSeconds, _ => PounceSeconds };
     public double WorkLength => Phase == FarmChorePhase.Drop ? DropSeconds : WorkSeconds;
-    public double HitTime => Phase == FarmChorePhase.Drop ? DropHit : Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, _ => PounceHit };
+    public double HitTime => Phase == FarmChorePhase.Drop ? DropHit : Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, FarmChoreKind.Hen => HenHit, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
     public void ScheduleAfterLook(bool went, Random random)
@@ -92,6 +95,9 @@ public sealed class FarmChores
     public void CountDownCook(double dt) => CookDue = Math.Max(0, CookDue - dt);
     public void ScheduleFish(double seconds) => FishDue = Math.Max(0, seconds);
     public void ScheduleFishAgain(double seconds) => FishAgain = Math.Max(0, seconds);
+    public void ScheduleHen(double seconds) => HenDue = Math.Max(0, seconds);
+    public static double NextHen(Random random) => HenMinSeconds + random.NextDouble() * (HenMaxSeconds - HenMinSeconds);
+    public void CountDownHen(double dt) => HenDue = Math.Max(0, HenDue - dt);
     public static double NextFish(Random random) => FishMinSeconds + random.NextDouble() * (FishMaxSeconds - FishMinSeconds);
     public static double NextBite(Random random, bool night = false) => night
         ? NightBiteMinSeconds + random.NextDouble() * (NightBiteMaxSeconds - NightBiteMinSeconds)

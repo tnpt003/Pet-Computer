@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-public enum FarmPatchKind { Hearth, Pond }
+public enum FarmPatchKind { Hearth, Pond, Coop }
 
 public sealed partial class PetFarmArt
 {
@@ -34,11 +34,16 @@ public sealed partial class PetFarmArt
         public int FishSide { get; set; } = 1;
         public FarmFish? CaughtFish { get; set; }
         public double CaughtAge { get; set; }
+        // The coop: how many hens and eggs in the nest, the hens' clock, and 0 to 1 while they scatter, or -1.
+        public int Hens { get; set; }
+        public int NestEggs { get; set; }
+        public double HenTime { get; set; }
+        public double HenScatter { get; set; } = -1;
 
         public Land(FarmPatchKind kind)
         {
             Kind = kind;
-            LandWidth = kind == FarmPatchKind.Hearth ? HearthLandWidth : PondLandWidth;
+            LandWidth = kind == FarmPatchKind.Hearth ? HearthLandWidth : kind == FarmPatchKind.Coop ? CoopLandWidth : PondLandWidth;
             Width = LandWidth + Side * 2;
             Height = ArtHeight;
         }
@@ -53,16 +58,72 @@ public sealed partial class PetFarmArt
             land.RotateAt(Tilt, mid, Floor);
             land.Translate(ShakeX, -air);
             dc.PushTransform(new MatrixTransform(land));
-            double above = Kind == FarmPatchKind.Hearth ? 58 : 8; // Only what stands on the land takes clicks.
+            double above = Kind == FarmPatchKind.Pond ? 8 : 58; // Only what stands on the land takes clicks.
             dc.DrawRectangle(Hit, null, new Rect(Side, SoilTop - above, LandWidth, SoilHeight + above));
             if (air > 0.5) DrawUnderside(dc, Side, LandWidth, air);
             DrawBank(dc, Side, LandWidth);
             if (Kind == FarmPatchKind.Hearth) DrawHearth(dc);
+            else if (Kind == FarmPatchKind.Coop) DrawCoop(dc);
             else DrawPond(dc);
             dc.Pop();
             if (Shed >= 0) DrawShedding(dc, Side, LandWidth, Shed);
             if (Dustiness > 0) { DrawDust(dc, Side, LandWidth, Dustiness); DrawLandingDirt(dc, Side, LandWidth, Dustiness); }
         }
+
+        private static readonly Brush HenWhite = PetUi.Hex("#FFF6E8"), HenComb = PetUi.Hex("#E2503F"), HenBeak = PetUi.Hex("#F0A63A"), CoopWood = PetUi.Hex("#B98A5F"), CoopDark = PetUi.Hex("#5B4034");
+
+        // A little straw-roofed house on the left, a nest on the right, the hens pecking about between.
+        private void DrawCoop(DrawingContext dc)
+        {
+            dc.PushTransform(new TranslateTransform(Side + LandWidth / 2, Floor - 16));
+            dc.DrawRectangle(CoopWood, Ink, new Rect(-54, -40, 40, 40));
+            dc.DrawEllipse(CoopDark, InkThin, new Point(-34, -14), 10, 13);
+            dc.DrawRectangle(CoopDark, null, new Rect(-44, -14, 20, 14));
+            dc.DrawGeometry(Thatch, Ink, CoopRoof);
+            dc.DrawEllipse(Thatch, Ink, new Point(40, -3), 18, 5.5);
+            int eggs = Math.Min(NestEggs, 3);
+            for (int i = 0; i < eggs; i++) { dc.PushTransform(new TranslateTransform(0, -3)); DrawEgg(dc, 40 + (i - (eggs - 1) / 2.0) * 10); dc.Pop(); }
+            if (NestEggs > 0) dc.DrawEllipse(ThatchDeep, InkThin, new Point(40, -2), 15, 3);
+            double scatter = HenScatter >= 0 ? Math.Sin(HenScatter * Math.PI) : 0;
+            for (int i = 0; i < Hens; i++)
+            {
+                double beat = HenTime * 0.35 + i * 2.1, x = 6 + Math.Sin(beat) * 16 + (i - 1) * 7;
+                int face = Math.Cos(beat) >= 0 ? 1 : -1;
+                double peck = Math.Sin(HenTime * 1.9 + i * 1.3) > 0.72 ? 1 : 0;
+                DrawHen(dc, x, -scatter * (12 + i * 5), face, HenScatter >= 0 ? 0 : peck);
+            }
+            if (HenScatter >= 0)
+            {
+                dc.PushOpacity(1 - HenScatter);
+                for (int i = 0; i < 6; i++)
+                {
+                    double angle = -2.8 + i * 0.5, way = 10 + HenScatter * 26;
+                    dc.DrawEllipse(HenWhite, InkThin, new Point(6 + Math.Cos(angle) * way, -20 + Math.Sin(angle) * way + HenScatter * 16), 3, 1.7);
+                }
+                dc.Pop();
+            }
+            dc.Pop();
+        }
+
+        private static readonly Geometry CoopRoof = Parse("M-60,-38 L-34,-62 L-8,-38 Z");
+
+        private static void DrawHen(DrawingContext dc, double x, double y, int face, double peck)
+        {
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.PushTransform(new ScaleTransform(face, 1));
+            dc.DrawLine(InkThin, new Point(-3, -4), new Point(-3, 0));
+            dc.DrawLine(InkThin, new Point(3, -4), new Point(3, 0));
+            dc.DrawEllipse(HenWhite, Ink, new Point(-8, -14), 3.5, 5.5);
+            dc.DrawEllipse(HenWhite, Ink, new Point(0, -10), 9.5, 7.5);
+            double head = peck * 8;
+            dc.DrawEllipse(HenComb, InkThin, new Point(7, -22 + head), 2.2, 2.6);
+            dc.DrawEllipse(HenWhite, Ink, new Point(8, -18 + head), 4.6, 4.6);
+            dc.DrawEllipse(PetUi.ArtInk, null, new Point(9.5, -19 + head), 0.9, 0.9);
+            dc.DrawLine(HenBeakPen, new Point(12.5, -18 + head), new Point(16, -17 + head));
+            dc.Pop(); dc.Pop();
+        }
+
+        private static readonly Pen HenBeakPen = PetUi.FrozenPen(PetUi.Hex("#F0A63A"), 2.4);
 
         // The pond seen from a little above, in a rim of earth, with reeds at the far end.
         private void DrawPond(DrawingContext dc)
@@ -174,6 +235,7 @@ public sealed partial class PetFarmArt
             double hit = FarmChores.PourHit / FarmChores.PourSeconds, age = Math.Clamp(PourAge, 0, 1);
             var colors = PetFarm.Recipe(dish).Select(part => CropColor(part.Crop)).ToList();
             if (PetFarm.FishIn(dish) is FarmFish inPot) colors.Add(FishColor(inPot));
+            if (PetFarm.EggsIn(dish) > 0) colors.Add(EggShell);
             if (age < hit)
             {
                 double k = age / hit;

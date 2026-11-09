@@ -32,6 +32,8 @@ public sealed partial class PetWindow
         FarmDish.CarpTomato => L("Cá chép kho cà chua", "Carp with tomato"),
         FarmDish.GoldfishHotpot => L("Lẩu cá vàng", "Golden fish hotpot"),
         FarmDish.ChilledWatermelon => L("Dưa hấu ướp lạnh", "Chilled watermelon"),
+        FarmDish.FriedEgg => L("Trứng ốp la", "Fried egg"),
+        FarmDish.EggTart => L("Bánh bí trứng", "Pumpkin egg tart"),
         _ => L("Bánh bí ngô", "Pumpkin pie")
     };
 
@@ -46,6 +48,7 @@ public sealed partial class PetWindow
     {
         var parts = PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm!.HaveOf(part.Crop)}/{part.Count}").ToList();
         if (PetFarm.FishIn(dish) is FarmFish fish) parts.Insert(0, $"{FarmFishName(fish)} {farm!.FishOf(fish)}/1");
+        if (PetFarm.EggsIn(dish) is int eggs and > 0) parts.Insert(0, $"{L("Trứng", "Eggs")} {farm!.EggStock}/{eggs}");
         return string.Join(" · ", parts);
     }
 

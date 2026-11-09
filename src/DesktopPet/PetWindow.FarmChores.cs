@@ -27,6 +27,7 @@ public sealed partial class PetWindow
     private double FarmBasketMid => FarmPlotLeft - PetFarmArt.Side + PetFarmArt.BasketX;
     private double FarmHearthMid => FarmPatchLeft(FarmHearth) + FarmHearth.Width / 2;
     private double FarmPondMid => FarmPatchLeft(FarmPond) + FarmPond.Width / 2;
+    private double FarmCoopMid => FarmPatchLeft(FarmCoop) + FarmCoop.Width / 2;
 
     // The cat can walk to the field from where it is.
     private bool FarmAtHand => preferences.Farm && FarmVisible && farm != null && pet.LedgeId == 0;
@@ -34,7 +35,8 @@ public sealed partial class PetWindow
     private bool FarmFieldReady => farmLift.Phase == FarmLiftPhase.Down && farmWithCat;
     private bool FarmHearthReady => FarmHearth.OnGround && FarmHearth.WithCat;
     private bool FarmPondReady => FarmPond.OnGround && FarmPond.WithCat;
-    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : FarmFieldReady;
+    private bool FarmCoopReady => farm?.HasCoop == true && FarmCoop.Monitor != null && FarmCoop.OnGround && FarmCoop.WithCat;
+    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : farmChores.Kind == FarmChoreKind.Hen ? FarmCoopReady : FarmFieldReady;
     private bool FarmHelpOn => preferences.FarmHelper && FarmAtHand;
 
     // Everything that starts a trip stops one, except the trip itself owning the cat. What the user
@@ -50,6 +52,7 @@ public sealed partial class PetWindow
         farmChoreSoundWait = Math.Max(0, farmChoreSoundWait - dt);
         farmChores.CountDownCook(dt);
         farmChores.CountDownFish(dt);
+        farmChores.CountDownHen(dt);
         if (!farmChores.Active && farmChores.CountDownVisit(dt)) farmChores.ScheduleAfterLook(TryFarmVisit(), featureRandom);
         if (farmChores.CountDownBird(dt)) farmChores.ScheduleBird(TryFarmBird() ? FarmChores.NextBird(featureRandom, farm?.Scarecrow == true) : FarmChores.RetrySeconds);
     }
@@ -75,6 +78,12 @@ public sealed partial class PetWindow
         {
             BeginFarmFishing(byUser: false);
             farmChores.ScheduleFish(FarmChores.NextFish(featureRandom));
+            return true;
+        }
+        if (FarmCoopReady && farmChores.HenDue <= 0)
+        {
+            farmChores.Begin(FarmChoreKind.Hen, -1, FarmSpotBeside(FarmCoopMid));
+            farmChores.ScheduleHen(FarmChores.NextHen(featureRandom));
             return true;
         }
         if (!preferences.FarmAutoCook || !FarmHearthReady || farmChores.CookDue > 0 || !FarmCatCanEat || farm!.AutoDish() is not FarmDish dish) return false;
@@ -141,7 +150,7 @@ public sealed partial class PetWindow
             return false;
         }
         bool hit = farmChores.Step(dt);
-        int facing = (farmChores.Cooking ? FarmHearthMid : kind == FarmChoreKind.Fishing ? FarmPondMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
+        int facing = (farmChores.Cooking ? FarmHearthMid : kind == FarmChoreKind.Fishing ? FarmPondMid : kind == FarmChoreKind.Hen ? FarmCoopMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
         switch (farmChores.Phase)
         {
             case FarmChorePhase.Notice:
@@ -167,6 +176,7 @@ public sealed partial class PetWindow
         FarmChoreKind.Pour => farm!.PotDish == null && farm.CanCook(farmChores.Dish),
         FarmChoreKind.Stir => farm!.PotDish != null,
         FarmChoreKind.Fishing => true,
+        FarmChoreKind.Hen => farm!.HasCoop,
         _ => farm!.Next(tile) == FarmChores.StepOf(kind)
     };
 
@@ -315,6 +325,16 @@ public sealed partial class PetWindow
                 {
                     FarmClick(tile);
                     farmCropInPaws = true;
+                }
+                break;
+            case FarmChoreKind.Hen:
+                HoldStill(PetAction.Sitting, facing);
+                pet.PlayCrouch = farmChores.Time < FarmChores.HenHit ? Math.Max(FarmStalkCrouch, Math.Min(1, farmChores.Time / 0.3)) : 0;
+                if (hit)
+                {
+                    farmHenScatter = 0;
+                    pet.BatRemaining = 0.3;
+                    PlayFarmSound("ball_tap");
                 }
                 break;
             default:

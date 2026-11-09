@@ -676,6 +676,34 @@ internal static class FarmChoreChecks
 
             Hearth();
             Pond();
+
+            // Now and then it goes to play with the hens.
+            Free(); Clear(field);
+            field.Hens = 2;
+            Call(window, "CreateFarmPatchWindows");
+            Call(window, "SettleFarmPatches");
+            Call(window, "ShowFarmPatches");
+            chores.ScheduleHen(0); chores.ScheduleFish(9999); chores.ScheduleCook(9999);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Hen, "With a coop and nothing to do on the field it goes to the hens");
+            check(chores.HenDue >= FarmChores.HenMinSeconds, "...and not again for a while");
+            pet.X = window.FarmChoreSpot;
+            Features(Frame * 2);
+            check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.Action == PetAction.Sitting, "There it crouches");
+            Features(FarmChores.HenHit + Frame);
+            check(Field<double>(window, "farmHenScatter") >= 0 && pet.BatRemaining > 0, "It pounces and they scatter");
+            Features(FarmChores.HenSeconds);
+            check(window.FarmChoreNow == FarmChoreKind.None && pet.PlayCrouch == 0, "Then it is over");
+            Free(); Clear(field);
+            chores.ScheduleHen(0);
+            prefs.Quiet = true;
+            Features(Frame);
+            check(!window.TryFarmVisit() || window.FarmChoreNow != FarmChoreKind.Hen, "In Quiet it leaves them alone");
+            prefs.Quiet = false;
+            Free();
+            Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm coop").Close();
+            window.FarmCoop.Monitor = null;
+            field.Hens = 0;
+            chores.ScheduleHen(FarmChores.HenMinSeconds);
         }
         finally
         {
@@ -792,6 +820,9 @@ internal static class FarmChoreChecks
             if (name != null) Save(bitmap, name);
             return Hash(bitmap);
         }
+        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+            Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.NestEggs = 2; a.HenTime = 1.3; }, back, $"coop-{tone}");
+        check(Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.HenTime = 1.3; a.HenScatter = 0.5; }, dark, "coop-scatter") != Land(FarmPatchKind.Coop, a => { a.Hens = 3; a.HenTime = 1.3; }, dark, null), "The hens scatter visibly");
         // The land, and the cat beside it as the two windows place them.
         void Scene(FarmPatchKind kind, Action<PetFarmArt.Land> set, int side, double gap, Action<PetModel> cat, Color back, string name)
         {

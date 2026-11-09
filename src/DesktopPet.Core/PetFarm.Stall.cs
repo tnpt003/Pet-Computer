@@ -27,13 +27,13 @@ public sealed partial class PetFarm
     {
         nameof(FarmCrop.Watermelon) => 1,
         nameof(FarmCrop.Pumpkin) => 2,
-        nameof(FarmCrop.Tomato) or nameof(FarmFish.Carp) => 3,
+        nameof(FarmCrop.Tomato) or nameof(FarmFish.Carp) or EggGood => 3,
         _ => MaxOfferItems
     };
 
-    private static int GoodPrice(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? SellPrice(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? SellPrice(fish) : 0;
-    private static int GoodXp(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HarvestXp(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishXp(fish) : 0;
-    public int GoodsOf(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HaveOf(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishOf(fish) : 0;
+    private static int GoodPrice(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? SellPrice(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? SellPrice(fish) : good == EggGood ? EggPrice : 0;
+    private static int GoodXp(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HarvestXp(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishXp(fish) : good == EggGood ? EggXp : 0;
+    public int GoodsOf(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HaveOf(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishOf(fish) : good == EggGood ? EggStock : 0;
 
     public static int OfferCoins(FarmOffer offer) => (int)Math.Round(offer.Items.Sum(item => item.Value * GoodPrice(item.Key)) * OfferPayFactor, MidpointRounding.AwayFromZero);
     public static int OfferXp(FarmOffer offer) => offer.Items.Sum(item => item.Value * GoodXp(item.Key));
@@ -44,7 +44,7 @@ public sealed partial class PetFarm
     private FarmOffer NewOffer(Random random)
     {
         var goods = Enum.GetValues<FarmCrop>().Where(crop => Unlocked(crop)).Select(crop => crop.ToString())
-            .Concat(new[] { nameof(FarmFish.Minnow), nameof(FarmFish.Carp) }).ToArray();
+            .Concat(new[] { nameof(FarmFish.Minnow), nameof(FarmFish.Carp) }).Concat(HasCoop ? new[] { EggGood } : Array.Empty<string>()).ToArray();
         int total = random.Next(MinOfferItems, Math.Min(MaxOfferItems, Level + 2) + 1);
         var first = goods[random.Next(goods.Length)];
         var offer = new FarmOffer();
@@ -76,6 +76,7 @@ public sealed partial class PetFarm
         {
             if (Enum.TryParse<FarmCrop>(good, out var crop)) Take(crop, count);
             else if (Enum.TryParse<FarmFish>(good, out var fish)) for (int i = 0; i < count; i++) TakeFish(fish);
+            else if (good == EggGood) EggStock -= count;
         }
         Earn(coins);
         GainXp(xp);

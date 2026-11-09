@@ -19,7 +19,7 @@ public sealed partial class PetFarmArt : FrameworkElement
     public const double TileWidth = 54, Pad = 10, Side = 40, SoilHeight = 28, PlantRoom = 72, LiftRoom = 54, BottomRoom = 6;
     public const double PlotWidth = TileWidth * PetFarm.TileCount + Pad * 2, ArtWidth = PlotWidth + Side * 2;
     // The hearth and the pond are land of their own (PetFarmArt.Land.cs).
-    public const double HearthLandWidth = 96, PondLandWidth = 150;
+    public const double HearthLandWidth = 96, PondLandWidth = 150, CoopLandWidth = 124;
     private const double PlotMid = Side + PlotWidth / 2;
     public const double ArtHeight = SoilHeight + PlantRoom + LiftRoom + BottomRoom, Floor = ArtHeight - BottomRoom, SoilTop = Floor - SoilHeight;
     public const double BasketX = Side + 9;
@@ -483,6 +483,18 @@ public sealed partial class PetFarmArt : FrameworkElement
                 foreach (var (x, y) in new[] { (-4.0, -11.0), (3.5, -10.0), (0.0, -17.0) })
                     dc.DrawEllipse(PetUi.ArtInk, null, new Point(x, y), 1.1, 1.7);
                 break;
+            case FarmDish.FriedEgg:
+                dc.DrawEllipse(RadishTip, Ink, new Point(0, -3), 18, 3.6);
+                dc.DrawGeometry(EggWhite, Ink, FriedWhite);
+                dc.DrawEllipse(EggYolk, InkThin, new Point(1, -8.5), 6, 4.5);
+                dc.DrawEllipse(Leaf, InkThin, new Point(11, -6.5), 3, 1.5);
+                break;
+            case FarmDish.EggTart:
+                dc.DrawGeometry(Stake, Ink, PieTin);
+                dc.DrawEllipse(Seed, Ink, new Point(0, -9.5), 17, 5);
+                dc.DrawEllipse(EggYolk, InkThin, new Point(0, -10), 13, 3.2);
+                foreach (double x in new[] { -7.0, 0.0, 7.0 }) dc.DrawEllipse(Pumpkin, null, new Point(x, -10), 1.6, 1);
+                break;
             default:
                 dc.DrawGeometry(Stake, Ink, PieTin);
                 dc.DrawEllipse(Seed, Ink, new Point(0, -9.5), 17, 5);
@@ -490,6 +502,16 @@ public sealed partial class PetFarmArt : FrameworkElement
                 dc.DrawEllipse(RadishTip, InkThin, new Point(0, -12.5), 5.5, 3);
                 break;
         }
+    }
+
+    private static readonly Brush EggWhite = PetUi.Hex("#FFF7EA"), EggYolk = PetUi.Hex("#F6B73C"), EggShell = PetUi.Hex("#F3E2C8");
+    private static readonly Geometry FriedWhite = Parse("M-14,-6 C-15,-12 -7,-15 -1,-13 C6,-16 15,-12 14,-7 C13,-3 6,-3 0,-3 C-6,-3 -13,-2 -14,-6 Z");
+
+    // An egg standing on y = 0.
+    public static void DrawEgg(DrawingContext dc, double x)
+    {
+        dc.DrawEllipse(EggShell, InkThin, new Point(x, -8), 6.5, 8);
+        dc.DrawEllipse(EggWhite, null, new Point(x - 2, -11), 1.8, 2.6);
     }
 
     private static void DrawBowl(DrawingContext dc, Brush bowl, Brush broth, Action topping)
@@ -765,6 +787,25 @@ public sealed class FarmFishIcon : FrameworkElement
         dc.PushTransform(new TranslateTransform(ActualWidth / 2 + 2 * zoom, ActualHeight / 2));
         dc.PushTransform(new ScaleTransform(zoom, zoom));
         PetFarmArt.DrawFish(dc, fish);
+        dc.Pop(); dc.Pop();
+    }
+}
+
+// An egg as a small picture (the shop).
+public sealed class FarmEggIcon : FrameworkElement
+{
+    public FarmEggIcon(double size = 22)
+    {
+        Width = Height = size;
+        IsHitTestVisible = false;
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        double zoom = ActualHeight / 20;
+        dc.PushTransform(new TranslateTransform(ActualWidth / 2, ActualHeight - zoom));
+        dc.PushTransform(new ScaleTransform(zoom, zoom));
+        PetFarmArt.DrawEgg(dc, 0);
         dc.Pop(); dc.Pop();
     }
 }

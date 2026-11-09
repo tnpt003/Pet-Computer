@@ -1457,3 +1457,4 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 
 - [ ] Mốc 1 Giỏ: mèo tự gặt xong ôm nông sản đi tới giỏ ở mép trái ruộng, thả vào, giỏ nảy; bị bế, ngủ, Pause giữa đường thì đạo cụ biến mất, nông sản vẫn trong kho; có Đèn lồng thì giỏ không che xấu
 - [ ] Mốc 2 Hàng vàng: tưới đúng giờ cả 3 lần thì thỉnh thoảng gặt ra "★"; tưới trễ không bao giờ ra; bảng Kho có nút ★ riêng không tràn dòng ở vi/en/ja; xe hàng và bếp vẫn nhận được hàng vàng khi thiếu hàng thường
+- [ ] Mốc 3 Chuồng gà: mua ở Kho khi đủ cấp 3; chuồng hiện ngay không đè đất khác; gà đi lại, mổ; chuột phải thu trứng; di chuyển chuồng như Bếp; mèo tới vồ gà vài phút một lần; 2 món trứng trong Nấu ăn và mèo ăn đúng hình

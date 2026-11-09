@@ -144,7 +144,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 |---|---|---|
 | 1. Giỏ nông sản | Mèo gặt xong ôm nông sản tới giỏ ở mép ruộng | Xong, còn test tay |
 | 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Xong, còn test tay |
-| 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Chưa làm |
+| 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Xong, còn test tay |
 | 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Chưa làm |
 | 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Chưa làm |
 | 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Chưa làm |
@@ -159,6 +159,13 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Mỗi ô đo 3 lần tưới: lần đầu tính từ lúc gieo, hai lần sau từ lúc cây khát. Cả 3 lần trong vòng 10 phút thì lúc gặt có 40% ra hàng vàng; một lần trễ thì chỉ mất cơ hội, không mất nông sản. Mưa, mèo tưới, tưới cả ruộng đều tính như nhau.
 - Hàng vàng để riêng trong kho (`GoldStock`), hiện "★" trên cùng dòng nông sản với nút bán riêng, giá gấp đôi. Nấu và giao xe dùng hàng thường trước, thiếu mới lấy hàng vàng; mèo tự nấu không bao giờ dùng hàng vàng. Bán hết thì bán cả hàng vàng.
 - Nhãn gặt có "★", mèo mang hàng vàng về giỏ có lấp lánh. `farm.json` phiên bản 5, file cũ giữ nguyên ruộng và kho.
+
+### Luật Mốc 3 Chuồng gà (duyệt 09/11)
+
+- Chuồng là vùng đất thứ tư, mua ở bảng Kho: cấp 3, 200 xu, có sẵn 1 gà; gà thứ hai 150 xu, thứ ba 300 xu. Chuồng di chuyển, sang màn khác, nhấc, thả y như Bếp và Hồ; xe hàng và mèo khách tránh nó. Lưu `CoopFractionX`, `CoopMonitor`.
+- Mỗi gà đẻ 1 trứng mỗi 45 phút theo đồng hồ thật, tối đa 3 trứng chờ mỗi gà trong tổ, đầy thì thôi đẻ, không có hình phạt. Chuột phải vào chuồng: "Thu trứng (n)". Mỗi trứng 2 XP, bán 20 xu; xe hàng có thể mua trứng khi đã có chuồng.
+- Món mới: Trứng ốp la (cấp 3: 1 Trứng + 1 Củ cải), Bánh bí trứng (cấp 6: 1 Trứng + 1 Bí ngô). Mèo tự nấu chừa lại 4 trứng.
+- Gà chỉ đi lại trong chuồng, vẽ 8 khung/giây để không tốn FPS. Mỗi 10–15 phút mèo tới chuồng vồ chơi, gà bay tán loạn, không gây hại; đuổi gà chịu mọi khóa của việc làm vườn (ngủ, Quiet, Pause, nhấc đất, khác màn hình).
 
 ## Giai đoạn 1
 

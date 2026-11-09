@@ -153,6 +153,69 @@ internal static class FarmTests
         protected override double Sample() => value;
     }
 
+    // The hen coop (docs/FARM-GAME.md, stage 4 milestone 3).
+    private static void Coop(Action<bool, string> check)
+    {
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var farm = new PetFarm { Coins = 5000 };
+        check(!farm.BuyCoop(start) && !farm.HasCoop && farm.Coins == 5000, "No coop before level 3");
+        check(!farm.BuyHen(), "No hen without a coop");
+        farm.Xp = 70;
+        check(farm.Level == PetFarm.CoopLevel && farm.BuyCoop(start) && farm.Hens == 1 && farm.Coins == 5000 - PetFarm.CoopPrice, "At level 3 it can be bought, with a hen in it");
+        check(!farm.BuyCoop(start), "...once");
+        check(!farm.LayEggs(start.AddSeconds(PetFarm.EggSeconds - 1)) && farm.EggsInCoop == 0, "No egg before its time");
+        check(farm.LayEggs(start.AddSeconds(PetFarm.EggSeconds)) && farm.EggsInCoop == 1, "One egg in 45 minutes");
+        check(farm.LayEggs(start.AddDays(5)) && farm.EggsInCoop == PetFarm.EggsPerHen && farm.NextEggAt == null, "A long absence fills the nest and stops there");
+        check(!farm.LayEggs(start.AddDays(6)), "A full nest lays nothing");
+        int xp = farm.Xp;
+        check(farm.CollectEggs() == 3 && farm.EggStock == 3 && farm.EggsInCoop == 0 && farm.Xp == xp + 6, "Collecting moves them to the store, for XP");
+        check(farm.CollectEggs() == 0, "...and there is nothing to collect again");
+        check(!farm.LayEggs(start.AddDays(6)) && farm.NextEggAt == start.AddDays(6).AddSeconds(PetFarm.EggSeconds), "An empty nest starts counting afresh");
+        check(farm.BuyHen() && farm.Hens == 2 && farm.Coins == 5000 - PetFarm.CoopPrice - 150, "The second hen costs 150");
+        check(farm.BuyHen() && farm.Hens == 3 && !farm.BuyHen(), "The third costs more, and that is all");
+        farm.NextEggAt = start.AddDays(90);
+        check(!farm.LayEggs(start.AddDays(7)) && farm.NextEggAt == start.AddDays(7).AddSeconds(PetFarm.EggSeconds / 3), "A clock set back does not make the wait longer; three hens lay three times as often");
+        int coins = farm.Coins;
+        check(farm.SellEgg() == PetFarm.EggPrice && farm.Coins == coins + 20 && farm.EggStock == 2, "An egg sells for 20");
+        check(new PetFarm().SellEgg() == 0, "No eggs, nothing paid");
+
+        var cook = new PetFarm { Xp = 2500 };
+        check(!cook.CanCook(FarmDish.FriedEgg), "No egg, no fried egg");
+        cook.EggStock = 1; cook.Stock["Radish"] = 1;
+        check(cook.Cook(FarmDish.FriedEgg) && cook.EggStock == 0 && cook.StockOf(FarmCrop.Radish) == 0, "It uses the egg and the radish");
+        check(PetFarm.DishLevel(FarmDish.FriedEgg) == 3 && PetFarm.DishLevel(FarmDish.EggTart) == 6 && PetFarm.EggsIn(FarmDish.EggTart) == 1 && PetFarm.EggsIn(FarmDish.RadishSoup) == 0, "The two egg dishes");
+        var auto = new PetFarm { Xp = 2500, EggStock = 4 };
+        auto.Stock["Pumpkin"] = 9; auto.Stock["Radish"] = 9;
+        check(auto.AutoDish() is not (FarmDish.FriedEgg or FarmDish.EggTart), "The cat leaves the last four eggs");
+        auto.EggStock = 5;
+        check(auto.AutoDish() == FarmDish.EggTart, "With one to spare it may use one");
+
+        var stall = new PetFarm { Xp = 2500, Hens = 1, EggStock = 2 };
+        var offer = new FarmOffer { Items = new() { [PetFarm.EggGood] = 2 } };
+        check(stall.GoodsOf(PetFarm.EggGood) == 2 && PetFarm.OfferCoins(offer) == 60 && PetFarm.OfferXp(offer) == 4, "The stall pays for eggs");
+        check(stall.Deliver(offer) == 60 && stall.EggStock == 0, "Delivering takes them");
+        var random = new Random(3);
+        check(Enumerable.Range(0, 200).Any(_ => stall.NewOffers(random).Any(o => o.Items.ContainsKey(PetFarm.EggGood))), "The stall asks for eggs once there is a coop");
+        var noHens = new PetFarm { Xp = 2500 };
+        check(!Enumerable.Range(0, 200).Any(_ => noHens.NewOffers(random).Any(o => o.Items.ContainsKey(PetFarm.EggGood))), "...and not before");
+        var value = new PetFarm { EggStock = 2 };
+        check(value.StockValue == 40 && value.SellAll() == 40 && value.EggStock == 0, "Selling everything sells the eggs");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-coop-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            File.WriteAllText(path, """{ "Version": 5, "Hens": 9, "EggsInCoop": 99, "EggStock": -3, "CoopFractionX": 7 }""");
+            var messy = PetFarm.Load(path);
+            check(messy.Hens == PetFarm.MaxHens && messy.EggsInCoop == 9 && messy.EggStock == 0 && messy.CoopFractionX == 1 && messy.NextEggAt == null, "A bad file is brought back in range");
+            var saved = new PetFarm { Hens = 2, EggStock = 3, EggsInCoop = 1, CoopFractionX = 0.4, CoopMonitor = "B" };
+            saved.PotDish = FarmDish.EggTart;
+            check(saved.Save(path) && PetFarm.Load(path) is { Hens: 2, EggStock: 3, EggsInCoop: 1, CoopFractionX: 0.4, CoopMonitor: "B", PotDish: FarmDish.EggTart }, "The coop is saved");
+        }
+        finally { Directory.Delete(folder, true); }
+    }
+
     // Golden crops (docs/FARM-GAME.md, stage 4 milestone 2).
     private static void Quality(Action<bool, string> check)
     {
@@ -228,6 +291,7 @@ internal static class FarmTests
     private static void Lands(Action<bool, string> check)
     {
         Quality(check);
+        Coop(check);
         var field = new[] { (100.0, 200.0) };
         check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
         check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");
@@ -782,7 +846,7 @@ internal static class FarmTests
     private static void Links(Action<bool, string> check, DateTime start)
     {
         var farm = new PetFarm();
-        check(Enum.GetValues<FarmDish>().Where(d => PetFarm.FishIn(d) == null).All(d => PetFarm.Recipe(d).Sum(p => p.Count) == 2), "Every dish without fish takes two things from the store");
+        check(Enum.GetValues<FarmDish>().Where(d => PetFarm.FishIn(d) == null).All(d => PetFarm.Recipe(d).Sum(p => p.Count) + PetFarm.EggsIn(d) == 2), "Every dish without fish takes two things from the store");
         check(!farm.Cook(FarmDish.RadishSoup) && farm.Stock.Count == 0, "An empty store cooks nothing");
         farm.Stock["Radish"] = 1;
         check(!farm.CanCook(FarmDish.RadishSoup) && !farm.Cook(FarmDish.RadishSoup) && farm.StockOf(FarmCrop.Radish) == 1, "One radish is not enough, and is kept");

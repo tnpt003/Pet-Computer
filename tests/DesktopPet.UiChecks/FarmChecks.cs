@@ -1035,6 +1035,7 @@ internal static class FarmChecks
         frames(0.02);
         var hearth = window.FarmHearth;
         double hearthWas = hearth.Fraction;
+        var hearthSaved = farm.HearthFractionX;
         window.BeginFarmPatchMove(hearth);
         frames(FarmLift.RiseSeconds + 0.1);
         hearth.Fraction = Math.Clamp((stood - area.Left) / (area.Right - area.Left - hearth.Width), 0, 1);
@@ -1044,6 +1045,7 @@ internal static class FarmChecks
         check(hearth.OnGround && (hearthAt + hearth.Width <= stood || hearthAt >= stood + PetFarmStallArt.ArtWidth), "Land set down on the cart's place goes beside it");
         check(Field<double>(window, "farmCartX") == stood, "...and the cart stays where it is");
         hearth.Fraction = hearth.RestFraction = hearthWas;
+        farm.HearthFractionX = hearthSaved;
 
         // The cat stays in front of the land, even after WPF re-applies Topmost on one of its windows.
         var ground = Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm" && w.IsLoaded);
@@ -1056,6 +1058,7 @@ internal static class FarmChecks
         void ResetCart() => Call(window, "ResetFarmCart");
 
         stall.Reset(); stall.Schedule(FarmStall.FirstSeconds);
+        CoopChecks(window, farm, check, frames);
         farm.Xp = 0; farm.Stock.Clear(); farm.Fish.Clear(); farm.Coins = coinsBefore;
         Call(window, "FarmChanged");
         double fade = FarmGainWait;
@@ -1273,6 +1276,48 @@ internal static class FarmChecks
         var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
         Directory.CreateDirectory(review);
         using var stream = File.Create(Path.Combine(review, name)); encoder.Save(stream);
+    }
+
+    // The hen coop (docs/FARM-GAME.md, stage 4 milestone 3).
+    private static void CoopChecks(PetWindow window, PetFarm farm, Action<bool, string> check, Action<double> frames)
+    {
+        Window? Coop() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm coop" && w.IsLoaded);
+        int coins = farm.Coins, xp = farm.Xp;
+        var patch = window.FarmCoop;
+        farm.Coins = 2000; farm.Xp = 0;
+        check(Coop() == null && !window.FarmBuyCoopOrHen(), "Before level 3 there is no coop to buy");
+        farm.Xp = 70;
+        window.OpenFarmShop();
+        check(window.FarmBuyCoopOrHen() && farm.HasCoop && Coop() is { IsVisible: true }, "Bought, the coop stands there at once");
+        window.CloseFarmShop();
+        frames(0.02);
+        double left = window.FarmPatchLeft(patch), right = left + patch.Width;
+        bool Clear(double from, double to) => right <= from || left >= to;
+        check(Clear(window.FarmPlotStart, window.FarmPlotStart + PetFarmArt.PlotWidth) && Clear(window.FarmPatchLeft(window.FarmHearth), window.FarmPatchLeft(window.FarmHearth) + window.FarmHearth.Width) && Clear(window.FarmPatchLeft(window.FarmPond), window.FarmPatchLeft(window.FarmPond) + window.FarmPond.Width), "It does not stand on other land");
+        check(window.FarmBuyCoopOrHen() && window.FarmBuyCoopOrHen() && farm.Hens == 3 && !window.FarmBuyCoopOrHen(), "Up to three hens");
+        var items = window.FarmPatchItems(patch);
+        check(items.Length == 2 && (string)items[0].Header == "Collect eggs (0)" && !items[0].IsEnabled, "An empty nest has nothing to collect");
+        farm.EggsInCoop = 2;
+        items = window.FarmPatchItems(patch);
+        check((string)items[0].Header == "Collect eggs (2)" && items[0].IsEnabled && (string)items[1].Header == "Move the coop", $"The menu says what is there ({items[0].Header})");
+        Render(Coop()!, "farm-coop.png");
+        check(window.FarmCollectEggs() == 2 && farm.EggStock == 2 && farm.EggsInCoop == 0, "Collected");
+        SetField(window, "paused", true);
+        farm.EggsInCoop = 1;
+        check(window.FarmCollectEggs() == 0 && farm.EggsInCoop == 1 && window.FarmPatchItems(patch).Length == 0, "Pause refuses it");
+        SetField(window, "paused", false);
+        window.BeginFarmPatchMove(patch);
+        check(!patch.OnGround, "It rises like the other land");
+        frames(FarmLift.RiseSeconds + 0.1);
+        window.DropFarmPatch(patch);
+        frames(FarmLift.FallSeconds + FarmLift.MaxGlideSeconds + 0.1);
+        check(patch.OnGround && farm.CoopFractionX != null, "It comes down and its place is kept");
+        Coop()!.Close();
+        patch.Monitor = null;
+        patch.Fraction = patch.RestFraction = 0;
+        farm.Hens = 0; farm.EggsInCoop = 0; farm.EggStock = 0; farm.NextEggAt = null; farm.CoopFractionX = null; farm.CoopMonitor = null;
+        farm.Coins = coins; farm.Xp = xp;
+        Call(window, "FarmChanged");
     }
 
     private static void Render(Window panel, string name = "farm-shop.png")

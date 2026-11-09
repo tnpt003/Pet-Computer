@@ -87,6 +87,7 @@ public sealed partial class PetWindow
             farmChecked = now;
             RefreshFarmArea();
             RefreshFarmCart();
+            RefreshFarmVisitor();
             SyncFarmSeason();
             CheckFarmGrowth(now);
             UpdateFarmChip();
@@ -94,11 +95,13 @@ public sealed partial class PetWindow
         }
         if (dt > 0) StepFarm(dt);
         if (dt > 0) StepFarmStall(dt);
+        if (dt > 0) StepFarmVisitor(dt);
         UpdateFarmTips();
         if (farmDragging) FollowFarmDrag();
         FollowFarmPatchDrags();
         PositionFarm();
         PlaceFarmCart();
+        PlaceFarmVisitor();
     }
 
     // From this computer's month. Everything drawn with grass changes with it.
@@ -306,6 +309,7 @@ public sealed partial class PetWindow
         CloseFarmKitchen();
         CloseFarmStall();
         ResetFarmCart();
+        ResetFarmVisitor();
         farmArt?.ReleaseMouseCapture();
         farmDragging = false;
         if (farmLift.Phase != FarmLiftPhase.Down) { farmFraction = farmRestFraction; farmMonitor = farmRestMonitor ?? farmMonitor; }
@@ -327,6 +331,7 @@ public sealed partial class PetWindow
         CloseFarmKitchen();
         CloseFarmStall();
         ResetFarmCart();
+        ResetFarmVisitor();
         CloseFarmPatches();
         farmWindow?.Close();
     }
@@ -385,6 +390,7 @@ public sealed partial class PetWindow
         foreach (var patch in farmPatches)
             if (patch.Window != null) yield return patch.Window;
         if (farmCartWindow != null) yield return farmCartWindow;
+        if (farmVisitorWindow != null) yield return farmVisitorWindow;
     }
 
     // What lies above this window in the z-order.
@@ -710,10 +716,10 @@ public sealed partial class PetWindow
         farmSeedMenu = null;
     }
 
-    public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Where(crop => farm?.InSeason(crop) != false).Select(crop =>
+    public MenuItem[] FarmSeedItems(int tile) => Enum.GetValues<FarmCrop>().Where(crop => farm == null || farm.InSeason(crop) || farm.OffSeasonOf(crop) > 0).Select(crop =>
     {
-        bool locked = farm?.Unlocked(crop) == false;
-        var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + (locked ? FarmLevelText(PetFarm.CropLevel(crop)) : FarmPriceText(PetFarm.SeedPrice(crop))), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || (!locked && farm.Coins >= PetFarm.SeedPrice(crop)) };
+        bool locked = farm?.Unlocked(crop) == false, gift = farm?.InSeason(crop) == false;
+        var item = new MenuItem { Header = FarmSeedLabel(crop) + " · " + (locked ? FarmLevelText(PetFarm.CropLevel(crop)) : FarmPriceText(gift ? 0 : PetFarm.SeedPrice(crop))), Icon = new FarmCropIcon(crop), IsEnabled = farm == null || (!locked && (gift || farm.Coins >= PetFarm.SeedPrice(crop))) };
         item.Click += (_, _) => FarmPlant(tile, crop);
         return item;
     }).ToArray();

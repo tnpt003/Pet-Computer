@@ -29,7 +29,7 @@ internal static class FarmTests
     // What the stall sells (docs/FARM-GAME.md, finishing milestone B).
     private static void Decorations(Action<bool, string> check)
     {
-        var all = Enum.GetValues<FarmDecor>();
+        var all = Enum.GetValues<FarmDecor>().Where(decor => !PetFarm.IsGiftDecor(decor)).ToArray();
         check(new[] { 500, 700, 800, 800, 1200, 1400 }.SequenceEqual(all.Select(PetFarm.DecorPrice)) && all.Sum(PetFarm.DecorPrice) == 5400, "Six decorations, 5400 coins in all");
 
         var farm = new PetFarm();
@@ -151,6 +151,79 @@ internal static class FarmTests
     private sealed class FixedRandom(double value) : Random
     {
         protected override double Sample() => value;
+    }
+
+    // The neighbour's cat (docs/FARM-GAME.md, stage 4 milestone 6).
+    private static void Visitor(Action<bool, string> check)
+    {
+        var random = new Random(11);
+        check(new PetFarm().NewVisitorRequest(random) == null, "An empty store: nobody comes to ask");
+        var farm = new PetFarm();
+        farm.Stock["Carrot"] = 5;
+        bool asks = true, small = true;
+        for (int i = 0; i < 200; i++)
+        {
+            var wants = farm.NewVisitorRequest(random)!;
+            asks &= wants.Count == 1 && wants.ContainsKey("Carrot");
+            small &= wants.Values.All(n => n is >= 1 and <= PetFarm.VisitorMaxItems);
+        }
+        check(asks && small, "It asks for one or two of what the store has");
+        var scarce = new PetFarm();
+        scarce.Stock["Radish"] = 1;
+        check(Enumerable.Range(0, 100).All(_ => scarce.CanGive(scarce.NewVisitorRequest(random)!)), "...never more than there is");
+
+        var visit = new FarmVisitor();
+        check(!visit.Here && visit.Due == FarmVisitor.FirstSeconds && visit.CountDown(FarmVisitor.FirstSeconds), "The first visit is a while off");
+        visit.Arrive(new() { ["Carrot"] = 1 });
+        check(visit.Here && visit.Rolling && visit.Left == FarmVisitor.StaySeconds, "It arrives");
+        check(!visit.Step(FarmVisitor.RollSeconds) && visit.Phase == FarmVisitorPhase.Open && visit.Amount == 1, "...and stands");
+        check(!visit.Step(FarmVisitor.StaySeconds) && visit.Phase == FarmVisitorPhase.Leaving, "...for three minutes");
+        check(visit.Step(FarmVisitor.RollSeconds + 0.01) && visit.Phase == FarmVisitorPhase.Away, "...then it has gone");
+        visit.Arrive(new() { ["Carrot"] = 1 });
+        visit.Step(FarmVisitor.RollSeconds);
+        visit.Leave();
+        check(visit.Phase == FarmVisitorPhase.Leaving && !visit.Here, "Given something, it leaves");
+        check(FarmVisitor.NextDelay(new FixedRandom(0)) == FarmVisitor.MinSeconds && FarmVisitor.NextDelay(new FixedRandom(0.999)) < FarmVisitor.MaxSeconds, "Half an hour to an hour between visits");
+
+        FarmGift Roll(double value, Action<PetFarm>? set = null)
+        {
+            var f = new PetFarm { Xp = 70, Season = FarmSeason.Winter };
+            f.Stock["Carrot"] = 3;
+            set?.Invoke(f);
+            return f.GiveVisitor(new() { ["Carrot"] = 2 }, new FixedRandom(value))!;
+        }
+        var given = new PetFarm { Xp = 70 };
+        given.Stock["Carrot"] = 3;
+        int coins = given.Coins;
+        var gift = given.GiveVisitor(new() { ["Carrot"] = 2 }, new FixedRandom(0.1))!;
+        check(gift.Kind == FarmGiftKind.Coins && gift.Amount == 40 + 3 * 10 && given.Coins == coins + gift.Amount && given.StockOf(FarmCrop.Carrot) == 1, "Coins, and the crop is gone from the store");
+        check(new PetFarm().GiveVisitor(new() { ["Carrot"] = 1 }, random) == null, "Short of it, nothing is given");
+        check(Roll(0.5).Kind == FarmGiftKind.Fertilizer && Roll(0.5).Amount == 2, "Fertilizer");
+        var seed = Roll(0.8);
+        check(seed.Kind == FarmGiftKind.Seed && seed.Crop is FarmCrop off && PetFarm.CropSeason(off) is FarmSeason s && s != FarmSeason.Winter, "A seed of another season");
+        var decor = Roll(0.95);
+        check(decor.Kind == FarmGiftKind.Decor && PetFarm.IsGiftDecor(decor.Decor!.Value), "A decoration only the visitor gives");
+        check(Roll(0.95, f => f.Decors.AddRange(PetFarm.GiftDecors.Select(d => d.ToString()))).Kind == FarmGiftKind.Fertilizer, "All given already: fertilizer instead");
+        check(PetFarm.GiftDecors.Length == 3 && !new PetFarm { Coins = 9999 }.BuyDecor(FarmDecor.Pinwheel), "Those cannot be bought");
+        var sale = new PetFarm();
+        check(!Enumerable.Range(0, 200).Any(_ => sale.NewDecors(random).Any(PetFarm.IsGiftDecor)), "...and the stall does not have them");
+
+        var field = new PetFarm { Coins = 0, Xp = 70, Season = FarmSeason.Winter };
+        field.Till(0); field.Till(1);
+        check(!field.Plant(0, FarmCrop.Strawberry), "Out of season there is no sowing it");
+        field.OffSeasonSeeds["Strawberry"] = 1;
+        check(field.Plant(0, FarmCrop.Strawberry) && field.Coins == 0 && field.OffSeasonOf(FarmCrop.Strawberry) == 0 && field.Tiles[0].Crop == FarmCrop.Strawberry, "A seed that was given sows it, free, and is used up");
+        check(!field.Plant(1, FarmCrop.Strawberry), "...once");
+        string folder = Path.Combine(Path.GetTempPath(), "pet-visitor-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            var saved = new PetFarm { FertilizerStock = 2 };
+            saved.OffSeasonSeeds["Corn"] = 1; saved.OffSeasonSeeds["Radish"] = 3; saved.OffSeasonSeeds["Nope"] = 3;
+            check(saved.Save(path) && PetFarm.Load(path) is { FertilizerStock: 2 } back && back.OffSeasonOf(FarmCrop.Corn) == 1 && back.OffSeasonSeeds.Count == 1, "Gifts are saved; only seasonal seeds count");
+        }
+        finally { Directory.Delete(folder, true); }
     }
 
     // Tools and fertilizer (docs/FARM-GAME.md, stage 4 milestone 5).
@@ -372,6 +445,7 @@ internal static class FarmTests
         Coop(check);
         Seasons(check);
         Tools(check);
+        Visitor(check);
         var field = new[] { (100.0, 200.0) };
         check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
         check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");

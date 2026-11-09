@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace DesktopPet;
 
-public enum FarmDecor { FlowerBed, WaterLily, BambooFence, Lantern, WoodBridge, Awning }
+public enum FarmDecor { FlowerBed, WaterLily, BambooFence, Lantern, WoodBridge, Awning, Pinwheel, StoneFrog, TeaPot }
 
 // What the traveling stall sells (docs/FARM-GAME.md, finishing milestone B): six things to look at.
 // Each is bought once and can be put away and brought back from the store. They give nothing but looks.
@@ -13,6 +13,9 @@ public enum FarmDecor { FlowerBed, WaterLily, BambooFence, Lantern, WoodBridge, 
 public sealed partial class PetFarm
 {
     public const int DecorsPerVisit = 2;
+    // Only ever given by the neighbour's cat; the stall does not sell them (docs/FARM-GAME.md, stage 4 milestone 6).
+    public static readonly FarmDecor[] GiftDecors = { FarmDecor.Pinwheel, FarmDecor.StoneFrog, FarmDecor.TeaPot };
+    public static bool IsGiftDecor(FarmDecor decor) => Array.IndexOf(GiftDecors, decor) >= 0;
 
     public static int DecorPrice(FarmDecor decor) => decor switch
     {
@@ -44,9 +47,9 @@ public sealed partial class PetFarm
 
     // Up to two the farm does not have yet, for one visit of the stall.
     public List<FarmDecor> NewDecors(Random random) =>
-        Enum.GetValues<FarmDecor>().Where(decor => !HasDecor(decor)).OrderBy(_ => random.Next()).Take(DecorsPerVisit).ToList();
+        Enum.GetValues<FarmDecor>().Where(decor => !IsGiftDecor(decor) && !HasDecor(decor)).OrderBy(_ => random.Next()).Take(DecorsPerVisit).ToList();
 
-    public bool CanBuyDecor(FarmDecor decor) => Enum.IsDefined(decor) && !HasDecor(decor) && Coins >= DecorPrice(decor);
+    public bool CanBuyDecor(FarmDecor decor) => Enum.IsDefined(decor) && !IsGiftDecor(decor) && !HasDecor(decor) && Coins >= DecorPrice(decor);
 
     public bool BuyDecor(FarmDecor decor)
     {

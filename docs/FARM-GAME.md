@@ -147,7 +147,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 | 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Xong, còn test tay |
 | 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Xong, còn test tay |
 | 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Xong, còn test tay |
-| 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Chưa làm |
+| 6. Mèo hàng xóm | Khách ghé xin đồ, tặng quà | Xong, còn test tay |
 
 ### Luật Mốc 1 Giỏ nông sản (duyệt 09/11)
 
@@ -177,6 +177,12 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 
 - Cuốc và bình tưới có ba bậc Đồng, Bạc (800 xu, cấp 5), Vàng (2.500 xu, cấp 8), mua ở bảng Kho. Mỗi bậc cho mèo làm thêm một ô kề trong cùng chuyến, ô gần nhất trước (cày chỉ các ô mèo được gieo lại); bấm tay và làm cả ruộng không đổi. Đồ mèo cầm đổi màu theo bậc.
 - Phân bón 15 xu mỗi ô, chuột phải vào ô đang lớn: "Bón phân". Mỗi vụ một lần: rút 25% thời gian lớn còn lại và các chặng sau, cơ hội hàng vàng lên 55%. Ô đã bón có hạt phân trên luống. Túi phân được tặng (Mốc 6) dùng trước xu.
+
+### Luật Mốc 6 Mèo hàng xóm (duyệt 09/11)
+
+- Cứ 30–60 phút (lần đầu 15 phút) một mèo mướp xám khác màu ghé 3 phút, đứng ở chỗ trống như xe hàng, không đè lên đất hay xe. Không đến khi Pause, Quiet, trong trận, Away, đang nhấc đất, hoặc kho trống; lần đó thử lại sau 45 giây. Không chạm mèo của người chơi, không làm mèo thức.
+- Khách xin 1–2 thứ đang có trong kho, hiện trên nhãn. Bấm trái vào khách để tặng, khách rời đi và để lại quà: 40% xu (40 + 10 × cấp), 30% 2 túi phân, 20% 1 hạt trái mùa, 10% một trong 3 đồ chỉ khách tặng (Chong chóng ở ruộng, Ếch đá ở hồ, Ấm trà ở bếp). Thiếu loại quà thì đổi sang quà khác. Không tặng cũng không mất gì.
+- Hạt trái mùa miễn phí, chỉ gieo được từ menu từng ô, dùng một lần. Đồ khách tặng không bán ở xe hàng và không tính vào thành tích 6 món đồ trang trí.
 
 ## Giai đoạn 1
 

@@ -81,6 +81,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Ngoại lệ đã duyệt 1.5.1: cổng phép là lối vào Battle Mode (tự hiện 20–40 phút, menu "Niệm phép cổng"); chỉ click của người dùng mới mở Sảnh, cổng không tự bắt đầu trận. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Cổng phép (Portal).
 
+- Ngoại lệ đã duyệt: mèo hàng xóm là khách ngồi yên ở nông trại, không physics, không chạm hay đánh thức mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Mèo hàng xóm nông trại.
+
 - Ngoại lệ đã duyệt: chuồng gà nông trại (vùng đất thứ tư, gà chỉ đi trong chuồng, không chạm mèo). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Chuồng gà nông trại.
 
 - Ngoại lệ đã duyệt 1.5.1: thời tiết chỉ đọc màu ảnh thu nhỏ của wallpaper, không lưu/gửi, overlay click xuyên qua không chạm vào mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Thời tiết theo wallpaper.

@@ -65,6 +65,16 @@ public sealed partial class PetFarm
         return offer;
     }
 
+    private void TakeGoods(Dictionary<string, int> items)
+    {
+        foreach (var (good, count) in items)
+        {
+            if (Enum.TryParse<FarmCrop>(good, out var crop)) Take(crop, count);
+            else if (Enum.TryParse<FarmFish>(good, out var fish)) for (int i = 0; i < count; i++) TakeFish(fish);
+            else if (good == EggGood) EggStock -= count;
+        }
+    }
+
     public bool CanDeliver(FarmOffer offer) => !offer.Done && offer.Items.All(item => GoodsOf(item.Key) >= item.Value);
 
     // Takes the goods from the store and pays. The coins it brought, 0 when it could not be delivered.
@@ -72,12 +82,7 @@ public sealed partial class PetFarm
     {
         if (!CanDeliver(offer)) return 0;
         int coins = OfferCoins(offer), xp = OfferXp(offer);
-        foreach (var (good, count) in offer.Items)
-        {
-            if (Enum.TryParse<FarmCrop>(good, out var crop)) Take(crop, count);
-            else if (Enum.TryParse<FarmFish>(good, out var fish)) for (int i = 0; i < count; i++) TakeFish(fish);
-            else if (good == EggGood) EggStock -= count;
-        }
+        TakeGoods(offer.Items);
         Earn(coins);
         GainXp(xp);
         offer.Done = true;

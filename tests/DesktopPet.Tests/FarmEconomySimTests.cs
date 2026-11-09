@@ -47,7 +47,7 @@ internal static class FarmEconomySimTests
         var random = new Random(seed);
         var farm = new PetFarm();
         int? firstDecor = null, allDecor = null, allTiles = null;
-        int count = Enum.GetValues<FarmDecor>().Length;
+        int count = Enum.GetValues<FarmDecor>().Count(decor => !PetFarm.IsGiftDecor(decor));
 
         for (int day = 1; day <= MaxDays && (allDecor == null || allTiles == null); day++)
         {

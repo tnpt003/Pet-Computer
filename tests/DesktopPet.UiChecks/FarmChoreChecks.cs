@@ -836,6 +836,24 @@ internal static class FarmChoreChecks
             if (name != null) Save(bitmap, name);
             return Hash(bitmap);
         }
+        foreach (var (back, tone) in new[] { (light, "light"), (dark, "dark") })
+        {
+            var host = new System.Windows.Controls.Grid { Width = 180, Height = 130, Background = new SolidColorBrush(back) };
+            host.Children.Add(new PetFarmVisitorArt { Time = 0.4, HorizontalAlignment = HorizontalAlignment.Center });
+            host.Measure(new Size(180, 130)); host.Arrange(new Rect(0, 0, 180, 130));
+            var visitorShot = new RenderTargetBitmap(180, 130, 96, 96, PixelFormats.Pbgra32);
+            visitorShot.Render(host);
+            Save(visitorShot, $"visitor-{tone}");
+            foreach (var decor in PetFarm.GiftDecors)
+            {
+                var iconHost = new System.Windows.Controls.Grid { Width = 60, Height = 60, Background = new SolidColorBrush(back) };
+                iconHost.Children.Add(new FarmDecorIcon(decor, 60));
+                iconHost.Measure(new Size(60, 60)); iconHost.Arrange(new Rect(0, 0, 60, 60));
+                var iconShot = new RenderTargetBitmap(60, 60, 96, 96, PixelFormats.Pbgra32);
+                iconShot.Render(iconHost);
+                Save(iconShot, $"gift-{decor}-{tone}");
+            }
+        }
         foreach (var season in Enum.GetValues<FarmSeason>())
         {
             var was = PetFarmArt.CurrentSeason;

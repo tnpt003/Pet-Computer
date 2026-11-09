@@ -339,7 +339,7 @@ internal static class FarmChecks
 
         // Decorations in the store: one row, what is out, what is put away, what is not owned.
         var toggles = Field<System.Collections.IList>(window, "farmShopDecors");
-        check(toggles.Count == 6 && !window.FarmToggleDecor(FarmDecor.Lantern), "Six places in the store; what is not owned cannot be brought out");
+        check(toggles.Count == 9 && !window.FarmToggleDecor(FarmDecor.Lantern), "A place for each in the store; what is not owned cannot be brought out");
         farm.Decors.AddRange(new[] { nameof(FarmDecor.Lantern), nameof(FarmDecor.WoodBridge) });
         Call(window, "FarmChanged");
         check(window.FarmToggleDecor(FarmDecor.WoodBridge) && farm.HasDecor(FarmDecor.WoodBridge) && !farm.ShowsDecor(FarmDecor.WoodBridge) && PetFarm.Load(path).DecorsHidden.Count == 1, "Put away from the store, and saved");
@@ -1236,7 +1236,7 @@ internal static class FarmChecks
         Render(panel, "farm-stall-decor.png");
 
         farm.Decors.Clear();
-        farm.Decors.AddRange(Enum.GetNames<FarmDecor>());
+        farm.Decors.AddRange(Enum.GetValues<FarmDecor>().Where(decor => !PetFarm.IsGiftDecor(decor)).Select(decor => decor.ToString()));
         Call(window, "FarmChanged");
         check(layers.All(layer => layer.Shown == 63), "All six out");
         check(window.FarmToggleDecor(FarmDecor.Awning) && window.FarmHearth.Decor!.Shown == 63 - (1 << (int)FarmDecor.Awning), "Put away, it leaves the land");
@@ -1313,6 +1313,34 @@ internal static class FarmChecks
         window.DropFarmPatch(patch);
         frames(FarmLift.FallSeconds + FarmLift.MaxGlideSeconds + 0.1);
         check(patch.OnGround && farm.CoopFractionX != null, "It comes down and its place is kept");
+        // The neighbour's cat comes to a free place and takes what it asks for.
+        var visitor = window.FarmVisitorNow;
+        Window? Guest() => window.FarmVisitorWindow;
+        farm.Stock.Clear(); farm.GoldStock.Clear(); farm.Fish.Clear(); farm.Stock["Carrot"] = 3; farm.EggStock = 0; farm.Coins = 100;
+        check(visitor.Phase == FarmVisitorPhase.Away && Guest() == null, "At first there is no visitor");
+        SetField(window, "paused", true);
+        check(!window.TryFarmVisitor(), "Pause keeps it away");
+        SetField(window, "paused", false);
+        check(window.TryFarmVisitor() && Guest() != null, "It comes");
+        check(!window.FarmGroundAboveCat, "It stays behind the cat");
+        frames(FarmVisitor.RollSeconds + 0.1);
+        double guestX = Field<double>(window, "farmVisitorX"), guestRight = guestX + PetFarmVisitorArt.ArtWidth;
+        bool Free(double from, double to) => guestRight <= from || guestX >= to;
+        check(visitor.Phase == FarmVisitorPhase.Open && Guest()!.Opacity == 1 && Free(window.FarmPlotStart, window.FarmPlotStart + PetFarmArt.PlotWidth) && Free(window.FarmPatchLeft(window.FarmHearth), window.FarmPatchLeft(window.FarmHearth) + window.FarmHearth.Width), "It stands somewhere free");
+        var text = Field<TextBlock?>(window, "farmVisitorText")!;
+        check(text.Text.Contains("Carrot 3/"), $"It says what it wants ({text.Text})");
+        Render(Guest()!, "farm-visitor.png");
+        int carrots = farm.StockOf(FarmCrop.Carrot), asked = visitor.Items["Carrot"];
+        var given = window.FarmGiveVisitor();
+        check(given != null && farm.StockOf(FarmCrop.Carrot) == carrots - asked && visitor.Phase == FarmVisitorPhase.Leaving, $"Given it, the visitor leaves something ({given?.Kind})");
+        check(window.FarmGiveVisitor() == null, "...once");
+        frames(FarmVisitor.RollSeconds + 0.1);
+        check(visitor.Phase == FarmVisitorPhase.Away && Guest() == null, "Then it has gone");
+        visitor.Reset(); visitor.Schedule(FarmVisitor.FirstSeconds);
+        farm.Stock.Clear(); farm.Decors.Clear(); farm.DecorsHidden.Clear(); farm.FertilizerStock = 0; farm.OffSeasonSeeds.Clear();
+        check(!window.TryFarmVisitor(), "An empty store: nobody comes");
+        Call(window, "FarmChanged");
+
         // Tools are bought in the shop; fertilizer goes on a tile from its menu.
         farm.Xp = 280; farm.Coins = 2000;
         window.OpenFarmShop();

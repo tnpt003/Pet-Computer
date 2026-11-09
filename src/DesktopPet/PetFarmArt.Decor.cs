@@ -73,16 +73,19 @@ public sealed partial class PetFarmArt
                 case FarmDecorPlace.FieldBack:
                     if (Has(FarmDecor.BambooFence)) At(dc, mid, SoilTop + 4, () => DrawBambooFence(dc, PlotWidth - 12));
                     if (Has(FarmDecor.Lantern)) At(dc, Side + 6, SoilTop + 1, () => DrawLantern(dc));
+                    if (Has(FarmDecor.Pinwheel)) At(dc, Side + PlotWidth - 34, SoilTop + 1, () => DrawPinwheel(dc));
                     break;
                 case FarmDecorPlace.FieldFront:
                     if (Has(FarmDecor.FlowerBed)) At(dc, mid, Floor - 1, () => { for (int i = -5; i <= 5; i++) { dc.PushTransform(new TranslateTransform(i * 30, 0)); DrawFlowers(dc, i); dc.Pop(); } });
                     break;
                 case FarmDecorPlace.Hearth:
                     if (Has(FarmDecor.Awning)) At(dc, mid, HearthBase, () => DrawAwning(dc));
+                    if (Has(FarmDecor.TeaPot)) At(dc, mid + 38, HearthBase + 2, () => DrawTeaPot(dc));
                     break;
                 default:
                     if (Has(FarmDecor.WoodBridge)) At(dc, mid, PondBase, () => DrawBridge(dc));
                     if (Has(FarmDecor.WaterLily)) At(dc, mid, PondBase, () => DrawLilies(dc));
+                    if (Has(FarmDecor.StoneFrog)) At(dc, mid - 44, PondBase + 1, () => DrawStoneFrog(dc));
                     break;
             }
             dc.Pop();
@@ -94,6 +97,45 @@ public sealed partial class PetFarmArt
             draw();
             dc.Pop();
         }
+    }
+
+    private static readonly Brush PinRed = PetUi.Hex("#E2663F"), PinBlue = PetUi.Hex("#6FB3D9"), FrogStone = PetUi.Hex("#8FB58A"), PotCream = PetUi.Hex("#F3E6D2"), PotBlue = PetUi.Hex("#6C93B8");
+    private static readonly Geometry PinwheelBlade = Parse("M0,0 L3,-14 L12,-11 Z");
+
+    // The neighbour's gifts, still pictures like the rest.
+    private static void DrawPinwheel(DrawingContext dc)
+    {
+        dc.DrawRoundedRectangle(Stake, InkThin, new Rect(-1.8, -46, 3.6, 46), 1.5, 1.5);
+        dc.PushTransform(new TranslateTransform(0, -48));
+        for (int i = 0; i < 4; i++)
+        {
+            dc.PushTransform(new RotateTransform(i * 90 + 15));
+            dc.DrawGeometry(i % 2 == 0 ? PinRed : PinBlue, InkThin, PinwheelBlade);
+            dc.Pop();
+        }
+        dc.DrawEllipse(PetalGold, InkThin, new Point(0, 0), 2.6, 2.6);
+        dc.Pop();
+    }
+
+    private static void DrawStoneFrog(DrawingContext dc)
+    {
+        dc.DrawEllipse(FrogStone, InkThin, new Point(0, -7), 12, 8);
+        foreach (int side in new[] { -1, 1 })
+        {
+            dc.DrawEllipse(FrogStone, InkThin, new Point(side * 6, -15), 4, 4);
+            dc.DrawEllipse(PetUi.ArtInk, null, new Point(side * 6, -15.5), 1.3, 1.7);
+        }
+        dc.DrawLine(InkThin, new Point(-6, -6), new Point(6, -6));
+    }
+
+    private static void DrawTeaPot(DrawingContext dc)
+    {
+        dc.DrawLine(InkThin, new Point(10, -12), new Point(18, -18));
+        dc.DrawEllipse(null, InkThin, new Point(-13, -9), 4.5, 5.5);
+        dc.DrawEllipse(PotCream, InkThin, new Point(0, -9), 12, 9.5);
+        dc.DrawLine(RailPen, new Point(-8, -8), new Point(8, -8));
+        dc.DrawEllipse(PotBlue, InkThin, new Point(0, -18.5), 6, 2.2);
+        dc.DrawEllipse(PotBlue, InkThin, new Point(0, -21), 1.8, 1.8);
     }
 
     // Each drawing stands on (0,0).
@@ -192,6 +234,9 @@ public sealed partial class PetFarmArt
             FarmDecor.WaterLily => (20.0, 16.0, 0.0, 3.0),
             FarmDecor.Lantern => (22.0, 36.0, 9.0, -29.0),
             FarmDecor.WoodBridge => (92.0, 44.0, 0.0, 5.0),
+            FarmDecor.Pinwheel => (34.0, 64.0, 0.0, 0.0),
+            FarmDecor.StoneFrog => (30.0, 24.0, 0.0, 0.0),
+            FarmDecor.TeaPot => (38.0, 26.0, 2.0, 0.0),
             _ => (100.0, 86.0, 0.0, 0.0)
         };
         double scale = Math.Min(size / width, size / height);
@@ -205,6 +250,9 @@ public sealed partial class PetFarmArt
             case FarmDecor.WaterLily: DrawLily(dc, 0, 0, true); break;
             case FarmDecor.Lantern: DrawPaperLantern(dc); break;
             case FarmDecor.WoodBridge: DrawBridge(dc); break;
+            case FarmDecor.Pinwheel: DrawPinwheel(dc); break;
+            case FarmDecor.StoneFrog: DrawStoneFrog(dc); break;
+            case FarmDecor.TeaPot: DrawTeaPot(dc); break;
             default: DrawAwning(dc); break;
         }
         dc.Pop(); dc.Pop(); dc.Pop();

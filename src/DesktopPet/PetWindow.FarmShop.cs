@@ -206,6 +206,7 @@ public sealed partial class PetWindow
         foreach (var item in farmShopDecors)
         {
             bool has = farm.HasDecor(item.Decor), shown = farm.ShowsDecor(item.Decor);
+            item.Button.Visibility = PetFarm.IsGiftDecor(item.Decor) && !has ? Visibility.Collapsed : Visibility.Visible; // A gift has no place here until it has been given.
             item.Button.ToolTip = has ? FarmDecorName(item.Decor) : $"{FarmDecorName(item.Decor)} · {FarmPriceText(PetFarm.DecorPrice(item.Decor))}";
             item.Button.BorderBrush = shown ? PetUi.Game.Gold : Brushes.Transparent;
             item.Icon.Opacity = shown ? 1 : has ? 0.5 : 0.7;

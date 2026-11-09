@@ -62,13 +62,14 @@ public sealed partial class PetWindow
     public double FarmPatchLeft(FarmPatch patch) => patch.Area.Left + patch.Fraction * FarmPatchFree(patch);
 
     // What stands on this monitor. Land on another one is no obstacle.
-    private List<(double Left, double Right)> FarmLandsTaken(string? monitor, FarmPatch? except, bool withField = true, bool withCart = true)
+    private List<(double Left, double Right)> FarmLandsTaken(string? monitor, FarmPatch? except, bool withField = true, bool withCart = true, bool withVisitor = true)
     {
         var taken = new List<(double Left, double Right)>();
         if (withField && farmMonitor == monitor) taken.Add((FarmPlotLeft, FarmPlotLeft + PetFarmArt.PlotWidth));
         foreach (var patch in farmPatches)
             if (patch != except && patch.Monitor == monitor) taken.Add((FarmPatchLeft(patch), FarmPatchLeft(patch) + patch.Width));
         if (withCart && farmCartWindow != null && farmCartMonitor == monitor) taken.Add((farmCartX, farmCartX + PetFarmStallArt.ArtWidth));
+        if (withVisitor && farmVisitorWindow != null && farmVisitorMonitor == monitor) taken.Add((farmVisitorX, farmVisitorX + PetFarmVisitorArt.ArtWidth));
         return taken;
     }
 

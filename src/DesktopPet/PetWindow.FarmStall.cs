@@ -212,7 +212,7 @@ public sealed partial class PetWindow
     private bool FarmStallReady => farm != null && farmStall.Offers.Any(farm.CanDeliver);
 
     private string FarmGoodName(string good) =>
-        Enum.TryParse<FarmCrop>(good, out var crop) ? FarmCropName(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FarmFishName(fish) : good;
+        Enum.TryParse<FarmCrop>(good, out var crop) ? FarmCropName(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FarmFishName(fish) : good == PetFarm.EggGood ? L("Trứng", "Eggs") : good;
 
     private void UpdateFarmStall()
     {
@@ -259,13 +259,16 @@ public sealed partial class PetWindow
         FarmDecor.BambooFence => L("Hàng rào tre", "Bamboo fence"),
         FarmDecor.Lantern => L("Đèn lồng", "Lantern"),
         FarmDecor.WoodBridge => L("Cầu gỗ", "Wooden bridge"),
+        FarmDecor.Pinwheel => L("Chong chóng", "Pinwheel"),
+        FarmDecor.StoneFrog => L("Ếch đá", "Stone frog"),
+        FarmDecor.TeaPot => L("Ấm trà", "Tea pot"),
         _ => L("Mái che", "Hearth roof")
     };
 
     private string FarmDecorSpot(FarmDecor decor) => decor switch
     {
-        FarmDecor.WaterLily or FarmDecor.WoodBridge => L("Bày ở hồ", "Goes on the pond"),
-        FarmDecor.Awning => L("Bày ở bếp", "Goes on the hearth"),
+        FarmDecor.WaterLily or FarmDecor.WoodBridge or FarmDecor.StoneFrog => L("Bày ở hồ", "Goes on the pond"),
+        FarmDecor.Awning or FarmDecor.TeaPot => L("Bày ở bếp", "Goes on the hearth"),
         _ => L("Bày ở ruộng", "Goes on the field")
     };
 

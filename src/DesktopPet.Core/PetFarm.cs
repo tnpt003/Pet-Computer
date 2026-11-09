@@ -251,6 +251,7 @@ public sealed partial class PetFarm
         GoldStock = CleanCounts(GoldStock);
         NormalizeCoop();
         NormalizeTools();
+        NormalizeVisitor();
         Fish =(Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
@@ -354,8 +355,19 @@ public sealed partial class PetFarm
 
     public bool Plant(int index, FarmCrop crop, DateTime? utcNow = null)
     {
-        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop) || !InSeason(crop) || Coins < SeedPrice(crop)) return false;
-        Coins -= SeedPrice(crop);
+        if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop)) return false;
+        if (InSeason(crop))
+        {
+            if (Coins < SeedPrice(crop)) return false;
+            Coins -= SeedPrice(crop);
+        }
+        else
+        {
+            // Out of season only with a seed that was given, which costs nothing and is used up.
+            if (OffSeasonOf(crop) <= 0) return false;
+            if (OffSeasonOf(crop) == 1) OffSeasonSeeds.Remove(crop.ToString());
+            else OffSeasonSeeds[crop.ToString()] = OffSeasonOf(crop) - 1;
+        }
         Tiles[index].Stage = FarmStage.Seed;
         Tiles[index].Crop = crop;
         Tiles[index].GrowsUntil = null;

@@ -89,7 +89,9 @@ Làm tròn những gì đã có, không thêm hệ thống lớn. Luật từng 
 | B. Xe bán đồ trang trí | 6 món, tổng 5.400 xu (chốt sau mô phỏng); mỗi lần xe đến bày 2 món chưa có; bật/tắt trong Kho; vẽ tĩnh, không cộng sức mạnh, không đổi vùng bấm | Xong (4c8a101), còn test tay |
 | C. Phần thưởng cấp 8–10 | Cấp 8 Dưa hấu (4 giờ, hạt 50 xu, bán 200 xu, 60 XP), cấp 9 món Dưa hấu ướp lạnh, cấp 10 Bù nhìn vàng; `farm.json` phiên bản 4 | Xong (9f9ed7c), còn test tay |
 | D. Nhật ký, thành tích, câu thoại | Thẻ Nông trại trong Nhật ký (hiện cả khi tắt Python); 5 thành tích, tiến độ cũ tính lại từ `farm.json`, không báo dồn; lên cấp, Cá vàng, giao xe có câu thoại do Python chọn | Xong (09c7e34), còn test tay |
-| E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Chưa làm |
+| E. Chuẩn bị 1.5.1 | Tăng phiên bản, CHANGELOG vi/en/ja, sửa câu lỗi thời, rút test tay còn khoảng 20 mục, đo FPS 6 loại thời tiết khi có đủ vùng đất; không push, không tạo release | Xong (d41e990), còn test tay; chưa phát hành |
+
+Đo FPS Mốc E (09/11, bản 1.5.1+d41e990, một màn hình, dữ liệu riêng cấp 10, đủ Ruộng, Bếp, Hồ, Chuồng 3 gà và Biển, ô chưa trồng cây, không có xe hàng hay khách, không ai bấm chuột; 2 vòng, mỗi vòng 40 giây bỏ 8 giây đầu). FPS trung vị / CPU toàn máy của vòng 1, vòng 2: tắt thời tiết 57,9 và 58,0 / 0,79% và 0,64%; Nắng 58,1 và 57,7 / 0,89% và 0,87%; Mưa 58,0 và 53,9 / 0,76% và 1,39%; Tuyết 55,7 và 57,7 / 0,87% và 0,82%; Hoàng hôn 58,1 và 56,3 / 0,91% và 0,75%; Phấn hoa 57,0 và 58,2 / 0,89% và 0,75%; Đêm 58,2 và 58,0 / 0,90% và 0,77%. Không loại nào thấp hơn đều ở cả hai vòng, nên chưa thấy thời tiết làm giảm FPS; một vòng Mưa 53,9 chưa rõ nguyên nhân. Cả nhóm tắt thời tiết cũng có giây thấp nhất khoảng 24 FPS, nên đó không do thời tiết. Chưa đo DPI khác, nhiều màn hình, ruộng đầy cây hay khi có xe hàng.
 
 ### Luật Mốc A (duyệt 09/11)
 

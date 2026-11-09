@@ -1560,6 +1560,8 @@
   "Scarecrow": "かかし",
   "Farm coins: {0}": "畑コイン：{0}",
   "In store: {0}": "在庫：{0}",
+  "In store: {0}{1}": "在庫：{0}{1}",
+  "Sell a golden one": "金の作物を売る",
   "Sell · +{0}": "売る · +{0}",
   "Open tile {0}": "{0}マス目を開く",
   "More tiles": "マスを増やす",

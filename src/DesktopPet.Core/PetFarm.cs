@@ -32,6 +32,9 @@ public sealed class FarmTile
     public DateTime? GrowsUntil { get; set; }
     // What was last harvested here: the cat may till and sow it again. Tilling by hand makes the tile the user's.
     public FarmCrop? LastCrop { get; set; }
+    // UTC since when it has waited for water, and whether any watering came too late for a golden crop.
+    public DateTime? ThirstySince { get; set; }
+    public bool LateWater { get; set; }
 }
 
 // The little field on the desktop (1.5.1 M3): six tiles, their crops and where the plot was left,
@@ -42,7 +45,7 @@ public sealed class FarmTile
 // coins, and the coins buy seeds, more tiles and a scarecrow. Radish seed is free, so nobody gets stuck.
 public sealed partial class PetFarm
 {
-    public const int CurrentVersion = 4, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
+    public const int CurrentVersion = 5, TileCount = 6, WateredStages = 3, MaxLevel = 10, MaxXp = 999_999;
     public const int StartingTiles = 3, StartingCoins = 20, MaxCoins = 999_999, ScarecrowPrice = 150;
     public const double FirstFraction = 0.25;
     // What the cat leaves in the store of each ingredient when it cooks by itself.
@@ -223,7 +226,8 @@ public sealed partial class PetFarm
         foreach (var tile in Tiles) Clean(tile);
         Harvested = CleanCounts(Harvested);
         Stock = CleanCounts(Stock);
-        Fish = (Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
+        GoldStock = CleanCounts(GoldStock);
+        Fish =(Fish ?? new()).Where(pair => Enum.TryParse<FarmFish>(pair.Key, out _) && pair.Value > 0).ToDictionary(pair => pair.Key, pair => pair.Value);
         Coins = Math.Clamp(Coins, 0, MaxCoins);
         Xp = Math.Clamp(Xp, 0, MaxXp);
         if (PotDish is FarmDish pot && !Enum.IsDefined(pot)) PotDish = null;
@@ -250,6 +254,8 @@ public sealed partial class PetFarm
         if (tile.Stage is FarmStage.Wild or FarmStage.Tilled) tile.Crop = null;
         if (tile.Stage is not (FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)) tile.GrowsUntil = null;
         else if (tile.GrowsUntil is DateTime until) tile.GrowsUntil = until.ToUniversalTime();
+        if (tile.Stage is not (FarmStage.Seed or FarmStage.Sprout or FarmStage.Young)) tile.ThirstySince = null;
+        else if (tile.ThirstySince is DateTime since) tile.ThirstySince = since.ToUniversalTime();
     }
 
     public bool IsOpen(int index) => index >= 0 && index < OpenTiles;
@@ -308,7 +314,7 @@ public sealed partial class PetFarm
     }
 
     // Sows from the left until the tiles or the coins run out. Returns the tiles sown.
-    public IReadOnlyList<int> SowAll(FarmCrop crop) => TilesAt(FarmStep.Plant).Where(i => Plant(i, crop)).ToList();
+    public IReadOnlyList<int> SowAll(FarmCrop crop, DateTime? utcNow = null) => TilesAt(FarmStep.Plant).Where(i => Plant(i, crop, utcNow)).ToList();
 
     public bool Till(int index, bool keepLastCrop = false)
     {
@@ -322,35 +328,44 @@ public sealed partial class PetFarm
     public FarmCrop? ResowCrop(int index) =>
         IsOpen(index) && Tiles[index].LastCrop is FarmCrop crop && Unlocked(crop) && Coins >= SeedPrice(crop) ? crop : null;
 
-    public bool Plant(int index, FarmCrop crop)
+    public bool Plant(int index, FarmCrop crop, DateTime? utcNow = null)
     {
         if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Tilled || !Enum.IsDefined(crop) || !Unlocked(crop) || Coins < SeedPrice(crop)) return false;
         Coins -= SeedPrice(crop);
         Tiles[index].Stage = FarmStage.Seed;
         Tiles[index].Crop = crop;
         Tiles[index].GrowsUntil = null;
+        Tiles[index].ThirstySince = utcNow;
+        Tiles[index].LateWater = false;
         return true;
     }
 
     public bool Water(int index, DateTime utcNow)
     {
         if (!IsOpen(index) || Next(index) != FarmStep.Water) return false;
-        Tiles[index].GrowsUntil = utcNow.AddSeconds(StageSeconds(Tiles[index].Crop!.Value));
+        var tile = Tiles[index];
+        tile.LateWater |= !WateredOnTime(tile, utcNow);
+        tile.ThirstySince = null;
+        tile.GrowsUntil = utcNow.AddSeconds(StageSeconds(tile.Crop!.Value));
         return true;
     }
 
     // The crop picked, or null when the tile is not ripe. The tile goes back to wild ground.
-    // Extra: one more for the store (a sunset's gift). Pollen: more XP for it.
-    public FarmCrop? Harvest(int index, bool extra = false, bool pollen = false)
+    // Extra: one more for the store (a sunset's gift). Pollen: more XP for it. Random: rolls for a golden crop.
+    public FarmCrop? Harvest(int index, bool extra = false, bool pollen = false, Random? random = null)
     {
         if (!IsOpen(index) || Tiles[index].Stage != FarmStage.Ripe) return null;
         var crop = Tiles[index].Crop!.Value;
+        LastHarvestGold = ComesUpGolden(Tiles[index], random);
         Tiles[index].Stage = FarmStage.Wild;
         Tiles[index].Crop = null;
-        Tiles[index].GrowsUntil = null;
+        Tiles[index].GrowsUntil = Tiles[index].ThirstySince = null;
+        Tiles[index].LateWater = false;
         Tiles[index].LastCrop = crop;
         Harvested[crop.ToString()] = Harvested.GetValueOrDefault(crop.ToString()) + 1;
-        Stock[crop.ToString()] = Stock.GetValueOrDefault(crop.ToString()) + (extra ? 2 : 1);
+        if (LastHarvestGold) GoldStock[crop.ToString()] = GoldOf(crop) + 1;
+        int plain = (extra ? 2 : 1) - (LastHarvestGold ? 1 : 0);
+        if (plain > 0) Stock[crop.ToString()] = StockOf(crop) + plain;
         GainXp(pollen ? (int)Math.Ceiling(HarvestXp(crop) * PollenXpFactor) : HarvestXp(crop));
         return crop;
     }
@@ -358,7 +373,7 @@ public sealed partial class PetFarm
     public int HarvestedCount(FarmCrop crop) => Harvested.GetValueOrDefault(crop.ToString());
     public int StockOf(FarmCrop crop) => Stock.GetValueOrDefault(crop.ToString());
     public int FishOf(FarmFish fish) => Fish.GetValueOrDefault(fish.ToString());
-    public int StockValue => Enum.GetValues<FarmCrop>().Sum(crop => StockOf(crop) * SellPrice(crop)) + Enum.GetValues<FarmFish>().Sum(fish => FishOf(fish) * SellPrice(fish));
+    public int StockValue => Enum.GetValues<FarmCrop>().Sum(crop => StockOf(crop) * SellPrice(crop) + GoldOf(crop) * GoldSellPrice(crop)) + Enum.GetValues<FarmFish>().Sum(fish => FishOf(fish) * SellPrice(fish));
     // The next tile to open, or -1 when all are.
     public int NextLockedTile => OpenTiles < TileCount ? OpenTiles : -1;
 
@@ -398,14 +413,16 @@ public sealed partial class PetFarm
         else Fish[fish.ToString()] = left;
     }
 
+    // The plain ones first; golden ones only for what is still missing.
     private void Take(FarmCrop crop, int count)
     {
-        int left = StockOf(crop) - count;
+        int plain = StockOf(crop), left = plain - count;
         if (left <= 0) Stock.Remove(crop.ToString());
         else Stock[crop.ToString()] = left;
+        if (count > plain) TakeGold(crop, count - plain);
     }
 
-    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Unlocked(dish) && Recipe(dish).All(part => StockOf(part.Crop) >= part.Count)
+    public bool CanCook(FarmDish dish) => Enum.IsDefined(dish) && Unlocked(dish) && Recipe(dish).All(part => HaveOf(part.Crop) >= part.Count)
         && (FishIn(dish) is not FarmFish fish || FishOf(fish) >= 1);
 
     // Uses up the ingredients, all of them or none.
@@ -444,6 +461,7 @@ public sealed partial class PetFarm
     {
         int value = StockValue;
         Stock.Clear();
+        GoldStock.Clear();
         Fish.Clear();
         return Earn(value);
     }
@@ -500,6 +518,7 @@ public sealed partial class PetFarm
             if (utcNow < until) continue;
             tile.GrowsUntil = null;
             tile.Stage++;
+            tile.ThirstySince = tile.Stage == FarmStage.Ripe ? null : until;
             (changed ??= new()).Add(i);
         }
         return (IReadOnlyList<int>?)changed ?? Array.Empty<int>();

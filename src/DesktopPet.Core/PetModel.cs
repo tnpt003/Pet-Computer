@@ -121,6 +121,7 @@ public sealed class PetModel
     public FarmCrop? FarmToolCrop;
     // The tool stays in the paws through this job's end, because the next one goes on with it.
     public bool FarmToolHold;
+    public bool FarmToolGold;
     public double BatRemaining;
     public double PlayCrouch;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):

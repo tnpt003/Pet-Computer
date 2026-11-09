@@ -614,7 +614,7 @@ public sealed partial class PetWindow
 
     public bool FarmPlant(int tile, FarmCrop crop)
     {
-        if (farm == null || paused || farmLift.Phase != FarmLiftPhase.Down || !farm.Plant(tile, crop)) return false;
+        if (farm == null || paused || farmLift.Phase != FarmLiftPhase.Down || !farm.Plant(tile, crop, FarmNow)) return false;
         StartFarmEffect(tile, FarmEffect.Plant);
         PlayFarmSound("pop");
         FarmChanged();
@@ -626,10 +626,13 @@ public sealed partial class PetWindow
     {
         var sky = FarmWeather;
         extra = sky == WeatherKind.Sunset && featureRandom.NextDouble() < PetFarm.SunsetExtraChance;
-        return farm!.Harvest(tile, extra, sky == WeatherKind.Pollen);
+        return farm!.Harvest(tile, extra, sky == WeatherKind.Pollen, farmGoldRandom);
     }
 
-    private void ShowFarmGain(int tile, FarmCrop crop, bool extra = false) => ShowFarmLabel(tile, (extra ? "+2 " : "+1 ") + FarmCropName(crop), FarmGainSeconds);
+    // What rolls for golden crops. UI checks set it to null, so a harvest there is always an ordinary one.
+    private Random? farmGoldRandom = new();
+
+    private void ShowFarmGain(int tile, FarmCrop crop, bool extra = false) => ShowFarmLabel(tile, (extra ? "+2 " : "+1 ") + (farm?.LastHarvestGold == true ? "★ " : "") + FarmCropName(crop), FarmGainSeconds);
 
     private void ShowFarmLabel(int tile, string text, double seconds)
     {

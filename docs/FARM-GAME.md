@@ -143,7 +143,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | 1. Giỏ nông sản | Mèo gặt xong ôm nông sản tới giỏ ở mép ruộng | Xong, còn test tay |
-| 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Chưa làm |
+| 2. Chất lượng nông sản | Tưới đúng giờ có cơ hội ra hàng vàng | Xong, còn test tay |
 | 3. Chuồng gà | Vùng đất thứ tư, gà, trứng, 2 món mới, mèo đuổi gà | Chưa làm |
 | 4. Mùa vụ | Bốn mùa theo tháng của máy, mỗi mùa một cây riêng, cỏ đổi màu | Chưa làm |
 | 5. Công cụ và phân bón | Cuốc, bình tưới ba bậc; phân bón theo ô | Chưa làm |
@@ -153,6 +153,12 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 
 - Chỉ chuyến mèo tự gặt mới mang đi; bấm tay và "Gặt cả ruộng" giữ nguyên. Mèo ôm nông sản đi tới giỏ ở mép trái ruộng rồi thả vào, giỏ nảy nhẹ, có tiếng "pop" theo giới hạn tiếng của mèo tự làm.
 - Nông sản vào kho ngay lúc gặt; bị bế, ngủ, Quiet, Pause, nhấc ruộng giữa đường thì đạo cụ biến mất và không mất gì. Giỏ đầy dần theo số nông sản đang có trong kho, không lưu thêm gì.
+
+### Luật Mốc 2 Chất lượng nông sản (duyệt 09/11)
+
+- Mỗi ô đo 3 lần tưới: lần đầu tính từ lúc gieo, hai lần sau từ lúc cây khát. Cả 3 lần trong vòng 10 phút thì lúc gặt có 40% ra hàng vàng; một lần trễ thì chỉ mất cơ hội, không mất nông sản. Mưa, mèo tưới, tưới cả ruộng đều tính như nhau.
+- Hàng vàng để riêng trong kho (`GoldStock`), hiện "★" trên cùng dòng nông sản với nút bán riêng, giá gấp đôi. Nấu và giao xe dùng hàng thường trước, thiếu mới lấy hàng vàng; mèo tự nấu không bao giờ dùng hàng vàng. Bán hết thì bán cả hàng vàng.
+- Nhãn gặt có "★", mèo mang hàng vàng về giỏ có lấp lánh. `farm.json` phiên bản 5, file cũ giữ nguyên ruộng và kho.
 
 ## Giai đoạn 1
 

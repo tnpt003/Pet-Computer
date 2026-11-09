@@ -44,7 +44,7 @@ public sealed partial class PetWindow
 
     private string FarmDishParts(FarmDish dish)
     {
-        var parts = PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm!.StockOf(part.Crop)}/{part.Count}").ToList();
+        var parts = PetFarm.Recipe(dish).Select(part => $"{FarmCropName(part.Crop)} {farm!.HaveOf(part.Crop)}/{part.Count}").ToList();
         if (PetFarm.FishIn(dish) is FarmFish fish) parts.Insert(0, $"{FarmFishName(fish)} {farm!.FishOf(fish)}/1");
         return string.Join(" · ", parts);
     }

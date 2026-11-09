@@ -16,6 +16,7 @@ internal static class FarmChoreChecks
 
     public static void Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences prefs, Action<bool, string> check)
     {
+        SetField(window, "farmGoldRandom", null);
         string folder = Path.Combine(Path.GetTempPath(), "pet-chores-ui-" + Guid.NewGuid().ToString("N"));
         string path = Path.Combine(folder, "farm.json");
         var now = new DateTime(2026, 11, 8, 12, 0, 0, DateTimeKind.Utc);
@@ -766,6 +767,7 @@ internal static class FarmChoreChecks
             Tool(FarmToolPose.Pour, 0.6, FarmChores.PourHit, FarmChores.PourSeconds, "pour");
             Tool(FarmToolPose.Pounce, 0.7, FarmChores.PounceHit, FarmChores.PounceSeconds, "pounce");
             Tool(FarmToolPose.Carry, 0.5, 0, 1000, "carry");
+            Cat(m => { m.FarmTool = FarmToolPose.Carry; m.FarmToolTime = 0.5; m.FarmToolLength = 1000; m.FarmToolCrop = FarmCrop.Carrot; m.FarmToolGold = true; m.FarmToolHold = true; }, back, $"chore-tool-carry-gold-{tone}");
             Tool(FarmToolPose.Drop, 0.15, FarmChores.DropHit, FarmChores.DropSeconds, "drop");
             Plot(a => { a.BasketFill = 3; a.BasketBounce = 0.3; }, back, $"chore-basket-full-{tone}");
             Plot(a => { a.BasketFill = 0; }, back, $"chore-basket-empty-{tone}");

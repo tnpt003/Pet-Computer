@@ -20,7 +20,7 @@ public sealed partial class PetWindow
     private FarmScarecrowIcon? farmShopScareIcon;
     private TextBlock? farmShopCoins, farmShopTileName, farmShopTileNote, farmShopTilePrice, farmShopScareName, farmShopScareNote, farmShopScarePrice, farmShopSellAllText;
     private Border? farmShopTileButton, farmShopScareButton, farmShopSellAll;
-    private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price)> farmShopRows = new();
+    private readonly List<(FarmCrop Crop, TextBlock Count, Border Button, TextBlock Price, Border Gold, TextBlock GoldPrice)> farmShopRows = new();
     private readonly List<(FarmFish Fish, TextBlock Count, Border Button, TextBlock Price)> farmShopFishRows = new();
     private bool farmShopPaused;
     private TextBlock? farmShopWeather;
@@ -85,8 +85,11 @@ public sealed partial class PetWindow
             count.Foreground = PetUi.Game.Soft;
             var chosen = crop;
             var (button, price, _) = HudButton(() => FarmSell(chosen), plain: true);
-            body.Children.Add(FarmShopRow(new FarmCropIcon(crop, 30), FarmCropName(crop), count, button));
-            farmShopRows.Add((crop, count, button, price));
+            var (gold, goldPrice, _) = HudButton(() => FarmSellGold(chosen), plain: true);
+            gold.MinWidth = 0;
+            gold.ToolTip = L("Bán hàng vàng", "Sell a golden one");
+            body.Children.Add(FarmShopRow(new FarmCropIcon(crop, 30), FarmCropName(crop), count, button, gold));
+            farmShopRows.Add((crop, count, button, price, gold, goldPrice));
         }
         farmShopFishRows.Clear();
         foreach (var fish in Enum.GetValues<FarmFish>())
@@ -237,11 +240,16 @@ public sealed partial class PetWindow
         farmShopNextUnlock!.Text = farm.Level >= PetFarm.MaxLevel ? L("Đã đạt cấp cao nhất", "Top level reached")
             : unlocks.Length > 0 ? LF($"Cấp sau mở: {unlocks}", $"Next level opens: {unlocks}")
             : LF($"Cấp sau thưởng {PetFarm.LevelReward(farm.Level + 1)} xu", $"Next level pays {PetFarm.LevelReward(farm.Level + 1)} coins");
-        foreach (var (crop, count, button, price) in farmShopRows)
+        foreach (var (crop, count, button, price, gold, goldPrice) in farmShopRows)
         {
-            count.Text = LF($"Trong kho: {farm.StockOf(crop)}", $"In store: {farm.StockOf(crop)}");
+            int golden = farm.GoldOf(crop);
+            string stars = golden > 0 ? $" · ★ {golden}" : "";
+            count.Text = LF($"Trong kho: {farm.StockOf(crop)}{stars}", $"In store: {farm.StockOf(crop)}{stars}");
             price.Text = LF($"Bán · +{PetFarm.SellPrice(crop)} xu", $"Sell · +{PetFarm.SellPrice(crop)}");
             ShowFarmShopButton(button, !paused && farm.StockOf(crop) > 0);
+            goldPrice.Text = $"★ +{PetFarm.GoldSellPrice(crop)}";
+            gold.Visibility = golden > 0 ? Visibility.Visible : Visibility.Collapsed;
+            ShowFarmShopButton(gold, !paused && golden > 0);
         }
         foreach (var (fish, count, button, price) in farmShopFishRows)
         {
@@ -285,6 +293,7 @@ public sealed partial class PetWindow
     }
 
     public int FarmSell(FarmCrop crop) => FarmSold(farm == null || paused ? 0 : farm.Sell(crop));
+    public int FarmSellGold(FarmCrop crop) => FarmSold(farm == null || paused ? 0 : farm.SellGold(crop));
     public int FarmSell(FarmFish fish) => FarmSold(farm == null || paused ? 0 : farm.Sell(fish));
     public int FarmSellAll() => FarmSold(farm == null || paused ? 0 : farm.SellAll());
 

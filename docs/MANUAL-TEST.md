@@ -1456,3 +1456,4 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 ## Nông trại — Giai đoạn 4 (09/11)
 
 - [ ] Mốc 1 Giỏ: mèo tự gặt xong ôm nông sản đi tới giỏ ở mép trái ruộng, thả vào, giỏ nảy; bị bế, ngủ, Pause giữa đường thì đạo cụ biến mất, nông sản vẫn trong kho; có Đèn lồng thì giỏ không che xấu
+- [ ] Mốc 2 Hàng vàng: tưới đúng giờ cả 3 lần thì thỉnh thoảng gặt ra "★"; tưới trễ không bao giờ ra; bảng Kho có nút ★ riêng không tràn dòng ở vi/en/ja; xe hàng và bếp vẫn nhận được hàng vàng khi thiếu hàng thường

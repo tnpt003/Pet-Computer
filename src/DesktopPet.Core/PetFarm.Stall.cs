@@ -33,7 +33,7 @@ public sealed partial class PetFarm
 
     private static int GoodPrice(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? SellPrice(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? SellPrice(fish) : 0;
     private static int GoodXp(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HarvestXp(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishXp(fish) : 0;
-    public int GoodsOf(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? StockOf(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishOf(fish) : 0;
+    public int GoodsOf(string good) => Enum.TryParse<FarmCrop>(good, out var crop) ? HaveOf(crop) : Enum.TryParse<FarmFish>(good, out var fish) ? FishOf(fish) : 0;
 
     public static int OfferCoins(FarmOffer offer) => (int)Math.Round(offer.Items.Sum(item => item.Value * GoodPrice(item.Key)) * OfferPayFactor, MidpointRounding.AwayFromZero);
     public static int OfferXp(FarmOffer offer) => offer.Items.Sum(item => item.Value * GoodXp(item.Key));

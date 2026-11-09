@@ -23,6 +23,7 @@ internal static class FarmChecks
 
     public static void Run(PetWindow window, PetModel pet, PetPreferences prefs, Action<bool, string> check)
     {
+        SetField(window, "farmGoldRandom", null);
         string folder = Path.Combine(Path.GetTempPath(), "pet-farm-ui-" + Guid.NewGuid().ToString("N"));
         string path = Path.Combine(folder, "farm.json");
         var now = new DateTime(2026, 11, 8, 12, 0, 0, DateTimeKind.Utc);
@@ -349,6 +350,26 @@ internal static class FarmChecks
         check(!window.FarmToggleDecor(FarmDecor.Lantern) && farm.ShowsDecor(FarmDecor.Lantern), "Pause refuses it");
         SetField(window, "paused", false);
         Render(panel);
+
+        // Golden crops have their own button in the crop's row.
+        var goldRow = Field<System.Collections.IList>(window, "farmShopRows")[1]!;
+        var goldButton = (Border)goldRow.GetType().GetField("Item5")!.GetValue(goldRow)!;
+        var goldCount = (TextBlock)goldRow.GetType().GetField("Item2")!.GetValue(goldRow)!;
+        check(goldButton.Visibility == Visibility.Collapsed, "No golden crops, no golden button");
+        int coinsNow = farm.Coins;
+        farm.GoldStock["Carrot"] = 2;
+        Call(window, "FarmChanged");
+        panel.UpdateLayout();
+        check(goldButton.Visibility == Visibility.Visible && goldButton.IsEnabled && goldCount.Text.Contains("★ 2"), $"Golden ones are counted and sold on their own ({goldCount.Text})");
+        check(Math.Abs(panel.ActualWidth - width) < 1, "The panel keeps its width with the golden button");
+        var goldCorner = goldButton.TransformToAncestor((Visual)panel.Content).Transform(new Point(goldButton.ActualWidth, 0));
+        check(goldCorner.X <= ((FrameworkElement)panel.Content).ActualWidth + 1 && goldCount.ActualWidth > 40, "The golden button stays in the row");
+        Render(panel, "farm-shop-gold.png");
+        check(window.FarmSellGold(FarmCrop.Carrot) == PetFarm.GoldSellPrice(FarmCrop.Carrot) && farm.Coins == coinsNow + PetFarm.GoldSellPrice(FarmCrop.Carrot), "A golden one sells for double");
+        farm.GoldStock.Clear();
+        farm.Coins = coinsNow;
+        Call(window, "FarmChanged");
+
         farm.Decors.Clear(); farm.DecorsHidden.Clear();
         Call(window, "FarmChanged");
         window.CloseFarmShop();

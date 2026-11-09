@@ -113,6 +113,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         public FarmToolPose FarmTool;
         public double FarmToolBlend, FarmToolTime, FarmToolHit, FarmToolLength;
         public FarmCrop? FarmToolCrop;
+        public bool FarmToolGold;
         public bool Walking, Sleeping, Waking, PickedUp, Airborne, Seeking, Eating, Grooming, Climbing;
         public PetEmotion Emotion;
         // Battle Mode: the wooden sword's grip (front paw) and angle (degrees from upright, toward the front).
@@ -269,6 +270,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             p.FarmToolHit = pet.FarmToolHit;
             p.FarmToolLength = pet.FarmToolLength;
             p.FarmToolCrop = pet.FarmToolCrop;
+            p.FarmToolGold = pet.FarmToolGold;
             double ramp = pet.FarmToolHold ? 1 : Math.Clamp(Math.Min(pet.FarmToolTime / 0.15, (pet.FarmToolLength - pet.FarmToolTime) / 0.15), 0, 1);
             p.FarmToolBlend = ramp * ramp * (3 - 2 * ramp);
         }

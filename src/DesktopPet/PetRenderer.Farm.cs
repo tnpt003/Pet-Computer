@@ -42,6 +42,7 @@ public sealed partial class PetRenderer
         PetFarmArt.DrawPlant(dc, FarmStage.Ripe, crop);
         dc.Pop(); dc.Pop();
         Oval(dc, Fur, CarryX - 4, Math.Min(y, CarryY) + 2, 7, 6.5);
+        if (p.FarmToolGold) DrawFarmSparkles(dc, CarryX, y - 28, p.FarmToolTime * 0.9 % 1);
     }
 
     // Let go over the basket, which stands a pace in front of the cat.

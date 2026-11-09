@@ -148,9 +148,86 @@ internal static class FarmTests
         finally { if (Directory.Exists(folder)) Directory.Delete(folder, true); }
     }
 
+    private sealed class FixedRandom(double value) : Random
+    {
+        protected override double Sample() => value;
+    }
+
+    // Golden crops (docs/FARM-GAME.md, stage 4 milestone 2).
+    private static void Quality(Action<bool, string> check)
+    {
+        var start = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        PetFarm Grown(double wait, FarmCrop crop = FarmCrop.Radish)
+        {
+            var farm = new PetFarm();
+            farm.Till(0);
+            farm.Plant(0, crop, start);
+            var now = start;
+            double stage = PetFarm.StageSeconds(crop);
+            for (int i = 0; i < PetFarm.WateredStages; i++)
+            {
+                now = now.AddSeconds(wait);
+                farm.Water(0, now);
+                now = now.AddSeconds(stage);
+                farm.Advance(now);
+            }
+            return farm;
+        }
+        var lucky = new FixedRandom(PetFarm.GoldChance - 0.01);
+        var onTime = Grown(PetFarm.OnTimeSeconds);
+        check(onTime.Next(0) == FarmStep.Harvest && onTime.Harvest(0, random: lucky) == FarmCrop.Radish && onTime.LastHarvestGold && onTime.GoldOf(FarmCrop.Radish) == 1 && onTime.StockOf(FarmCrop.Radish) == 0, "Watered on time and lucky: a golden crop");
+        var late = Grown(PetFarm.OnTimeSeconds + 1);
+        check(late.Harvest(0, random: lucky) == FarmCrop.Radish && !late.LastHarvestGold && late.StockOf(FarmCrop.Radish) == 1 && late.GoldOf(FarmCrop.Radish) == 0, "Watered late: an ordinary crop, nothing lost");
+        var unlucky = Grown(0);
+        check(unlucky.Harvest(0, random: new FixedRandom(PetFarm.GoldChance)) != null && !unlucky.LastHarvestGold, "On time is only a chance");
+        var plain = Grown(0);
+        check(plain.Harvest(0) != null && !plain.LastHarvestGold && plain.StockOf(FarmCrop.Radish) == 1, "Without a roll it is never golden");
+        var extra = Grown(0);
+        extra.Harvest(0, extra: true, random: lucky);
+        check(extra.GoldOf(FarmCrop.Radish) == 1 && extra.StockOf(FarmCrop.Radish) == 1, "A sunset's extra one is an ordinary one");
+        var oneLate = new PetFarm();
+        oneLate.Till(0); oneLate.Plant(0, FarmCrop.Radish, start);
+        oneLate.Water(0, start.AddSeconds(PetFarm.OnTimeSeconds + 5));
+        check(oneLate.Tiles[0].LateWater, "One late watering is enough to miss it");
+        oneLate.Harvest(0);
+        var hand = new PetFarm();
+        hand.Till(0); hand.Plant(0, FarmCrop.Radish);
+        hand.Water(0, start.AddDays(3));
+        check(!hand.Tiles[0].LateWater, "Sown with no time known, the first watering counts as on time");
+
+        var store = new PetFarm();
+        store.GoldStock["Radish"] = 3; store.Stock["Radish"] = 1;
+        int coins = store.Coins;
+        check(store.SellGold(FarmCrop.Radish) == PetFarm.SellPrice(FarmCrop.Radish) * 2 && store.Coins == coins + 6 && store.GoldOf(FarmCrop.Radish) == 2, "A golden crop sells for double");
+        check(store.HaveOf(FarmCrop.Radish) == 3 && store.CanCook(FarmDish.RadishSoup) && store.AutoDish() == null, "Cooking may use golden ones, the cat by itself will not");
+        check(store.Cook(FarmDish.RadishSoup) && store.StockOf(FarmCrop.Radish) == 0 && store.GoldOf(FarmCrop.Radish) == 1, "The ordinary ones go first");
+        check(store.StockValue == 6 && store.SellAll() == 6 && store.GoldOf(FarmCrop.Radish) == 0, "Selling everything counts them");
+        check(new PetFarm().SellGold(FarmCrop.Carrot) == 0, "None to sell, nothing paid");
+
+        string folder = Path.Combine(Path.GetTempPath(), "pet-gold-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            string path = Path.Combine(folder, "farm.json");
+            var saved = new PetFarm();
+            saved.GoldStock["Carrot"] = 2;
+            saved.Tiles[0].LateWater = true;
+            saved.Till(0);
+            saved.Plant(0, FarmCrop.Radish, start);
+            check(saved.Save(path), "(saved)");
+            var back = PetFarm.Load(path);
+            check(back.GoldOf(FarmCrop.Carrot) == 2 && back.Tiles[0].ThirstySince == start && back.Version == 5, "Golden crops are saved, in version 5");
+            File.WriteAllText(path, """{ "Version": 4, "Stock": { "Carrot": 3 }, "GoldStock": { "Nope": 2, "Carrot": -1 } }""");
+            var old = PetFarm.Load(path);
+            check(!old.ReadOnly && old.StockOf(FarmCrop.Carrot) == 3 && old.GoldStock.Count == 0, "A file from before keeps its store");
+        }
+        finally { Directory.Delete(folder, true); }
+    }
+
     // Three pieces of land on one floor (docs/FARM-GAME.md).
     private static void Lands(Action<bool, string> check)
     {
+        Quality(check);
         var field = new[] { (100.0, 200.0) };
         check(FarmLands.FreeSpot(400, 50, field, 0, 900, 6) == 400, "A free place is taken as it is");
         check(FarmLands.FreeSpot(120, 50, field, 0, 900, 6) == 44, "On other land it goes to the nearest side");
@@ -672,7 +749,7 @@ internal static class FarmTests
             string path = Path.Combine(folder, "farm.json");
             File.WriteAllText(path, """{ "Version": 3, "Xp": 2500, "Coins": 40, "OpenTiles": 5, "Decors": [ "Lantern" ], "Scarecrow": false }""");
             var old = PetFarm.Load(path);
-            check(old.Version == 4 && old.Xp == 2500 && old.Coins == 40 && old.OpenTiles == 5 && old.HasDecor(FarmDecor.Lantern), "A version 3 field comes over whole, as version 4");
+            check(old.Version == PetFarm.CurrentVersion && old.Xp == 2500 && old.Coins == 40 && old.OpenTiles == 5 && old.HasDecor(FarmDecor.Lantern), "A version 3 field comes over whole, as the current version");
             check(old.GoldenScarecrow && old.Scarecrow && old.TakeLevelsGained() == 0, "Already at the top: it stands there at once, free, with nothing told again");
             var bought = new PetFarm { Scarecrow = true };
             check(bought.Save(path) && PetFarm.Load(path) is { Scarecrow: true, GoldenScarecrow: false }, "A bought scarecrow stays plain and saved");
@@ -680,7 +757,7 @@ internal static class FarmTests
             var crop = new PetFarm { Xp = 1000, Coins = 100 };
             crop.Till(0); crop.Plant(0, FarmCrop.Watermelon); crop.PotDish = FarmDish.ChilledWatermelon;
             check(crop.Save(path) && PetFarm.Load(path) is { PotDish: FarmDish.ChilledWatermelon } back && back.Tiles[0].Crop == FarmCrop.Watermelon, "The new crop and dish are saved by name");
-            File.WriteAllText(path, """{ "Version": 5, "Coins": 3 }""");
+            File.WriteAllText(path, """{ "Version": 6, "Coins": 3 }""");
             check(PetFarm.Load(path).ReadOnly, "A newer file is only read");
         }
         finally { Directory.Delete(folder, true); }

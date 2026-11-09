@@ -247,6 +247,7 @@ public sealed partial class PetWindow
         pet.FarmToolHit = farmChores.HitTime;
         pet.FarmToolLength = farmChores.WorkLength;
         pet.FarmToolHold = farmCropInPaws;
+        pet.FarmToolGold = farmCropInPaws && farm!.LastHarvestGold;
         if (kind == FarmChoreKind.Harvest && farm!.Tiles[tile].Crop is FarmCrop crop) pet.FarmToolCrop = crop; // Kept once the tile is empty: it is in the cat's paws now.
     }
 
@@ -337,7 +338,7 @@ public sealed partial class PetWindow
         pet.FishingTime = -1;
         pet.FarmTool = FarmToolPose.None;
         pet.FarmToolCrop = null;
-        pet.FarmToolHold = farmCropInPaws = false;
+        pet.FarmToolHold = pet.FarmToolGold = farmCropInPaws = false;
         if (pet.Action is not (PetAction.Walking or PetAction.Sitting or PetAction.Looking or PetAction.Idle)) return; // Held, flying or asleep: not ours to change.
         pet.Action = PetAction.Idle;
         pet.VX = pet.SmoothedWalkVelocity = 0;

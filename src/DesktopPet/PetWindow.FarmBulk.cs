@@ -60,7 +60,7 @@ public sealed partial class PetWindow
         if (tiles.Count == 0 || step is not (FarmStep.Till or FarmStep.Water or FarmStep.Harvest)) return 0;
 
         FarmCrop? picked = null;
-        int extras = 0;
+        int extras = 0, golden = 0;
         foreach (int tile in tiles)
         {
             if (step == FarmStep.Till) farm.Till(tile);
@@ -69,11 +69,12 @@ public sealed partial class PetWindow
             {
                 picked = FarmHarvest(tile, out bool extra);
                 if (extra) extras++;
+                if (farm.LastHarvestGold) golden++;
             }
             StartFarmEffect(tile, step == FarmStep.Till ? FarmEffect.Till : step == FarmStep.Water ? FarmEffect.Water : FarmEffect.Harvest);
         }
         PlayPetSound(step == FarmStep.Till ? "ball_tap" : step == FarmStep.Water ? "swoosh" : "sparkle");
-        if (picked is FarmCrop crop) ShowFarmBulkGain(tiles, crop, extras);
+        if (picked is FarmCrop crop) ShowFarmBulkGain(tiles, crop, extras, golden);
         FarmChanged();
         return tiles.Count;
     }
@@ -82,7 +83,7 @@ public sealed partial class PetWindow
     public int FarmSowAll(FarmCrop crop)
     {
         if (!FarmHandsFree) return 0;
-        var tiles = farm!.SowAll(crop);
+        var tiles = farm!.SowAll(crop, FarmNow);
         if (tiles.Count == 0) return 0;
         foreach (int tile in tiles) StartFarmEffect(tile, FarmEffect.Plant);
         PlayPetSound("pop");
@@ -91,9 +92,10 @@ public sealed partial class PetWindow
     }
 
     // One label rises from the middle of what was picked; several crops have no one name.
-    private void ShowFarmBulkGain(IReadOnlyList<int> tiles, FarmCrop last, int extras)
+    private void ShowFarmBulkGain(IReadOnlyList<int> tiles, FarmCrop last, int extras, int golden)
     {
         int total = tiles.Count + extras;
-        ShowFarmLabel(tiles[tiles.Count / 2], tiles.Count > 1 ? LF($"+{total} nông sản", $"+{total} crops") : $"+{total} " + FarmCropName(last), FarmGainSeconds);
+        string stars = golden > 0 ? $" (★{golden})" : "";
+        ShowFarmLabel(tiles[tiles.Count / 2], (tiles.Count > 1 ? LF($"+{total} nông sản", $"+{total} crops") : $"+{total} " + FarmCropName(last)) + stars, FarmGainSeconds);
     }
 }

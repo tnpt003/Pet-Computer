@@ -96,3 +96,4 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 - Nhảy ra chỉ khi giấc ngủ kết thúc mà mèo vẫn đứng trên sàn, hộp còn dưới mèo và không ai kéo. Bị kéo thì mặt trước tắt ngay. Hộp mất thì giấc ngủ chỉ mất phần hình, mèo ngủ tiếp tại chỗ.
 - Kỷ vật rơi trúng mèo đang ngủ trong hộp vẫn gây Bonk như mọi giấc ngủ (ngoại lệ Kệ kỷ vật có physics). Chỉ đệm bỏ qua Bonk, vì lúc đó mèo nằm trên chính món kỷ vật.
 - Đã soát ảnh render (ghép cửa sổ mèo lên cửa sổ hộp) lúc ngủ, waking, giữa cú nhảy ra và sau khi ra: mặt trước hai cửa sổ trùng khít. Chưa xem trên desktop thật, chưa thử DPI khác, nhiều màn hình.
+- Đo 11/11 (bản 1e1fa40, cùng cách đo M1), FPS trung vị vòng 1, vòng 2: không giỏ 59,8 và 60,1; giỏ và bóng nằm yên 59,9 và 59,8; giỏ, bóng và hộp nằm yên 59,2 và 59,2. Hộp thêm một cửa sổ, chênh dưới 1 fps. Chưa đo lúc mèo ngủ trong hộp hay hộp đang bay, chưa đủ 3 món.

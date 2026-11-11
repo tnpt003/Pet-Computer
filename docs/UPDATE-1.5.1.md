@@ -233,6 +233,7 @@ Sự kiện đề xuất kéo dài ngắn, bỏ qua được và không giành f
 ## 9. Hướng dài hạn đã nhắc, chưa chốt vào 1.5.1
 
 - **Nhiều mèo:** đuổi bắt, ngủ cạnh nhau, tranh đồ chơi. Quy mô rất lớn, liên quan input, physics, AI, lưu dữ liệu, hiệu năng và Battle Mode. Đề xuất làm sau khi một mèo tương tác tốt với nhiều đồ vật.
+- **Chơi chung qua Internet:** mèo bạn ghé thăm và đánh chung Battle Mode, dùng Epic Online Services; hướng đã duyệt 11/11, kế hoạch ở [MULTIPLAYER.md](MULTIPLAYER.md).
 - **Voice:** đọc bong bóng hoặc líu lo hoạt hình; là lớp thể hiện bổ sung. Thiết kế trước đó ở [NEXT-STEPS.md](NEXT-STEPS.md), vẫn cần duyệt thay đổi quy tắc chưa tích hợp voice; việc lưu ý tưởng này không cấp quyền triển khai voice/LLM.
 
 ## Các gói chủ đề từng đề xuất (chưa chọn)

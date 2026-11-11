@@ -86,6 +86,10 @@ Chuyển nguyên văn từ AGENTS.md ngày 2026-10-26 để AGENTS.md ngắn l�
 
 - **Duyệt 2026-11-09 (nông trại Mốc 5):** wallpaper là khí hậu chính; cứ 10–20 phút có một đợt loại thời tiết khác dài 3–5 phút rồi trở về, thay luật "chỉ đổi khi đổi nền". Mọi loại đều có tác dụng có lợi cho ruộng và hồ. Cách đọc wallpaper và các giới hạn về riêng tư, click xuyên qua, không chạm vào mèo không đổi. Chi tiết: docs/FARM-GAME.md.
 
+## Chơi chung qua Internet (EOS)
+
+- **Duyệt hướng 2026-11-11, chưa code:** thay quy tắc "không gửi dữ liệu ra ngoài" và nới "hạn chế dependency" cho riêng tính năng chơi chung. Dùng Epic Online Services (Connect Device ID, Lobbies, P2P), miễn phí, người chơi không cần tài khoản Epic. Mạng chỉ khởi tạo khi người dùng bấm "Mời bạn"/"Vào phòng" hoặc mở link mời; lúc thường app không gọi mạng. Chỉ gửi mã phòng, phiên bản game, tên và ngoại hình mèo, thao tác và trạng thái trận; không gửi tên người dùng Windows, cửa sổ, wallpaper, file, nông trại, preferences. C# lo toàn bộ mạng, Python không tham gia. Mất mạng hay Epic lỗi chỉ tắt phần chơi chung. SDK EOS và mã client không bao giờ vào git; bản phát hành kèm EULA có miễn trừ cho thành phần Epic và ThirdPartyNotices. Mèo khách không được phá bất biến mèo chính (ngủ, kéo/ném, cảm xúc, Pause). Luật trận hai mèo, ghé thăm, link mời `desktoppet://` còn chờ duyệt riêng. Chi tiết: docs/MULTIPLAYER.md.
+
 ## Hành vi mèo
 
 Chuyển nguyên văn từ AGENTS.md ngày 2026-11-05.

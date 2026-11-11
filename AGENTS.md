@@ -33,7 +33,7 @@ Không đọc cả file lớn (docs/BATTLE-DATA.md, docs/MANUAL-TEST.md, PetBatt
 - Python: chỉ quyết định hành vi cấp cao, tính cách, mood, memory. KHÔNG di chuyển window, KHÔNG physics.
 - Python tắt hoặc lỗi thì mèo vẫn chạy bằng hành vi local.
 - IPC: JSON-lines qua stdin/stdout, giữ nguyên trừ khi có lý do rõ ràng.
-- Chưa tích hợp LLM, voice, computer vision. Hạn chế dependency.
+- Chưa tích hợp LLM, voice, computer vision. Hạn chế dependency (ngoại lệ: EOS cho chơi chung, xem dưới).
 
 ## Nguyên tắc
 - Mở rộng project hiện có; không xây lại, không đổi framework, không đổi sang sprite (giữ artwork vector/procedural).
@@ -85,6 +85,8 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Ngoại lệ đã duyệt: mèo hàng xóm là khách ngồi yên ở nông trại, không physics, không chạm hay đánh thức mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Mèo hàng xóm nông trại.
 
 - Ngoại lệ đã duyệt: chuồng gà nông trại (vùng đất thứ tư, gà chỉ đi trong chuồng, không chạm mèo). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Chuồng gà nông trại.
+
+- Hướng đã duyệt 11/11, chưa code: chơi chung qua Internet bằng Epic Online Services; mạng chỉ bật khi người dùng mời/vào phòng, chỉ gửi dữ liệu mèo/trận, Python không tham gia, SDK và mã client không vào git. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Chơi chung qua Internet; thiết kế: docs/MULTIPLAYER.md.
 
 - Ngoại lệ đã duyệt 1.5.1: thời tiết chỉ đọc màu ảnh thu nhỏ của wallpaper, không lưu/gửi, overlay click xuyên qua không chạm vào mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Thời tiết theo wallpaper.
 

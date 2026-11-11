@@ -7,7 +7,7 @@ Người dùng duyệt kế hoạch 2026-11-09. Luật từng mốc viết và d
 | M1. Nền đồ vật | Tối đa 3 món, Giỏ đồ chơi, Cất nhanh, lưu vị trí | Đã có code, còn test tay |
 | M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Đã có code, còn test tay |
 | M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Đã có code, còn test tay |
-| M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Chưa viết luật |
+| M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Luật đã duyệt 11/11, chưa code |
 | M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Chưa viết luật |
 
 Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
@@ -102,7 +102,7 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
 ### Món tha được
 
-- Chỉ Bóng len. Thùng carton không tha được. Đồ của M4 quyết khi viết luật M4.
+- Chỉ Bóng len. Thùng carton không tha được. Cần câu lông vũ và Chuột dây cót (M4) cũng không tha được.
 
 ### Ném nhặt (người dùng bắt đầu)
 
@@ -146,3 +146,39 @@ Commit/publish 12d60f3, smoke 3/3 PASS.
 - Nhả (`DropCarriedBall`): bóng nhận monitor và DIP của mèo như sau trò chơi bóng, đặt tại miệng (trước tâm mèo 4 DIP, trên sàn 44 DIP), rơi theo physics, chỉ lưu khi nằm yên. Cửa sổ hiện ngay trong khung đó.
 - Mọi lối hủy đều qua `StopToyFetch`: `CancelFeatureActivity` (click trái/phải mèo, kéo, đổi việc, !CanPlay) thì nhả; `GuardToyFetch` mỗi khung trong `TickDesktopToys` nhả khi app toàn màn hình, vào trận, bóng sang màn khác, trò chơi bóng; Cất nhanh và cất bóng thì bóng về giỏ. Rủ chơi gặp Quiet/Giờ tập trung thì dừng và nhả. Không có âm thanh mới (`ball_tap`) và không có sự kiện IPC.
 - Đã soát ảnh render bóng ở miệng khi đi trái/phải, ngồi, nhìn, đứng và lúc nhả (PET_RENDER_REVIEW). Chưa xem trên desktop thật, chưa thử DPI khác, nhiều màn hình; chưa đo FPS riêng (M3 không thêm cửa sổ).
+
+## Luật M4 Cần câu lông vũ và Chuột dây cót (duyệt 11/11)
+
+### Chung cho hai món
+
+- Lấy từ Giỏ đồ chơi, miễn phí, mỗi món chỉ một cái, tính vào giới hạn 3 món. Giỏ có 4 món: Bóng len, Thùng carton, Cần câu lông vũ, Chuột dây cót.
+- Kéo quá khoảng 6 DIP là cầm; thả có vận tốc và trọng lực. Chỉ nằm trên sàn, tự tránh vùng đất như hộp.
+- Mèo chỉ đuổi khi người dùng đang chơi: đang cầm cần câu, hoặc chuột đang chạy vì người dùng lên dây. Do người dùng bật nên chạy cả trong Quiet và wake cooldown, như bóng/laser.
+- Mèo chỉ tham gia khi thức, rảnh (Idle, đang đi, hoặc đang ngồi chờ ở bước cuối của ném nhặt), đứng trên sàn, cùng màn hình với món đồ. Mèo đang ngủ thì ngủ tiếp. Mèo bận, bị kéo, đang bay, đang phản ứng, đang trong trò bóng hoặc laser, hoặc đang có chuyến M2/M3 thì không tham gia.
+- Mèo vồ bằng cú nhảy thường. Đồ vẫn không chạm mèo: không Bonk, Dizzy hay cảm xúc. "Bắt được" chỉ là hành động của mèo.
+- Trong lúc đuổi, cảm xúc tự động chờ. Bấm trái hoặc kéo mèo: dừng đuổi, kéo như thường. Bấm phải: dừng và mở menu. Pause đóng băng tất cả.
+- App toàn màn hình, vào trận, rút màn hình: dừng đuổi, đồ ẩn theo luật M1. Cất nhanh: dừng đuổi, đồ về giỏ.
+- Mèo không tha hai món này và không tự lên dây chuột.
+- Không có âm thanh mới: dùng lại cue sẵn có, có cooldown. Không có sự kiện IPC mới; mỗi lượt chơi gửi `toy_started` sẵn có một lần như laser, để Python tính là đã chơi.
+- Đuổi cần câu liên tục tối đa khoảng 90 giây, hoặc đuổi chuột 5 lượt liên tiếp, rồi mèo nghỉ 2 phút: chỉ nhìn theo, không chạy.
+
+### Cần câu lông vũ
+
+- Nằm yên: cán dài khoảng 90 DIP trên sàn, lông vũ ở đầu dây; không lăn, không xoay.
+- Người dùng cầm cán: lông vũ treo ở dây khoảng 90 DIP, đung đưa như con lắc (physics ở C#). Mèo nhìn theo, rình, chạy theo trên sàn; lông xuống trong tầm khoảng 120 DIP trên đầu mèo (như tầm vồ laser) thì mèo nhảy vồ.
+- Vồ trúng: mèo giữ lông khoảng 0,8 giây rồi buông; mèo không giật cần khỏi tay người dùng.
+- Người dùng giữ yên quá 8 giây thì mèo chán, ngồi nhìn; lông động lại thì đuổi tiếp.
+- Thả cần thì mèo thôi đuổi. Cần rơi, trượt ngắn, không nảy cao.
+
+### Chuột dây cót
+
+- Bấm không kéo là lên dây: chuột chạy dọc sàn khoảng 5 giây, khoảng 180 DIP/s, gặp mép màn hình hoặc vùng đất thì quay đầu, rồi chậm dần và dừng. Bấm khi chuột đang chạy thì không có tác dụng.
+- Ném: chuột rơi; chạm sàn mạnh thì lật ngửa, bánh quay khoảng 1 giây rồi tự lật lại.
+- Chuột đang chạy thì mèo đuổi; tới gần thì vồ. Trúng: chuột dừng, mèo đè chuột khoảng 1 giây rồi ngồi. Trượt (chuột quay đầu): mèo đuổi tiếp tới khi chuột dừng. Mỗi lần lên dây là một lượt.
+- Đi quá 20 giây chưa tới thì thôi.
+
+### Khi code cần kiểm tra
+
+- Cần câu là món đầu tiên mèo phản ứng trong lúc người dùng đang cầm đồ: giữ nhánh kéo đồ tách hẳn khỏi nhánh kéo mèo.
+- Cửa sổ chỉ di chuyển từng khung khi đồ đang được cầm hoặc đang chạy. Đo lại FPS với đủ 3 món nằm yên và khi chuột đang chạy.
+- Test lại sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, wake cooldown, chuyến tới hộp/đệm và ném nhặt.

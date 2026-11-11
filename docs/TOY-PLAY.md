@@ -6,7 +6,7 @@ Người dùng duyệt kế hoạch 2026-11-09. Luật từng mốc viết và d
 |---|---|---|
 | M1. Nền đồ vật | Tối đa 3 món, Giỏ đồ chơi, Cất nhanh, lưu vị trí | Đã có code, còn test tay |
 | M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Đã có code, còn test tay |
-| M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Chưa viết luật |
+| M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Đã duyệt luật, chưa code |
 | M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Chưa viết luật |
 | M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Chưa viết luật |
 
@@ -97,3 +97,41 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 - Kỷ vật rơi trúng mèo đang ngủ trong hộp vẫn gây Bonk như mọi giấc ngủ (ngoại lệ Kệ kỷ vật có physics). Chỉ đệm bỏ qua Bonk, vì lúc đó mèo nằm trên chính món kỷ vật.
 - Đã soát ảnh render (ghép cửa sổ mèo lên cửa sổ hộp) lúc ngủ, waking, giữa cú nhảy ra và sau khi ra: mặt trước hai cửa sổ trùng khít. Chưa xem trên desktop thật, chưa thử DPI khác, nhiều màn hình.
 - Đo 11/11 (bản 1e1fa40, cùng cách đo M1), FPS trung vị vòng 1, vòng 2: không giỏ 59,8 và 60,1; giỏ và bóng nằm yên 59,9 và 59,8; giỏ, bóng và hộp nằm yên 59,2 và 59,2. Hộp thêm một cửa sổ, chênh dưới 1 fps. Chưa đo lúc mèo ngủ trong hộp hay hộp đang bay, chưa đủ 3 món.
+
+## Luật M3 Tha đồ và ném nhặt (duyệt 11/11)
+
+### Món tha được
+
+- Chỉ Bóng len. Thùng carton không tha được. Đồ của M4 quyết khi viết luật M4.
+
+### Ném nhặt (người dùng bắt đầu)
+
+- Người dùng kéo bóng rồi thả với tốc độ trên khoảng 400 DIP/s. Ném nhẹ, đặt xuống hoặc bấm cho lăn thì không tính.
+- Mèo chỉ đi nhặt khi đang thức, rảnh (Idle hoặc đang đi), đứng trên sàn, cùng màn hình với bóng. Mèo nhìn theo bóng; khi bóng chạm sàn và chậm lại thì chạy tới, ngậm bóng, mang về chỗ con trỏ trên sàn (theo trục ngang của con trỏ), nhả bóng rồi ngồi ngước lên chờ ném tiếp.
+- Do người dùng bật nên chạy cả trong Quiet và wake cooldown, như bóng/laser. Mèo đang ngủ thì ngủ tiếp (luật M1). Mèo bận, bị kéo, đang bay, đang phản ứng hoặc có việc khác thì bỏ qua cú ném.
+- Nhặt liên tiếp tối đa 5 lần, rồi nghỉ 2 phút: chỉ nhìn theo bóng, không chạy.
+- Đi quá 20 giây chưa tới bóng thì thôi.
+
+### Tha đồ (mèo tự làm)
+
+- Rủ chơi: mỗi khoảng 8–15 phút, nếu bóng đang nằm ngoài và người dùng đang dùng máy, mèo ngậm bóng mang tới chỗ con trỏ trên sàn rồi ngồi chờ. Trong 20 giây người dùng ném thì thành ném nhặt, không thì mèo đi việc khác.
+- Bị chặn như mèo tự vào hộp: mèo bận, Quiet, Giờ tập trung, trong trận, đang có việc khác, wake cooldown, người dùng vắng. Mèo phải đứng trên sàn, cùng màn hình với bóng. Đi quá 20 giây chưa tới thì thôi.
+- Mèo không tự cất bóng vào giỏ và không tự tha bóng về cạnh giỏ.
+
+### Khi mèo đang ngậm bóng
+
+- Bóng vẽ ở miệng trong cửa sổ mèo (như mặt trước hộp ở M2), cửa sổ bóng ẩn; mọi click vẫn rơi vào mèo.
+- Bấm trái hoặc kéo mèo: mèo nhả bóng, bóng rơi từ miệng theo physics, việc kéo như thường. Bấm phải: nhả bóng và mở menu.
+- Cảm xúc tự động chờ như lúc đi tới hộp. Pause đóng băng tất cả.
+- App toàn màn hình, vào trận hoặc rút màn hình: mèo nhả bóng tại chỗ, rồi bóng ẩn theo luật M1. Cất nhanh hoặc "Cất bóng": bóng về giỏ, chuyến tha hủy.
+- Người dùng cầm bóng khi mèo đang chạy tới thì chuyến đó hủy, không phạt gì.
+- Hàng bóng trong giỏ mờ, ghi "mèo đang ngậm".
+- Không có âm thanh mới: nhặt và nhả dùng lại `ball_tap`, có cooldown.
+- Trò "Chơi bóng" 45 giây giữ nguyên; trong lúc trò chạy không có ném nhặt hay tha đồ.
+- Python không tham gia, không có sự kiện IPC mới; mọi phần ở C#.
+
+### Khi code cần kiểm tra
+
+- Soát hình bóng ở miệng qua mọi tư thế đi, chạy, ngồi, quay mặt, lúc nhả và lúc bị nhấc.
+- Bóng nhả ra nhận vị trí miệng, đồng bộ DPI như M1; chỉ lưu vị trí khi bóng nằm yên sau khi nhả.
+- Test lại sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, wake cooldown, và chuyến đi tới hộp/đệm khi có cả hai.

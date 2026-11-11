@@ -5,7 +5,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
-| M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Chưa viết luật |
+| M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Luật chờ duyệt |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Chưa viết luật |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
 | M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
@@ -64,3 +64,49 @@ Trụ cào là đồ góc sống có physics như thùng carton (giới hạn ri
 - Lệnh Cào móng: `PetBehavior.ScratchElsewhere` (giống `SleepElsewhere`) được gọi khi hành vi local chọn Cào móng hoặc Python gửi `SCRATCH`; `TryStartCommand` gọi `ScratchPostNow` cho "Làm ngay". Giao thức không đổi.
 - Tư thế Cào móng vẽ chân trước ở phía đối diện đuôi, nên mèo quay phía đó vào trụ; tâm mèo cách tâm trụ 34 DIP (`PostScratchRules.StandOff`), chân rơi lên mép dây thừng gần mèo.
 - Đã soát ảnh render ghép cửa sổ mèo lên cửa sổ trụ lúc cào (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.
+
+## Luật M2 Chậu cây và hộp thêm trạng thái (đề xuất 11/11, chờ duyệt)
+
+### Chậu cây là đồ góc sống
+
+- Lấy từ Giỏ, miễn phí, nhóm "Góc sống" cùng trụ cào (tối đa 2 món: có cả trụ và chậu là đủ).
+- Chậu đất nung rộng khoảng 50 DIP, cây lá tròn, vẽ vector theo docs/DESIGN-SYSTEM.md, nhìn rõ trên nền sáng/tối.
+- Physics như hộp và trụ: kéo quá khoảng 6 DIP là cầm; thả rơi, nảy thấp, không lăn, không xoay. Chậu không vỡ, đất không đổ. Bấm không kéo thì lá rung nhẹ. Lưu, Cất nhanh, Pause, toàn màn hình, trận, rút màn hình, DPI: như mọi món.
+- Cây không thuộc nông trại: không tưới, không thu hoạch, không xu, không ảnh hưởng thời tiết.
+
+### Cây lớn dần, không bao giờ héo
+
+- Mỗi lần mèo ghé cây xong trọn vẹn được 1 điểm, tối đa 1 điểm mỗi 10 phút. 4 dáng: mầm (0), cây nhỏ (5), cây sum suê (15), ra hoa (30). Lên dáng mới có hiệu ứng lá lấp lánh ngắn, không âm thanh mới.
+- Không bao giờ héo hay nhỏ lại: tắt app, vắng máy, cất vào giỏ đều giữ nguyên dáng. Lưu trong `preferences.json` như vị trí đồ (là trạng thái món đồ, C# giữ), không đụng `ai-memory.json`.
+- Giỏ ghi dáng hiện tại cạnh tên, ví dụ "Chậu cây (cây nhỏ)".
+
+### Mèo ghé cây
+
+- Mèo tự đi tới mỗi 8–12 phút, chặn như trụ cào (bận, Quiet, Giờ tập trung, trận, việc khác, wake cooldown, ngủ/waking) và chờ cooldown tự chăm sóc 45 giây. Đi quá 15 giây chưa tới thì thôi.
+- Tới nơi, mèo làm một trong ba việc, không lặp lại việc lần trước: ngửi lá (cúi mũi khoảng 1,5 giây, như ngửi đồ mới M5); chạm lá (vỗ một chân, lá rung); ngồi cạnh nhìn cây khoảng 4 giây.
+- Không có "Làm ngay" mới, không có lệnh Python mới; Python không tham gia. Ghé cây không đổi needs, bond, learning.
+- Ngắt như trụ cào: click trái/kéo dừng và kéo như thường, click phải dừng và mở menu, cảm xúc ưu tiên cao nhường, Pause đóng băng, nhấc chậu hoặc Cất nhanh thì chuyến hủy và không được điểm.
+
+### Hộp: mèo trốn trong hộp, thò đầu
+
+- Thêm một việc với thùng carton: mèo tự chui vào hộp ngồi thức, chỉ thò đầu lên nhìn quanh khoảng 8–15 giây, rồi nhảy nhẹ ra. Mỗi 8–12 phút, chặn như mèo tự vào hộp ngủ. Không có "Làm ngay" mới.
+- Dùng lại cú nhảy vào/ra và mặt trước hộp vẽ trong cửa sổ mèo của M2 Đợt 1, nên mọi click vẫn rơi vào mèo: click trái nhấc thẳng mèo ra và kéo được, click phải mèo ra và mở menu. Cảm xúc ưu tiên cao: mèo nhảy ra.
+- Đang thò đầu mà tới lúc mèo tự ngủ (ba dịp của đệm/hộp) thì ngủ luôn trong hộp theo giấc ngủ thường của M2, không cần nhảy ra.
+- Người dùng không cầm được hộp khi có mèo bên trong (như M2); Cất nhanh, toàn màn hình, trận: hộp biến mất, mèo đứng tại chỗ.
+
+### Hộp: vồ đồ đi ngang
+
+- Đang thò đầu mà người dùng lên dây chuột chạy ngang trong khoảng 200 DIP quanh hộp, hoặc vẩy cần câu để lông vũ xuống trong khoảng đó: mèo rình 0,5 giây rồi vồ ra khỏi hộp bằng cú nhảy thường, sau đó đuổi theo đúng luật M4 (tính chung lượt và thời gian nghỉ 2 phút của M4).
+- Đang trong 2 phút nghỉ của M4 thì mèo chỉ quay đầu nhìn theo, không vồ.
+- Bóng len lăn ngang không làm mèo vồ ra (chuyền bóng M5 giữ nguyên luật cũ: mèo ở trong hộp thì không tham gia).
+- Trốn tìm để sang Đợt 3 Mini-game.
+
+### Khi code cần kiểm tra
+
+- Trạng thái "trong hộp, thức" là mới: soát sleep lock (không coi là ngủ), wake cooldown, drag/throw từ trong hộp, emotion priority, chuyến M3/M4/M5 khi mèo đang trong hộp, local fallback, Pause.
+- Giới hạn nhóm góc sống khi có cả trụ và chậu; `preferences.json` cũ (chưa có chậu) vẫn đọc được.
+- Đo FPS với 3 đồ chơi, trụ và chậu nằm yên; soát render chậu 4 dáng, mèo ghé cây, mèo thò đầu trong hộp trên nền sáng/tối.
+
+### Bổ sung ngoại lệ đề xuất (chờ duyệt, ghi vào docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics khi duyệt)
+
+Chậu cây là đồ góc sống có physics như trụ cào (chung giới hạn 2 món góc sống). Mèo tự ghé cây mỗi 8–12 phút, chặn như trụ cào và chờ cooldown tự chăm sóc; ngửi, chạm lá hoặc ngồi cạnh; mỗi lần ghé trọn vẹn được 1 điểm (tối đa 1 điểm/10 phút), cây lớn qua 4 dáng và không bao giờ héo; lưu ở `preferences.json`, Python không tham gia. Thùng carton thêm việc mèo tự vào ngồi thức, thò đầu 8–15 giây (mỗi 8–12 phút, chặn như vào hộp ngủ); click trái nhấc thẳng ra và kéo được, click phải ra và mở menu, cảm xúc ưu tiên cao thì nhảy ra; đang thò đầu mà tới dịp ngủ thì ngủ trong hộp theo luật ngủ thường. Đang thò đầu, chuột dây cót hoặc lông vũ người dùng đang chơi đi ngang trong ~200 DIP thì mèo vồ ra rồi đuổi theo luật M4 (chung lượt và nghỉ). Đồ vẫn không chạm mèo: không Bonk, Dizzy, cảm xúc, không đánh thức; không âm thanh mới.

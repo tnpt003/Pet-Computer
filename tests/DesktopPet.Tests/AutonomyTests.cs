@@ -10,7 +10,7 @@ internal static class AutonomyTests
         check(kinds.All(k => PetAutonomy.MayAct(k, AutoBlock.None)), "Nothing blocks any kind when no condition holds");
 
         // What the cat does on its own stops in Quiet and with a fullscreen app (AGENTS.md).
-        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore, AutoKind.ToyInvite };
+        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore, AutoKind.ToyInvite, AutoKind.ToySniff };
         check(own.All(k => Blocks(k, AutoBlock.Quiet) && Blocks(k, AutoBlock.Fullscreen)), "Autonomous kinds stop in Quiet and with a fullscreen app");
         // The user asked: Quiet does not stop it; a fullscreen app still stops the games.
         var asked = new[] { AutoKind.Treat, AutoKind.UserGame, AutoKind.CallToLook };
@@ -40,6 +40,13 @@ internal static class AutonomyTests
         check(!Blocks(AutoKind.ToyChase, AutoBlock.Quiet) && !Blocks(AutoKind.ToyChase, AutoBlock.WakeCooldown) && !Blocks(AutoKind.ToyChase, AutoBlock.Away)
             && new[] { AutoBlock.Fullscreen, AutoBlock.Feature, AutoBlock.Unsettled, AutoBlock.Held, AutoBlock.Paused, AutoBlock.Battle }.All(b => Blocks(AutoKind.ToyChase, b)),
             "Chasing the wand or the mouse works in Quiet, not asleep, held, busy or with a fullscreen app");
+        // M5: passing the ball and reactions.
+        check(!Blocks(AutoKind.ToyPass, AutoBlock.Quiet) && !Blocks(AutoKind.ToyPass, AutoBlock.WakeCooldown) && !Blocks(AutoKind.ToyPass, AutoBlock.Away)
+            && new[] { AutoBlock.Fullscreen, AutoBlock.Feature, AutoBlock.Unsettled, AutoBlock.Held, AutoBlock.Paused, AutoBlock.Battle }.All(b => Blocks(AutoKind.ToyPass, b)),
+            "Passing the ball works in Quiet and the wake cooldown, not asleep, held, busy or with a fullscreen app");
+        check(PetAutonomy.BlockedBy(AutoKind.ToySniff) == PetAutonomy.BlockedBy(AutoKind.ToyInvite), "Sniffing a new toy on its own waits exactly like the fetch invitation");
+        check(!Blocks(AutoKind.ToyReact, AutoBlock.Quiet) && new[] { AutoBlock.Unsettled, AutoBlock.Held, AutoBlock.Paused, AutoBlock.Battle, AutoBlock.Feature }.All(b => Blocks(AutoKind.ToyReact, b)),
+            "The new-accessory reaction works in Quiet, never asleep, held or in a battle");
         check(Blocks(AutoKind.Admire, AutoBlock.Feature) && !Blocks(AutoKind.CallToLook, AutoBlock.Feature), "Admiring on its own waits for other features; a double click does not");
         check(Blocks(AutoKind.Ledges, AutoBlock.Battle) && !Blocks(AutoKind.Ledges, AutoBlock.Quiet), "Ledges are ground in Quiet, not in a battle");
     }

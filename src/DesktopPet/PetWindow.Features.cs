@@ -237,6 +237,7 @@ public sealed partial class PetWindow
         StopLaser();
         StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         StopToyChase(); // PetWindow.ToyChase.cs
+        StopToyPass(); StopToyReact(); // PetWindow.ToyPass.cs, PetWindow.ToyReact.cs
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
@@ -255,7 +256,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None);
 
     private void TickFeatures(double dt)
     {
@@ -283,7 +284,9 @@ public sealed partial class PetWindow
         if (TickPortal(dt)) return; // The magic portal (PetWindow.Portal.cs).
         if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
         if (TickLaser(dt)) return;
+        if (TickToyReact(dt)) return; // A miss, a first sniff, a new accessory (PetWindow.ToyReact.cs).
         if (TickToyChase(dt)) return; // The feather wand and the wind-up mouse (PetWindow.ToyChase.cs).
+        if (TickToyPass(dt)) return; // Passing the yarn ball (PetWindow.ToyPass.cs).
         if (!CanPlay)
         {
             if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None) CancelFeatureActivity();
@@ -441,5 +444,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); passWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

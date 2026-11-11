@@ -1584,3 +1584,18 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Trò "Chơi bóng", laser, ném nhặt vẫn như cũ; đang chơi laser thì cầm cần câu mèo không đuổi.
 - [ ] DPI 125 %/150 % và màn hình phụ: lông vũ treo đúng dưới đầu cần, chuột chạy đúng trên sàn.
 - [ ] Đọc nhãn tiếng Nhật "羽根のねこじゃらし", "ぜんまいネズミ" (chưa ai duyệt).
+
+## Chơi cùng sen M5 — Chuyền bóng và phản ứng (11/11, chỉ bản 1.6)
+- [ ] Bóng len nằm ngoài, mèo thức, đứng trên sàn: bấm phía xa của bóng cho bóng lăn về phía mèo, hoặc ném nhẹ về phía mèo. Mèo quay về phía bóng, hạ người, bước tới đón; bóng tới chân thì vỗ trả về phía con trỏ, bóng dừng gần chỗ con trỏ trên sàn.
+- [ ] Chuyền qua lại: từ lượt 2 có số nhỏ cạnh bóng khoảng 1,5 giây, click xuyên qua được. Bóng tự lăn về (dội mép màn hình) không tính lượt.
+- [ ] Để bóng nằm yên khoảng 6 giây: chuỗi hết. Chuỗi từ 5 lượt vượt kỷ lục: nhãn "Kỷ lục mới!". Giỏ ghi "Bóng len (kỷ lục chuyền N)", hàng không mờ.
+- [ ] Cầm bóng giữa chuỗi: mèo ngồi nhìn; thả nhẹ về phía mèo là chuyền tiếp; ném mạnh thì thành ném nhặt.
+- [ ] Bóng nảy qua đầu mèo, lăn qua: chuỗi hết, mèo ngơ ngác khoảng 1 giây (nghiêng đầu, ngoái lại).
+- [ ] Vồ hụt chuột dây cót hoặc lông vũ: mèo ngơ ngác khoảng 1 giây rồi đuổi tiếp; hụt liên tục thì không ngơ ngác lại trong 10 giây.
+- [ ] Bật Quiet, hoặc mèo vừa thức (~30 giây): vẫn chuyền được. Mèo ngủ: bóng lăn tới không đánh thức. Pause: đứng yên. Click trái/phải mèo giữa chuỗi: thôi chuyền, kéo/menu như thường.
+- [ ] Chuyền khoảng 90 giây hoặc 20 lượt: mèo nghỉ 2 phút, chỉ nhìn; trong lúc nghỉ đó cần câu và chuột cũng chỉ được nhìn (nghỉ chung).
+- [ ] Lấy một món chưa từng ra (hoặc xóa `ToysSniffed` trong dữ liệu thử): mèo tự đi chậm tới, cúi ngửi, chạm một chân, một lần mỗi món. Quiet, Giờ tập trung, vừa thức, đang có việc khác hoặc vắng máy thì không đi. Lần đầu tự bấm chơi món mới: mèo ngửi nhanh rồi chơi.
+- [ ] Đổi sang phụ kiện khác trong Tùy chỉnh rồi Lưu: mèo nhìn, lắc đầu, rửa mặt khoảng 2 giây, cả trong Quiet. Mèo đang ngủ thì không phản ứng; click mèo giữa chừng thì dừng ngay.
+- [ ] Trò "Chơi bóng" 45 giây, ném nhặt, cần câu, chuột vẫn như M3/M4. Cất nhanh giữa chuỗi: dừng, đồ về giỏ.
+- [ ] DPI 125 %/150 % và màn hình phụ: số đếm hiện đúng trên bóng.
+- [ ] Đọc nhãn tiếng Nhật "パス最高記録", "新記録！" (chưa ai duyệt).

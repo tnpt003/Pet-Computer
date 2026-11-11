@@ -85,6 +85,7 @@ internal static class ToyChecks
         if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is { Length: > 0 } review) Render(review, check);
         window.Reset();
         preferences.Quiet = false; behavior.Quiet = false;
+        preferences.ToysSniffed = DesktopToyRules.All.ToList(); // The first sniff (M5) is checked on its own in RunReact.
 
         // The basket.
         Tick(window);
@@ -291,6 +292,9 @@ internal static class ToyChecks
         RunFetch(window, pet, behavior, preferences, check);
         RunWand(window, pet, behavior, preferences, check);
         RunMouse(window, pet, behavior, preferences, check);
+        RunPass(window, pet, behavior, preferences, check);
+        RunReact(window, pet, behavior, preferences, check);
+        preferences.ToysSniffed = null;
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
     }
@@ -814,9 +818,9 @@ internal static class ToyChecks
         Free(); motion.X = CatCentre() + 200;
         Frame();
         check(window.ChasePhase == "Run" && windUp.Running, "A miss: it chases on");
+        check(window.ReactPhase == "Miss", "...after a puzzled second (M5)");
         windUp.RunLeft = 0;
-        Frame();
-        check(window.ChasePhase == "None", "The mouse stops: the chase ends");
+        check(Until(() => window.ChasePhase == "None", 120) && window.ReactPhase == "None", "The mouse stops: the chase ends");
         Settle(window, motion);
 
         // The same winding is chased once: a click on the cat ends it for good.
@@ -876,6 +880,243 @@ internal static class ToyChecks
         window.ToggleToyBasket();
         Frame();
         check(!window.ToyBasketShown && window.ChasePhase == "None" && !window.ToyIsOut(DesktopToyRules.Mouse), "Quick tidy: the chase ends, everything is put away");
+        SetField(window, "cursorProbe", null);
+        window.Reset();
+    }
+
+    // M5: passing the yarn ball lying out.
+    private static void RunPass(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        var bounds = Field<Area>(window, "bounds");
+        var settings = Field<PetSettings>(window, "settings");
+        double scale = Field<double>(window, "scale");
+        double cursorX = bounds.Left + 200;
+        SetField(window, "cursorProbe", new Func<Point>(() => new Point(cursorX * scale, (bounds.Bottom - 60) * scale)));
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        window.ToyChaseStreak.Step(1000, false);
+        preferences.ToyPassBest = 0; SetField(window, "passCount", null);
+        window.ToggleToyBasket();
+        Tick(window);
+        check(window.TakeToyOut(Ball), "The yarn ball comes out for passing");
+        Tick(window);
+        var motion = window.ToyMotionOf(Ball)!;
+        var ballWindow = window.ToyWindowOf(Ball)!;
+        Settle(window, motion);
+        var thing = Thing(window, Ball);
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+        void Roll(double from, double vx) { motion.X = CatCentre() + from; motion.Height = 0; motion.VY = 0; motion.VX = vx; Call(window, "PassTouched", thing); }
+        double middle = (bounds.Left + bounds.Right) / 2;
+        pet.X = middle - PetSettings.CenterX; Free();
+
+        // A click on the ball rolls it away from the click: from its far side, toward the cat. In Quiet too.
+        preferences.Quiet = true; behavior.Quiet = true;
+        motion.X = CatCentre() + 150;
+        cursorX = motion.X + 20;
+        SetThing(thing, "Press", true); Call(window, "EndToyDrag", thing, true);
+        check(window.PassCount.Touched && motion.VX < 0, "A click rolls the ball toward the cat and counts as the user's touch");
+        Frame();
+        check(window.PassPhase == "Ready", "In Quiet too, the cat gets ready for the ball");
+        for (int i = 0; i < 12; i++) Frame();
+        check(pet.PlayCrouch > 0 || pet.Action == PetAction.Walking, "...crouching, or stepping up to meet a ball that would stop short");
+        Snapshot(window, ballWindow, "pass-ready");
+        cursorX = bounds.Right - 200; // Behind the cat's other side now.
+        bool batted = false;
+        check(Until(() => { batted |= pet.BatRemaining > 0; return window.PassPhase == "Wait"; }, 300) && batted, "The ball reaches its paws: the cat bats it back");
+        check(window.PassCount.Count == 1 && motion.VX > 0 && motion.VY > 0, "One pass: the ball goes back toward the cursor");
+        double stops = ToyPassRules.StopsAt(motion.X, motion.VX);
+        check(Math.Abs(motion.VX) <= ToyPassRules.MaxBat && stops > CatCentre(), "...as hard as it takes to get there, within limits");
+
+        // A light roll back: a second pass, and the count shows by the ball.
+        Roll(250, -280);
+        check(Until(() => window.PassCount.Count == 2, 300) && window.PassLabel == "2", "The second pass shows its count by the ball");
+        var passWindow = Field<Window?>(window, "passWindow");
+        check(passWindow?.IsVisible == true && passWindow.IsHitTestVisible == false, "The label is a click-through overlay");
+        // Rolling back on its own (no touch): the cat watches, no pass.
+        motion.X = CatCentre() + 200; motion.VX = -250; motion.Height = 0;
+        for (int i = 0; i < 120; i++) Frame();
+        check(window.PassCount.Count == 2 && window.PassPhase == "Wait", "A roll the user did not make is no pass");
+        check(Until(() => window.PassLabel == null, 200), "The count fades after a moment");
+        // Six seconds without a touch: the streak ends; the record is kept and shown in the basket.
+        Settle(window, motion);
+        check(Until(() => window.PassPhase == "None", (int)(60 * (ToyPassRules.IdleSeconds + 1))) && preferences.ToyPassBest == 2, "Six seconds untouched: the streak ends, its record kept");
+        var ballRow = window.ToyBasketMenuItems()[0];
+        check(((string)ballRow.Header).Contains("best pass streak 2") && ballRow.IsEnabled, "The basket shows the record without greying the row");
+
+        // Five in a row beats the record out loud.
+        Free(); pet.X = middle - PetSettings.CenterX;
+        for (int n = 0; n < 5; n++)
+        {
+            int before = window.PassCount.Count;
+            Roll(220, -300);
+            Until(() => window.PassCount.Count > before, 300);
+        }
+        check(window.PassCount.Count == 5 && preferences.ToyPassBest == 5, "Five passes in a row: the record goes up at once");
+        Settle(window, motion);
+        check(Until(() => window.PassPhase == "None", 60 * 8) && window.PassLabel == "New record!", "When it ends: \"New record!\"");
+
+        // Held: the streak waits; a hard throw would be a fetch.
+        Free();
+        Roll(220, -300);
+        Until(() => window.PassCount.Count == 1, 300);
+        Call(window, "StartToyDrag", thing);
+        Frame();
+        check(window.PassPhase == "Wait" && pet.Action == PetAction.Looking, "The ball in the user's hand: the cat waits, looking");
+        Call(window, "EndToyDrag", thing, false);
+        Settle(window, motion);
+
+        // A ball that rolls past it: the streak ends, and a puzzled second.
+        Free();
+        Roll(120, -300);
+        Frame();
+        check(window.PassPhase == "Ready", "A ball rolls in");
+        motion.VX = -500; motion.Height = 80; motion.VY = 150; // Bouncing over its head, out of reach.
+        check(Until(() => window.PassPhase == "None", 300) && window.ReactPhase == "Miss", "A ball that rolls past: the streak ends, the cat looks puzzled");
+        for (int i = 0; i < 12; i++) Frame();
+        Snapshot(window, ballWindow, "pass-miss");
+        check(pet.ReactTilt != 0 || window.ReactPhase == "None", "...head on one side");
+        check(Until(() => window.ReactPhase == "None", 120) && pet.ReactTilt == 0, "...for about a second");
+        Settle(window, motion);
+
+        // A click on the cat stops the streak.
+        Free();
+        Roll(220, -300);
+        Frame();
+        check(window.PassPhase == "Ready", "Another streak");
+        Call(window, "CancelFeatureActivity");
+        Frame();
+        check(window.PassPhase == "None", "A click on the cat stops it");
+        Settle(window, motion);
+
+        // Asleep: it sleeps on.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Roll(220, -300);
+        for (int i = 0; i < 60; i++) Frame();
+        check(window.PassPhase == "None" && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "A ball rolled to the sleeping cat does not wake it");
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+        Settle(window, motion);
+        preferences.Quiet = false; behavior.Quiet = false;
+
+        // The rest is shared with the wand and the mouse.
+        window.ToyChaseStreak.Step(1000, false);
+        for (int i = 0; i < ToyChaseStreak.MouseInARow; i++) window.ToyChaseStreak.TryMouse();
+        Free();
+        Roll(220, -300);
+        Frame();
+        check(window.PassPhase == "Look", "Rested from chasing the mouse: it only watches the pass");
+        bool moved = false;
+        for (int i = 0; i < 60; i++) { Frame(); moved |= pet.Action == PetAction.Walking || pet.BatRemaining > 0; }
+        check(!moved, "...without stepping up or batting");
+        Settle(window, motion);
+        Until(() => window.PassPhase == "None", 600);
+        window.ToyChaseStreak.Step(1000, false);
+
+        window.ToggleToyBasket();
+        check(!window.ToyBasketShown && window.PassPhase == "None", "Quick tidy ends any streak");
+        preferences.ToyPassBest = 0; SetField(window, "passCount", null);
+        SetField(window, "cursorProbe", null);
+        window.Reset();
+    }
+
+    // M5 reactions: the first sniff of a toy, and a new accessory. The miss is checked with the pass and the mouse.
+    private static void RunReact(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        var bounds = Field<Area>(window, "bounds");
+        var settings = Field<PetSettings>(window, "settings");
+        double scale = Field<double>(window, "scale");
+        SetField(window, "cursorProbe", new Func<Point>(() => new Point((bounds.Left + 200) * scale, (bounds.Bottom - 60) * scale)));
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        window.ToyChaseStreak.Step(1000, false);
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+        double middle = (bounds.Left + bounds.Right) / 2;
+        preferences.ToysSniffed = new() { Ball, Box, DesktopToyRules.Wand };
+        window.ToggleToyBasket();
+        Tick(window);
+        check(window.TakeToyOut(DesktopToyRules.Mouse), "A toy the cat never met comes out");
+        Tick(window);
+        var motion = window.ToyMotionOf(DesktopToyRules.Mouse)!;
+        Settle(window, motion);
+        var mouseWindow = window.ToyWindowOf(DesktopToyRules.Mouse)!;
+        var thing0 = Thing(window, DesktopToyRules.Mouse);
+        pet.X = middle - PetSettings.CenterX; Free();
+        motion.X = CatCentre() + 300;
+        Tick(window);
+
+        // Quiet: no visit of its own.
+        preferences.Quiet = true; behavior.Quiet = true;
+        SetField(window, "reactSniffCheck", 0.0);
+        for (int i = 0; i < 30; i++) Frame();
+        check(window.ReactPhase == "None" && !window.ToysSniffed.Contains(DesktopToyRules.Mouse), "In Quiet the cat does not go to sniff on its own");
+        preferences.Quiet = false; behavior.Quiet = false;
+        // Asleep: it sleeps on.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        SetField(window, "reactSniffCheck", 0.0);
+        for (int i = 0; i < 30; i++) Frame();
+        check(window.ReactPhase == "None" && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "A new toy does not wake the sleeping cat");
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+
+        // Awake and free: it walks over slowly, sniffs, tries it with a paw, once.
+        check(window.SniffNewToy() && window.ReactPhase == "SniffWalk" && window.SniffToyId == DesktopToyRules.Mouse, "Awake and free, the cat goes to sniff the new mouse");
+        Frame();
+        check(pet.Action == PetAction.Walking && Math.Abs(pet.VX) < settings.WalkSpeed * 0.75 && pet.Facing == 1, "...slowly");
+        pet.X = motion.X - 40 - PetSettings.CenterX; // (No physics in these checks: the walk is put where it leads.)
+        check(Until(() => window.ReactPhase == "Sniff", 30), "It gets there and sniffs");
+        check(window.ToysSniffed.Contains(DesktopToyRules.Mouse) && preferences.ToysSniffed!.Contains(DesktopToyRules.Mouse), "...and remembers it has met the mouse");
+        for (int i = 0; i < 30; i++) Frame();
+        Call(window, "PositionDesktopThing", thing0);
+        Snapshot(window, mouseWindow, "sniff");
+        check(pet.PlayCrouch > 0.5 && pet.ReactDip > 4 && pet.Action == PetAction.Sitting, "Nose down at it");
+        bool pawed = false;
+        check(Until(() => { pawed |= pet.BatRemaining > 0; return window.ReactPhase == "None"; }, 120) && pawed, "...a paw tries it, then it is done");
+        SetField(window, "reactSniffCheck", 0.0);
+        for (int i = 0; i < 30; i++) Frame();
+        check(window.ReactPhase == "None", "Each toy is sniffed once");
+
+        // A first game with a toy it never met: a quick sniff, then the game.
+        preferences.ToysSniffed = new() { Ball, Box, DesktopToyRules.Wand };
+        var thing = Thing(window, DesktopToyRules.Mouse);
+        var windUp = window.WindUpOf(DesktopToyRules.Mouse)!;
+        Free();
+        motion.X = CatCentre() + 300; windUp.Direction = 1;
+        SetThing(thing, "Press", true); Call(window, "EndToyDrag", thing, true);
+        Frame();
+        check(window.ReactPhase == "Sniff" && window.ToysSniffed.Contains(DesktopToyRules.Mouse), "The first game with a new toy: a quick sniff first");
+        check(Until(() => window.ChasePhase == "Run", 60), "...then the chase");
+        Call(window, "CancelFeatureActivity");
+        windUp.RunLeft = 0; Settle(window, motion);
+
+        // A new accessory: a look, a head shake, a paw over the ears. In Quiet too; never asleep.
+        preferences.Quiet = true; behavior.Quiet = true;
+        Free();
+        Call(window, "ReactToAccessory");
+        check(window.ReactPhase == "Accessory" && pet.Action == PetAction.Looking, "A new accessory: the cat looks itself over, in Quiet too");
+        Frame(); Frame(); Frame();
+        check(pet.ReactTilt != 0, "...shaking its head");
+        check(Until(() => pet.Action == PetAction.Grooming, 60), "...then a paw over its ears");
+        for (int i = 0; i < 30; i++) Frame();
+        Snapshot(window, mouseWindow, "accessory");
+        check(Until(() => window.ReactPhase == "None", 120) && pet.ReactTilt == 0, "About two seconds in all");
+        Free();
+        Call(window, "ReactToAccessory");
+        Frame();
+        Call(window, "CancelFeatureActivity");
+        check(window.ReactPhase == "None" && pet.ReactTilt == 0, "A click on the cat ends a reaction at once");
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Call(window, "ReactToAccessory");
+        for (int i = 0; i < 10; i++) Frame();
+        check(window.ReactPhase == "None" && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "Asleep, a new accessory does not wake it");
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+        preferences.Quiet = false; behavior.Quiet = false;
+
+        preferences.ToysSniffed = DesktopToyRules.All.ToList();
+        window.ToggleToyBasket();
         SetField(window, "cursorProbe", null);
         window.Reset();
     }

@@ -8,7 +8,7 @@ Người dùng duyệt kế hoạch 2026-11-09. Luật từng mốc viết và d
 | M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Đã có code, còn test tay |
 | M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Đã có code, còn test tay |
 | M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Đã có code, còn test tay |
-| M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Đã duyệt luật, chưa code |
+| M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Đã có code, còn test tay |
 
 Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
@@ -227,3 +227,12 @@ Chung: chỉ là hành động ngắn (tối đa khoảng 2 giây), dùng lại 
 - Phân biệt bấm bóng để chuyền với bấm bóng trong trò 45 giây và với ném nhặt M3 (ngưỡng 400 DIP/s).
 - Ngửi đồ mới là hành vi tự động mới: giữ đúng cổng như rủ chơi, không đánh thức mèo ngủ.
 - Test lại sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, wake cooldown, ném nhặt M3, đuổi M4 và chuyến tới hộp/đệm.
+
+### Cách code M5 (11/11)
+
+- Luật thuần ở `PetToyPass.cs` (Core), có unit test: `ToyPassRules` (tầm 400 DIP, bước tới 150, bóng dừng ngắn 120, 6 giây, nhãn 1,5 giây; lực vỗ = 1,25 × khoảng tới con trỏ, trong 120–300 DIP/s, đúng với ma sát sàn của `ToyBall.Step`; con trỏ trong 60 DIP trên đầu mèo thì trả về hướng bóng tới), `ToyPassCount` (lượt chỉ tính khi người dùng vừa chạm; kỷ lục nâng ngay mỗi lượt nên thoát app không mất; báo "Kỷ lục mới!" khi từ 5 lượt), `ToyReactRules`. `ToyChaseStreak` thêm `Pass`/`Passed` (90 giây hoặc 20 lượt) dùng chung thời gian nghỉ với M4. `preferences.json` thêm `ToyPassBest`, `ToysSniffed`.
+- Chuyền ở `PetWindow.ToyPass.cs`: `Ready` (hạ người, bước tới tối đa 150 DIP gặp bóng sẽ dừng ngắn, đi tới bóng đã dừng trong 120 DIP, vỗ khi bóng trong 49 DIP và thấp dưới 24 DIP) → `Wait` (ngồi nhìn; người dùng chạm và bóng lăn tới thì `Ready` lại; bóng nằm yên 6 giây thì hết) / `Look` (đang nghỉ, chỉ nhìn). Bấm bóng (`Nudge`, lăn như cũ) và thả bóng chậm hơn ngưỡng ném nhặt đều là "người dùng chạm" (`PassTouched` trong `EndToyDrag`). Cổng `AutoKind.ToyPass` như `ToyChase`; đang ngồi chờ ném nhặt thì chuyền giành quyền. Nhãn đếm là cửa sổ phủ click xuyên qua kiểu nhãn Giờ tập trung, chỉ tạo khi cần, ẩn theo đồ.
+- Khác bản luật: người dùng cầm bóng giữa chuỗi thì chuỗi chờ (mèo ngồi nhìn), thả nhẹ về phía mèo là chuyền tiếp; ném mạnh (ném nhặt) mới kết thúc chuỗi. Lý do: ném nhẹ là một cách chuyền đã duyệt, nếu cầm là hết chuỗi thì không chuyền bằng tay được. "Kỷ lục mới!" chỉ hiện khi chuỗi tự hết (6 giây hoặc bóng lăn qua), không hiện khi bị click mèo, Cất nhanh.
+- Phản ứng ở `PetWindow.ToyReact.cs`, tick trước đuổi M4 và chuyền nên lúc ngơ ngác hai trò đó chờ. Chỉ dùng tư thế sẵn có (Looking, Sitting, Grooming) cùng hai số chỉ phần hình `PetModel.ReactTilt` (nghiêng đầu, độ) và `ReactDip` (hạ đầu, DIP) cộng vào phép đặt đầu trong `PetRenderer`; không vào hàng cảm xúc, không IPC. `!CanPlay` (ngủ, waking, bị kéo, bay, cảm xúc giữ mèo) kết thúc ngay. Hụt: vồ hụt M4 và bóng lăn qua, cách nhau 10 giây. Ngửi: mỗi 2 giây xem có món chưa ngửi, cổng `AutoKind.ToySniff` bằng đúng `ToyInvite`, đi chậm (0,6 tốc độ đi), tới nơi ghi `ToysSniffed` rồi cúi ngửi 1,5 giây và vỗ chân; lần đầu người dùng rủ chơi món mới thì ngửi nhanh 0,5 giây rồi vào trò (`SniffFirst`). Phụ kiện: Lưu trong Tùy chỉnh với phụ kiện khác cái cũ (không tính "Không"), cổng `AutoKind.ToyReact` (không chặn Quiet).
+- Không âm thanh mới (`ball_tap`), không sự kiện IPC mới (`toy_started` mỗi chuỗi).
+- Đã soát ảnh render (PET_RENDER_REVIEW): mèo chờ bóng, ngơ ngác khi bóng lăn qua, cúi ngửi chuột, rửa mặt sau khi đổi phụ kiện. Chưa xem trên desktop thật, chưa bấm chuột thật, chưa thử DPI khác, nhiều màn hình. UiChecks gọi thẳng `ReactToAccessory`, chưa bấm Lưu thật trong Tùy chỉnh. Lực vỗ, tầm, thời gian là ước tính.

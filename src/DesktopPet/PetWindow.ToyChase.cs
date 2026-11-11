@@ -70,6 +70,7 @@ public sealed partial class PetWindow
         if (Blocking(asked) != AutoBlock.None || !CatOnFloor || !ChaseToyWithCat(lure)) return false;
         if (!waiting && pet.Action is not (PetAction.Idle or PetAction.Walking)) return false;
         if (waiting) StopToyFetch(drop: false);
+        if (SniffFirst(lure)) return true; // A first look before playing (PetWindow.ToyReact.cs).
         bool mouse = lure.Id == DesktopToyRules.Mouse;
         if (mouse) chaseWind = lure.WindUp.Winds;
         bool may = mouse ? toyChaseStreak.TryMouse() : !toyChaseStreak.Resting;
@@ -114,7 +115,7 @@ public sealed partial class PetWindow
                     else toy.Feather.Pin(CatCenter + pet.Facing * FeatherPawAhead, pet.Y + settings.Height - FeatherPlume - 2); // By its front paws, not behind the body.
                     PlayPetSound("ball_tap");
                 }
-                else { chase = mouse ? Chase.Run : Chase.Wand; chaseCooldown = 0.6; }
+                else { chase = mouse ? Chase.Run : Chase.Wand; chaseCooldown = 0.6; MissReaction(); }
                 return true;
             case Chase.Hold: // Paws on the feather, or pinning the mouse down.
                 pet.Action = PetAction.Sitting; pet.VX = pet.SmoothedWalkVelocity = 0;

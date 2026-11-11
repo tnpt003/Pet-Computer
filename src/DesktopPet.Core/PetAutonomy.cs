@@ -50,6 +50,9 @@ public enum AutoKind
     ToyFetch,       // Fetching the yarn ball the user threw (allowed in Quiet and the wake cooldown, like the ball game).
     ToyInvite,      // Bringing the yarn ball to the user on its own, to ask for a game.
     ToyChase,       // Chasing the feather wand the user holds or the mouse the user wound (allowed in Quiet and the wake cooldown).
+    ToyPass,        // Batting back the yarn ball the user rolled to it (allowed in Quiet and the wake cooldown).
+    ToySniff,       // Going to sniff a toy it has never seen, on its own (blocked like the fetch invitation).
+    ToyReact,       // A short reaction to the user's doing (a new accessory); allowed in Quiet.
 }
 
 public static class PetAutonomy
@@ -81,6 +84,9 @@ public static class PetAutonomy
         AutoKind.FarmChore => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         AutoKind.ToyFetch => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
         AutoKind.ToyChase => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
+        AutoKind.ToyPass => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
+        AutoKind.ToySniff => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
+        AutoKind.ToyReact => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
         AutoKind.ToyInvite => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };

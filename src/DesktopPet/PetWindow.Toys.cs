@@ -89,6 +89,8 @@ public sealed partial class PetWindow
         toyGameStowing = false;
         StopToyFetch(drop: false); // A ball in the mouth goes back to the basket too.
         StopToyChase();
+        StopToyPass();
+        if (react == React.SniffWalk) StopToyReact();
         foreach (var toy in desktopToys) CloseDesktopThing(toy);
         desktopToys.Clear();
         WriteToyPlaces();
@@ -154,8 +156,9 @@ public sealed partial class PetWindow
 
     private void StowToy(DesktopThing toy)
     {
-        if (toy.Id == DesktopToyRules.Ball) StopToyFetch(drop: false);
+        if (toy.Id == DesktopToyRules.Ball) { StopToyFetch(drop: false); StopToyPass(); }
         if (chaseToy == toy) StopToyChase();
+        if (sniffToy == toy) StopToyReact();
         CloseDesktopThing(toy);
         desktopToys.Remove(toy);
         WriteToyPlaces();
@@ -292,7 +295,9 @@ public sealed partial class PetWindow
         string? why = playing ? L("đang chơi", "in play") : sleeping ? L("mèo đang ngủ", "the cat is asleep in it") : carried ? L("mèo đang ngậm", "in the cat's mouth")
             : full ? L("tối đa 3 món", "3 out at most") : null;
         var item = PetUi.MenuItem(id switch { DesktopToyRules.Box => PetUi.Box, DesktopToyRules.Wand => PetUi.Wand, DesktopToyRules.Mouse => PetUi.WindUpMouse, _ => PetUi.Ball });
-        item.Header = why == null ? name : $"{name} ({why})";
+        // The pass record (M5) is a note, not a reason to grey the row.
+        string? note = why ?? (ballRow && preferences.ToyPassBest > 0 ? L("kỷ lục chuyền", "best pass streak") + " " + preferences.ToyPassBest : null);
+        item.Header = note == null ? name : $"{name} ({note})";
         item.IsCheckable = true; item.IsChecked = isOut; item.IsEnabled = why == null;
         item.Click += (_, _) => { if (ToyIsOut(id)) StowToy(id); else TakeToyOut(id); };
         return item;
@@ -375,7 +380,7 @@ public sealed partial class PetWindow
             else if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }
             // Wound up: it runs (PetWindow.ToyChase.cs); a click while it runs does nothing.
             else if (thing.Id == DesktopToyRules.Mouse) { if (thing.WindUp.Wind(thing.Motion)) PlayPetSound("ball_tap"); }
-            else { thing.Motion.Nudge(ToyCursor(thing).X - thing.Motion.X); PlayPetSound("ball_tap"); }
+            else { thing.Motion.Nudge(ToyCursor(thing).X - thing.Motion.X); PlayPetSound("ball_tap"); PassTouched(thing); } // It may roll to the cat (PetWindow.ToyPass.cs).
             return;
         }
         if (!thing.Held) return;
@@ -391,7 +396,10 @@ public sealed partial class PetWindow
         var (vx, vy) = letGo && !paused ? thing.Tracker.Velocity(2200) : (0.0, 0.0);
         thing.Motion.VX = vx;
         thing.Motion.VY = -vy; // Height goes up, the screen goes down.
-        BallThrown(thing, vx, vy); // A hard throw: the cat may fetch it (PetWindow.ToyFetch.cs).
+        // A hard throw: the cat may fetch it (PetWindow.ToyFetch.cs) and a pass streak ends; a light one may be a pass (PetWindow.ToyPass.cs).
+        if (letGo && !paused && FetchStreak.IsThrow(vx, vy)) StopToyPass();
+        else if (letGo && !paused) PassTouched(thing);
+        BallThrown(thing, vx, vy);
     }
 
     // "Play with ball" with the ball lying out: the game takes over from where it is. On another
@@ -501,6 +509,7 @@ public sealed partial class PetWindow
         TickBoxNap(dt); // PetWindow.ToyBox.cs: also when the basket has just been tidied away.
         GuardToyFetch(dt); // PetWindow.ToyFetch.cs: a fullscreen app or a battle drops the ball before it hides.
         GuardToyChase(dt); // PetWindow.ToyChase.cs: the same for chasing the wand or the mouse.
+        GuardToyPass(dt); // PetWindow.ToyPass.cs: and for passing the ball, with its label.
         if (toyBasket == null) return;
         bool show = ToysMayShow, shown = false;
         foreach (var thing in DesktopThings)

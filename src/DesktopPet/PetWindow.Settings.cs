@@ -176,6 +176,7 @@ public sealed partial class PetWindow
             preferences.Personality = personalities[Math.Max(0, form.Personality.SelectedIndex)]; Title = preferences.Name + " — Desktop Pet";
             behavior.Personality = preferences.Personality;
             preferences.Coat = form.CoatIds[Math.Max(0, form.Coat.SelectedIndex)];
+            string oldAccessory = preferences.Accessory;
             preferences.Accessory = form.AccessoryIds[Math.Max(0, form.Accessory.SelectedIndex)];
             // A day past the month's end (31 February) becomes its last day; both parts are needed.
             int birthMonth = Math.Max(0, form.BirthMonth.SelectedIndex), birthDay = Math.Max(0, form.BirthDay.SelectedIndex);
@@ -183,6 +184,7 @@ public sealed partial class PetWindow
                 ? $"{birthMonth:00}-{Math.Min(birthDay, DateTime.DaysInMonth(2000, birthMonth)):00}" : "";
             preferences.HolidayAccessories = form.HolidayAccessories.IsChecked == true;
             renderer.Coat = PetScene.Coat = preferences.Coat; ApplyAccessory();
+            if (preferences.Accessory is { Length: > 0 } and not "None" && preferences.Accessory != oldAccessory) ReactToAccessory(); // PetWindow.ToyReact.cs
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.Weather = form.Weather.IsChecked == true;

@@ -103,6 +103,38 @@ internal static class DesktopToyTests
         chase.Step(1.01, false);
         check(chase.MiceInARow == 0 && chase.WandPlayed == 0, "Twenty seconds without play: it starts afresh");
 
+        // M5: passing the ball, its shared rest and the reactions' rules.
+        check(ToyPassRules.BatSpeed(160) == 200 && ToyPassRules.BatSpeed(10) == ToyPassRules.MinBat && ToyPassRules.BatSpeed(-2000) == ToyPassRules.MaxBat && ToyPassRules.BatSpeed(double.NaN) == ToyPassRules.MinBat,
+            "The bat is as hard as it takes to stop near the cursor, within limits");
+        check(Math.Abs(ToyPassRules.StopsAt(100, 200) - 260) < 1e-9, "A rolling ball stops about v / 1.25 DIPs on");
+        var rolled = new ToyBall { X = 100, VX = 200 };
+        for (int i = 0; i < 1200; i++) rolled.Step(1 / 120.0, 0, 5000);
+        check(Math.Abs(rolled.X - ToyPassRules.StopsAt(100, 200)) < 12, "...as the ball's own physics does");
+        check(ToyPassRules.BatDirection(900, 500, -1) == 1 && ToyPassRules.BatDirection(100, 500, 1) == -1 && ToyPassRules.BatDirection(530, 500, -1) == -1 && ToyPassRules.BatDirection(470, 500, 1) == 1,
+            "Batted toward the cursor; with the cursor overhead, back the way it came");
+        var passes = new ToyPassCount(3);
+        check(!passes.Bat() && passes.Count == 0, "A bat with no touch from the user is not a pass");
+        passes.Touch(); passes.Touch();
+        check(passes.Bat() && !passes.Bat() && passes.Count == 1, "One touch, one pass");
+        for (int i = 0; i < 3; i++) { passes.Touch(); passes.Bat(); }
+        check(passes.Count == 4 && passes.Best == 4 && !passes.End() && passes.Count == 0 && passes.Best == 4, "A record under five is kept quietly");
+        for (int i = 0; i < 6; i++) { passes.Touch(); passes.Bat(); }
+        check(passes.Best == 6 && passes.End() && !passes.End(), "Five or more beats the record: said once");
+        var shared = new ToyChaseStreak();
+        for (int i = 0; i < 19; i++) shared.Passed();
+        check(!shared.Resting && shared.PassesMade == 19, "Up to twenty passes in a row");
+        shared.Passed();
+        check(shared.Resting && !shared.TryMouse(), "...then the rest, shared with the wand and the mouse");
+        shared.Step(121, false);
+        shared.Pass(60); shared.Wand(29);
+        check(!shared.Resting, "Passing and the wand count apart");
+        shared.Pass(31);
+        check(shared.Resting, "About 90 seconds of passing rests too");
+        check(ToyReactRules.Normalize(new List<string> { "ball", "ghost", "ball", "mouse" })!.SequenceEqual(new[] { "ball", "mouse" }) && ToyReactRules.Normalize(new List<string>()) == null,
+            "Sniffed toys are known ones, each once");
+        check(ToyReactRules.NextToSniff(new[] { "ball", "wand" }, new[] { "ball" }) == "wand" && ToyReactRules.NextToSniff(new[] { "ball" }, new[] { "ball" }) == null && ToyReactRules.NextToSniff(new[] { "box" }, null) == "box",
+            "The next toy to sniff is the first one out it never met");
+
         var feather = new FeatherString();
         for (int i = 0; i < 600; i++) feather.Step(1 / 60.0, 500, 100, 1000);
         check(Math.Abs(feather.X - 500) < 1 && Math.Abs(feather.Y - (100 + FeatherString.Length)) < 1 && feather.Speed < 5, "Held still, the feather hangs on its string under the tip");
@@ -157,6 +189,9 @@ internal static class DesktopToyTests
             check(loaded.ToyBasketShown && loaded.ToyBasketFractionX == 1 && loaded.ToysOut is { Count: 1 } && loaded.ToysOut[0].Monitor == "M" && loaded.ToysOut[0].FractionX == 0.4, "Preferences keep the basket and the toys, cleaned up");
             new PetPreferences { ToyBasketShown = false, ToysOut = new() { new SavedToy { Id = "ball" } } }.Save(path);
             check(PetPreferences.Load(path).ToysOut == null, "A hidden basket has nothing out");
+            new PetPreferences { ToyPassBest = -4, ToysSniffed = new() { "wand", "wand", "spoon" } }.Save(path);
+            var m5 = PetPreferences.Load(path);
+            check(m5.ToyPassBest == 0 && m5.ToysSniffed!.SequenceEqual(new[] { "wand" }), "Preferences keep the pass record and the sniffed toys, cleaned up");
         }
         finally { Directory.Delete(folder, true); }
     }

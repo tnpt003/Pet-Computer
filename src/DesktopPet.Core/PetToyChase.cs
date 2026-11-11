@@ -9,14 +9,31 @@ namespace DesktopPet;
 public sealed class ToyChaseStreak
 {
     public const double WandSeconds = 90, RestSeconds = 120, BreakSeconds = 20, BoredSeconds = 8, MouseWalkSeconds = 20;
-    public const int MouseInARow = 5;
-    private double wand, idle, rest;
-    private int mice;
+    public const int MouseInARow = 5, PassesInARow = 20;
+    private double wand, passing, idle, rest;
+    private int mice, passes;
 
     public bool Resting => rest > 0;
     public double RestLeft => rest;
     public double WandPlayed => wand;
+    public double PassPlayed => passing;
     public int MiceInARow => mice;
+    public int PassesMade => passes;
+
+    // M5 shares the rest: a frame of passing the ball (the 90th second rests), and each pass (the 20th rests).
+    public void Pass(double dt)
+    {
+        if (rest > 0 || !double.IsFinite(dt) || dt <= 0) return;
+        idle = 0;
+        if ((passing += dt) >= WandSeconds) StartRest();
+    }
+
+    public void Passed()
+    {
+        if (rest > 0) return;
+        idle = 0;
+        if (++passes >= PassesInARow) StartRest();
+    }
 
     // A frame of chasing the wand; the 90th second starts the rest.
     public void Wand(double dt)
@@ -35,7 +52,7 @@ public sealed class ToyChaseStreak
         return true;
     }
 
-    private void StartRest() { wand = 0; mice = 0; rest = RestSeconds; }
+    private void StartRest() { wand = passing = 0; mice = passes = 0; rest = RestSeconds; }
 
     // playing: the cat chases one of them this frame. Twenty seconds without: the next chase starts afresh.
     public void Step(double dt, bool playing)
@@ -43,7 +60,7 @@ public sealed class ToyChaseStreak
         if (!double.IsFinite(dt) || dt <= 0) return;
         rest = Math.Max(0, rest - dt);
         if (playing) { idle = 0; return; }
-        if ((idle += dt) >= BreakSeconds) { wand = 0; mice = 0; }
+        if ((idle += dt) >= BreakSeconds) { wand = passing = 0; mice = passes = 0; }
     }
 }
 

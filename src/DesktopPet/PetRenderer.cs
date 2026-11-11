@@ -856,10 +856,10 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         glanceX += p.PettingLean * 3;
         if (p.Gesture == PetAction.ChasingTail) { glanceX -= 4 * p.GestureBlend; glanceY += 2 * p.GestureBlend; } // Eyes on the tail.
         if (p.Climbing) { glanceX = 2; glanceY = -3; } // Eyes on the top edge.
-        double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0) + p.SneezeLift;
+        double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0) + p.SneezeLift + (p.PickedUp || p.Sleeping ? 0 : pet.ReactDip);
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +
             (p.Eating && p.EatTime > 1.3 ? Math.Sin(p.EatTime * 16) * 1.2 : 0)));
-        dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0) + p.SneezeTilt, 55, 49));
+        dc.PushTransform(new RotateTransform(p.PickedUp ? Math.Sin(pet.Pickup.Time * 10) * p.Dizzy * 3 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) : glanceDirection * glanceBlend * 2.5 + (pet.Motion.Ready ? pet.Motion.HeadTilt * p.Influence * pet.Motion.Facing : 0) + p.PettingLean * 7 + (p.Seeking ? Math.Sin(Math.PI * Math.Clamp(pet.ActionTime / PetSettings.AttentionGestureDuration, 0, 1)) * 6 : 0) + p.SneezeTilt + pet.ReactTilt, 55, 49));
         DrawAccessory(dc, AccessoryLayer.Neck);
         dc.PushTransform(new RotateTransform(twitch - 28 * p.AngryBlend - 24 * p.Jolt, 37, 33)); // Angry or a hard landing: ears flatten.
         Triangle(dc, new Point(27, 38), new Point(27, 13), new Point(47, 31), palette.Ear);

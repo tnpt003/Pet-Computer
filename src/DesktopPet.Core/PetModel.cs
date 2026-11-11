@@ -126,6 +126,8 @@ public sealed class PetModel
     public int FarmToolTier;
     public double BatRemaining;
     public double PlayCrouch;
+    // M5 reactions (PetWindow.ToyReact.cs): degrees the head leans, presentation only.
+    public double ReactTilt, ReactDip;
     // Battle Mode, presentation only (the window copies them from BattleSim each frame):
     // the wooden sword, the swing's progress (0..1, negative when not swinging), a short
     // flinch after a hit, and the end-of-battle pose.

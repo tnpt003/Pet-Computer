@@ -82,6 +82,9 @@ public sealed class PetPreferences
     public string? ToyBasketMonitor { get; set; }
     public double? ToyBasketFractionX { get; set; }
     public List<SavedToy>? ToysOut { get; set; }
+    // M5: the longest pass streak (shown in the basket) and the toys the cat has sniffed once.
+    public int ToyPassBest { get; set; }
+    public List<string>? ToysSniffed { get; set; }
     // Where the user dragged the battle HUD, per monitor (device name): its left and top as fractions
     // of the room left in that monitor's work area. A monitor not listed: centred at the top.
     public Dictionary<string, double[]>? BattleHudSpots { get; set; }
@@ -134,6 +137,8 @@ public sealed class PetPreferences
         if (p.TrophyFractionX is double tx) p.TrophyFractionX = double.IsFinite(tx) ? Math.Clamp(tx, 0, 1) : null;
         if (p.ToyBasketFractionX is double bx) p.ToyBasketFractionX = double.IsFinite(bx) ? Math.Clamp(bx, 0, 1) : null;
         p.ToysOut = DesktopToyRules.Normalize(p.ToysOut, p.ToyBasketShown);
+        p.ToyPassBest = Math.Clamp(p.ToyPassBest, 0, 9999);
+        p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
         if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
         return p;
     }

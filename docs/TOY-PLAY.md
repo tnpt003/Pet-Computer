@@ -8,7 +8,7 @@ Người dùng duyệt kế hoạch 2026-11-09. Luật từng mốc viết và d
 | M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Đã có code, còn test tay |
 | M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Đã có code, còn test tay |
 | M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Đã có code, còn test tay |
-| M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Chưa viết luật |
+| M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Đã duyệt luật, chưa code |
 
 Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
@@ -195,3 +195,35 @@ Commit/publish ba2afa7, smoke 3/3 PASS.
 - Hàng giỏ không mờ khi mèo đang đuổi; cất món đang bị đuổi thì mèo thôi đuổi.
 - Đã soát ảnh render (PET_RENDER_REVIEW) cần câu nằm, đang cầm, đang vẩy, lúc mèo giữ lông, chuột đứng và đang chạy. Chưa xem trên desktop thật, chưa kéo chuột thật, chưa thử DPI khác, nhiều màn hình.
 - Đo 11/11 (bản ba2afa7, cùng cách đo M1, thêm tắt AI, 2 vòng): lúc đo máy chỉ chạy khoảng 31 fps cho cả bản M3 12d60f3 không giỏ, nên chỉ so tương đối. FPS trung vị vòng 1, vòng 2: không giỏ 26,6 và 26,1; giỏ, bóng, cần câu, chuột nằm yên 26,9 và 26,9. Ba món nằm yên không làm chậm thêm. Chưa đo được lúc chuột đang chạy hay đang cầm cần câu: click gửi bằng PostMessage không lên dây được chuột. Đo lại khi máy về ~60 fps.
+
+## Luật M5 Chuyền bóng và phản ứng (duyệt 11/11)
+
+### Chuyền bóng (người dùng bắt đầu)
+
+- Chỉ Bóng len đang nằm ngoài. Người dùng bấm bóng (lăn nhẹ ra xa chỗ bấm) hoặc ném nhẹ dưới khoảng 400 DIP/s cho bóng lăn về phía mèo. Ném mạnh hơn vẫn là ném nhặt M3.
+- Mèo tham gia như M4: thức, rảnh (Idle, đang đi, hoặc đang ngồi chờ ở bước cuối của ném nhặt), đứng trên sàn, cùng màn hình với bóng; bóng đang lăn về phía mèo, cách trong khoảng 400 DIP. Mèo bận, bị kéo, đang bay, đang phản ứng, trong trò bóng/laser hoặc đang có chuyến M2/M3/M4 khác thì không tham gia.
+- Mèo quay về phía bóng, hạ người chờ, có thể bước tới tối đa khoảng 150 DIP. Bóng tới chân thì mèo vỗ trả về phía con trỏ, lực tính để bóng dừng gần chỗ con trỏ trên sàn. Con trỏ ở ngay trên mèo (trong khoảng 60 DIP theo chiều ngang) thì trả về hướng bóng vừa tới. Bóng dừng ngắn trước mặt mèo (dưới 120 DIP) thì mèo đi tới vỗ.
+- Mỗi lần mèo vỗ trả sau khi người dùng vừa chạm bóng là một lượt. Từ lượt 2, một nhãn số nhỏ hiện cạnh bóng khoảng 1,5 giây. Kỷ lục lưu trong `preferences.json` và chỉ hiện ở hàng Bóng len trong giỏ ("Kỷ lục chuyền: 12"); không vào Nhật ký.
+- Chuỗi kết thúc khi bóng nằm yên quá 6 giây mà người dùng không chạm, bóng lăn qua mèo, hoặc người dùng cầm bóng. Kỷ lục mới từ 5 lượt trở lên thì nhãn "Kỷ lục mới!".
+- Chuyền liên tục tối đa khoảng 90 giây hoặc 20 lượt, rồi mèo nghỉ 2 phút: chỉ nhìn theo. Thời gian nghỉ dùng chung với M4: mèo mệt vì chơi thì nghỉ, dù vừa chơi món nào.
+- Do người dùng bật nên chạy cả trong Quiet và wake cooldown. Mèo ngủ thì ngủ tiếp. Bấm trái hoặc kéo mèo: dừng, kéo như thường; bấm phải: dừng và mở menu. Cảm xúc tự động chờ. Pause đóng băng. App toàn màn hình, vào trận, rút màn hình, Cất nhanh hoặc cất bóng: dừng.
+- Trò "Chơi bóng" 45 giây giữ nguyên; trong lúc trò chạy không có chuyền.
+- Không có âm thanh mới (dùng `ball_tap`, có cooldown). Không có sự kiện IPC mới; mỗi chuỗi gửi `toy_started` sẵn có một lần.
+
+### Phản ứng
+
+Chung: chỉ là hành động ngắn (tối đa khoảng 2 giây), dùng lại tư thế sẵn có (Looking, Sitting, Grooming), không phải cảm xúc: không vào hàng cảm xúc, không đổi mood, không có IPC mới. Không bao giờ khi mèo ngủ, waking, bị kéo hoặc đang bay. Bấm hoặc kéo mèo hủy ngay; Pause đóng băng. Cảm xúc tự động chờ trong lúc phản ứng; cảm xúc ưu tiên cao thì phản ứng nhường.
+
+1. **Hụt:** vồ hụt lông vũ hoặc chuột, hoặc để bóng chuyền lăn qua, mèo ngơ ngác khoảng 1 giây (nghiêng đầu, nhìn quanh) rồi đuổi tiếp nếu món đó còn đang chơi. Cách nhau ít nhất 10 giây; trong khoảng đó mèo đuổi tiếp luôn.
+2. **Tò mò với đồ mới:** lần đầu mỗi món nằm ngoài desktop, mèo tự đi tới chậm, cúi ngửi khoảng 1,5 giây, chạm thử một chân rồi thôi. Mỗi món một lần, lưu lại. Mèo tự làm nên bị chặn như rủ chơi M3: mèo bận, Quiet, Giờ tập trung, trong trận, đang có việc khác, wake cooldown, người dùng vắng; phải đứng trên sàn, cùng màn hình; đi quá 20 giây chưa tới thì thôi (lần sau thử lại). Nếu lần đầu chính là người dùng rủ chơi món đó thì mèo ngửi nhanh 0,5 giây rồi chơi.
+3. **Phụ kiện mới:** Lưu cài đặt với phụ kiện khác cái cũ thì mèo rửa mặt, lắc đầu, chỉnh mũ khoảng 2 giây. Người dùng đổi nên chạy cả trong Quiet. Mèo đang ngủ thì không phản ứng, cả sau khi thức; mèo bận hoặc trong trận thì bỏ qua.
+
+### Chưa làm ở M5
+
+- Mèo tha chuột sau khi bắt, ăn mừng bằng cảm xúc Happy, chuyền bằng món khác.
+
+### Khi code cần kiểm tra
+
+- Phân biệt bấm bóng để chuyền với bấm bóng trong trò 45 giây và với ném nhặt M3 (ngưỡng 400 DIP/s).
+- Ngửi đồ mới là hành vi tự động mới: giữ đúng cổng như rủ chơi, không đánh thức mèo ngủ.
+- Test lại sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, wake cooldown, ném nhặt M3, đuổi M4 và chuyến tới hộp/đệm.

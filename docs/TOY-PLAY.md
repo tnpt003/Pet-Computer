@@ -185,6 +185,8 @@ Commit/publish 12d60f3, smoke 3/3 PASS.
 
 ### Cách code M4 (11/11)
 
+Commit/publish ba2afa7, smoke 3/3 PASS.
+
 - Luật thuần ở `PetToyChase.cs` (Core), có unit test: `ToyChaseStreak` (90 giây cần câu hoặc 5 lượt chuột rồi nghỉ 120 giây, dùng chung cho hai món; 20 giây không chơi thì đếm lại), `FeatherString` (lông vũ là một điểm trên dây 90 DIP, tính kiểu Verlet 120 bước/giây, trễ sau đầu cần, không xa quá dây, quét trên sàn; `Pin` giữ lông dưới chân mèo tới khi dây căng quá 12 DIP), `WindUpMouse` (lên dây 5 giây, 180 DIP/s, giây cuối chậm dần, quay đầu ở mép màn hình và vùng đất, chạm sàn nhanh hơn 380 DIP/s thì lật 1 giây). Món `wand` và `mouse` trong `DesktopToyRules`.
 - Hai món chung khung cầm, ném, lưu, tránh vùng đất của M1 (`PetWindow.Toys.cs`). Cần câu rơi bằng `StepBox` như hộp. Cửa sổ cần câu 300×240 DIP, tâm cán luôn ở giữa để có chỗ cho dây khi cầm; chỉ phần vẽ nhận click (`ToyWandArt`). Chuột 56×36 (`ToyMouseArt`), bấm không kéo gọi `WindUpMouse.Wind`. Cửa sổ chỉ di chuyển từng khung khi đồ đang được cầm, đang bay, đang chạy hoặc đang lật.
 - Mèo đuổi ở `PetWindow.ToyChase.cs`: `Look` (nghỉ, chỉ nhìn) / `Wand` (nhịp của laser: nhìn, chạy, rình, vồ) / `Run` (chạy nhanh gấp 2,2 theo chuột, vồ khi cách 25–85 DIP) → `Pounce` (cú nhảy thường) → `Hold` (0,8 giây giữ lông cách tâm mèo 42 DIP, hoặc 1 giây đè chuột). Tick ngay sau laser trong `TickFeatures` vì lúc nhảy `CanPlay` sai; ngoài lúc nhảy, `!CanPlay` thì thôi đuổi.
@@ -192,3 +194,4 @@ Commit/publish 12d60f3, smoke 3/3 PASS.
 - Mỗi lượt gửi `toy_started` sẵn có một lần. Âm thanh dùng lại `ball_tap` (lên dây, vồ trúng) và `swoosh` (cầm đồ).
 - Hàng giỏ không mờ khi mèo đang đuổi; cất món đang bị đuổi thì mèo thôi đuổi.
 - Đã soát ảnh render (PET_RENDER_REVIEW) cần câu nằm, đang cầm, đang vẩy, lúc mèo giữ lông, chuột đứng và đang chạy. Chưa xem trên desktop thật, chưa kéo chuột thật, chưa thử DPI khác, nhiều màn hình.
+- Đo 11/11 (bản ba2afa7, cùng cách đo M1, thêm tắt AI, 2 vòng): lúc đo máy chỉ chạy khoảng 31 fps cho cả bản M3 12d60f3 không giỏ, nên chỉ so tương đối. FPS trung vị vòng 1, vòng 2: không giỏ 26,6 và 26,1; giỏ, bóng, cần câu, chuột nằm yên 26,9 và 26,9. Ba món nằm yên không làm chậm thêm. Chưa đo được lúc chuột đang chạy hay đang cầm cần câu: click gửi bằng PostMessage không lên dây được chuột. Đo lại khi máy về ~60 fps.

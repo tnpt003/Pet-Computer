@@ -6,7 +6,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 |---|---|---|
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
-| M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Chưa viết luật |
+| M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Luật chờ duyệt |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
 | M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
 
@@ -120,3 +120,57 @@ Chậu cây là đồ góc sống có physics như trụ cào (chung giới hạ
 - Vồ ra: `PeekLure` lấy món người dùng đang chơi (`ChaseLure` của M4) trong 200 DIP quanh hộp và đủ thấp để vồ; rình 0,5 giây rồi `PounceFromBox` (ToyChase.cs) mở lượt đuổi M4 bằng cú vồ, tính chung lượt chuột và thời gian nghỉ.
 - Sửa kèm (lỗi có sẵn từ M4, test M2 tìm ra): cất chuột rồi lấy ra lại thì lần lên dây đầu có thể bị bỏ qua vì chuột mới đếm số lần lên dây từ 0 mà mèo còn nhớ số của chuột cũ; `NewToy` giờ xóa số nhớ đó.
 - Đã soát ảnh render: chậu 4 dáng, mèo ghé cây, mèo thò đầu trong hộp (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.
+
+## Luật M3 Mốc thân thiết (đề xuất 11/11, chờ duyệt)
+
+### Năm mốc, chỉ đi lên
+
+- Bond 0–100 hiện có (Python giữ, mỗi ngày tăng tối đa 3, giảm tối đa 2, không giảm khi vắng mặt) chia 5 mốc: **Mới quen** (0), **Quen mặt** (20), **Thân** (40), **Rất thân** (60), **Tri kỷ** (80). Bond mới bắt đầu ở 30, tức Quen mặt; lên Tri kỷ cần ít nhất khoảng 17 ngày chơi.
+- Mốc là **mốc cao nhất từng đạt**, không bao giờ tụt: bond có giảm (ném mạnh) thì thanh bond trong Nhật ký giảm, còn mốc và các hành vi đã mở vẫn giữ. Không có áp lực đăng nhập, không phạt khi vắng.
+- Python tính và lưu mốc cao nhất trong `ai-memory.json`; file cũ được tính mốc từ bond hiện tại. "Quên điều mèo đã học" không xóa mốc (giống bond hiện nay).
+
+### Mỗi mốc mở một hành vi
+
+| Mốc | Hành vi mở thêm |
+|---|---|
+| Mới quen | Hành vi hiện có, không đổi |
+| Quen mặt | **Ngó chào**: người dùng quay lại sau ≥10 phút vắng máy, mèo quay đầu về phía con trỏ, vẫy đuôi khoảng 1,5 giây |
+| Thân | **Chuỗi sau khi chơi**: một trò người dùng bật kết thúc tự nhiên (hết 45 giây bóng, hết chuỗi ném nhặt/chuyền, mèo nghỉ sau cần câu/chuột), mèo liếm chân (tư thế chải lông) → vươn vai → đi về chỗ nghỉ đã nhớ (nếu cùng màn hình) hoặc ngồi tại chỗ khoảng 5 giây |
+| Rất thân | **Ra đón**: thay Ngó chào, mèo đi về phía con trỏ trên sàn (tối đa khoảng 8 giây) rồi vẫy chân (tư thế Vẫy chân sẵn có) |
+| Tri kỷ | **Ngủ tựa vào đồ**: khi mèo tự chọn ngủ mà có đồ chơi, đồ góc sống hoặc kỷ vật cùng màn hình trong khoảng 400 DIP, mèo đi tới nằm sát cạnh món đó rồi ngủ (giấc ngủ thường; đệm và hộp vẫn theo luật cũ) |
+
+- Các hành vi cũ giữ nguyên ngưỡng: câu "welcome_back" (bond ≥ 50 sau ≥ 1 giờ), lăn ngửa sau khi vuốt ve (bond ≥ 60, affection ≥ 60).
+- Python quyết định mốc; C# chỉ thực hiện hành vi theo mốc và tự lo thời điểm, đường đi, physics. **Python tắt hoặc lỗi: C# coi như chưa mở hành vi nào** (mốc biết được trong phiên bị xóa khi AI tắt), mèo chạy hành vi local như hiện nay.
+
+### Khi nào hành vi mở khóa được chạy
+
+- Ngó chào và Ra đón: mỗi lần quay lại tối đa một lần, cách nhau ít nhất 30 phút. Mèo đang ngủ (kể cả away nap) thì không bị đánh thức thêm: chờ mèo thức (away nap tự thức khi người dùng quay lại, như đã duyệt), tối đa 30 giây rồi bỏ.
+- Cả bốn hành vi là việc mèo tự làm: chặn khi Quiet, Giờ tập trung, app toàn màn hình, trận và màn hình trận, Pause, mèo bận/bị kéo/đang bay, cảm xúc ưu tiên cao, đang có việc khác (trò, chuyến tới đồ). Chuỗi sau khi chơi tối đa một lần mỗi 5 phút và chung cooldown tự chăm sóc 45 giây.
+- Ngắt như các chuyến tới đồ: click trái/kéo dừng và kéo như thường, click phải dừng và mở menu, cảm xúc ưu tiên cao nhường, Pause đóng băng.
+- Không âm thanh mới; câu nói dùng hệ thống câu nói hiện có (có cooldown, im trong Quiet).
+- Không phải tương tác của người dùng: needs, bond, learning không đổi vì các hành vi này.
+
+### Lên mốc mới
+
+- Lần đầu Python thấy mốc cao hơn, quyết định gửi kèm báo lên mốc một lần. C# hiện vài trái tim nhỏ bay lên trên đầu mèo khoảng 1,5 giây và một câu mới (tình huống `bond_up` trong `ai/lines.json`, vi/en; tiếng Nhật theo luật hiện có rơi về tiếng Anh nếu thiếu).
+- Mèo đang ngủ, bị kéo, đang bay, trong trận hoặc app toàn màn hình: chờ tối đa 10 phút tới lúc mèo rảnh, quá thì chỉ hiện trong Nhật ký. Không phải cảm xúc, không đổi emotion.
+
+### Nhật ký
+
+- Thẻ độ thân thiết hiện tên mốc cao nhất, 5 nấc, khoảng còn lại tới mốc kế, danh sách hành vi đã mở và hành vi kế tiếp (khóa, ghi "Mở ở mốc …").
+- Python tắt: Nhật ký như hiện nay (không có dữ liệu Python thì không có thẻ này).
+
+### Giao thức (thêm trường tùy chọn, không đổi trường cũ)
+
+- Decision thêm `bond_level` (số nguyên 1–5, mốc cao nhất) và `bond_up` (1–5, chỉ có trong một decision khi vừa lên mốc). `diary` thêm `bond_level`. C# bỏ qua giá trị sai mà không từ chối cả decision, như các trường tùy chọn khác.
+- Không có lệnh mới: C# tự chạy hành vi theo mốc nhận được.
+
+### Khi code cần kiểm tra
+
+- Python: tính mốc, không tụt, file cũ, lên mốc chỉ báo một lần, quên-đã-học không xóa mốc, câu `bond_up` vi/en.
+- C#: không mốc khi Python tắt hoặc vừa tắt; sleep lock (không đánh thức), wake, drag, throw, emotion priority, Quiet, Giờ tập trung, fullscreen, trận, Pause; chuỗi sau khi chơi không chạy khi trò bị ngắt; Ngủ tựa vào đồ vẫn là giấc ngủ thường (timer, click thức, kéo được).
+- Soát render trái tim lên mốc, thẻ Nhật ký vi/en/ja.
+
+### Bổ sung ngoại lệ đề xuất (chờ duyệt, ghi vào docs/APPROVED-EXCEPTIONS.md → Hành vi mèo khi duyệt)
+
+Mốc thân thiết: Python chia bond thành 5 mốc chỉ đi lên (Mới quen 0, Quen mặt 20, Thân 40, Rất thân 60, Tri kỷ 80) và gửi `bond_level`/`bond_up` (trường tùy chọn); C# mở theo mốc: Ngó chào khi người dùng quay lại sau ≥10 phút (Quen mặt), chuỗi liếm chân → vươn vai → về chỗ nghỉ sau trò người dùng bật kết thúc tự nhiên (Thân, tối đa 1 lần/5 phút), Ra đón đi về phía con trỏ rồi vẫy chân (Rất thân, thay Ngó chào), ngủ nằm sát đồ vật/kỷ vật trong 400 DIP khi mèo tự chọn ngủ (Tri kỷ, giấc ngủ thường). Tất cả là hành vi tự động: chặn khi Quiet, Giờ tập trung, fullscreen, trận, Pause, bận, cảm xúc ưu tiên cao, việc khác; không đánh thức mèo ngủ; click/kéo/cảm xúc ngắt như thường. Python tắt thì không có hành vi mở khóa. Lên mốc: trái tim nhỏ trên đầu ~1,5 s và một câu, không phải cảm xúc, không âm thanh mới.

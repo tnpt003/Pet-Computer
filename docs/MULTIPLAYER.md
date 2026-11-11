@@ -71,6 +71,14 @@ Chưa xác nhận, mốc 0 phải đo:
 | M3 Trận hai mèo | Chế độ "Trận chung" riêng (mục 6.1): `BattleSim` nhận thêm mèo thứ hai chỉ trong chế độ này, host gửi trạng thái, luật quái nhắm, độ khó, rớt mạng | Luật Trận chung được duyệt; các chế độ một người cho kết quả y như cũ (test hồi quy cùng seed); chơi thử thật hai máy |
 | M4 Phát hành | EULA, ThirdPartyNotices, trang Quyền riêng tư, publish kèm DLL, link mời | Smoke bản phát hành; kiểm không có SDK/mã client trong git |
 
+### 6.0 M0 — trạng thái 11/11
+
+- Code: `tools/EosProbe/` (console .NET 10, không thuộc app). SDK C# 1.19.2.1 ở `.tools/eos-sdk/`, mã ở `secrets/eos.local.json`, cả hai ngoài git. Build: `.tools\dotnet\dotnet.exe build tools\EosProbe\EosProbe.csproj -c Release`. Gói tự chạy cho máy thứ hai: `dotnet publish ... --self-contained -p:PublishSingleFile=true -o artifacts\eos-probe` rồi chép `eos.local.json` vào; ZIP `artifacts\eos-probe.zip` (~40 MB, có mã client: chỉ gửi người tin cậy, không đăng công khai).
+- Phòng dùng LobbyId tự đặt `petcoop-probe-<mã 6 ký tự>` (bỏ chữ dễ nhầm I, L, O, 0, 1) với `EnableJoinById`, vào thẳng bằng `JoinLobbyById`, không cần tìm kiếm. Tối đa 2 người, host không chuyển.
+- **Đã chạy thật trên máy dev:** Device ID login thành công (policy Peer2Peer đủ quyền), tạo phòng thành công, vào phòng mã sai báo `NotFound` rõ ràng, bản đóng gói tự chạy được. NAT máy dev: **Strict** → nối thẳng khó thành công, nhiều khả năng phải đi relay.
+- **Đo lần 1 hai máy (11/11, máy thứ hai điều khiển qua Parsec; người dùng chưa xác nhận hai máy có khác mạng không):** cả hai NAT Strict, cả hai lượt đều **RelayedConnection**, mất 0/40, vào phòng ~1,3 s. Cho nối thẳng: min 14,9 / median 31 ms. Ép relay: min 48,1 / median 63 ms. p90/max 1,3–2,2 s là lỗi cách đo (ping gửi lúc đang mở kết nối bị SDK xếp hàng); bản thử đã sửa chỉ đo ping sau khi kết nối, cần đo lại để có p90 thật.
+- **Cách đo:** ping giữa hai máy khác mạng (một máy không tự ping chính mình được vì cùng Device ID). Cách đo: máy A chạy `host.cmd`, máy B chạy `join.cmd` và nhập mã; mỗi bên đo hai lần (cho nối thẳng, ép relay). Ghi kết quả median/p90 và loại kết nối (Direct/Relayed) vào đây.
+
 ### 6.1 Người dùng chốt 11/11
 
 - **Trận chung là chế độ riêng**, tách khỏi Phiêu lưu, Viễn chinh, Vô tận và trận tự do. Các chế độ một người không đổi luật, số liệu hay cân bằng.

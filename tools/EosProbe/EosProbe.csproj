@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- M0 connection probe for docs/MULTIPLAYER.md. Not part of the pet app build or publish.
+       The EOS SDK is not in git (Epic license): extract the C# SDK into .tools/eos-sdk/. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>$(DefineConstants);EOS_PLATFORM_WINDOWS_64</DefineConstants>
+    <NoWarn>$(NoWarn);CS0618;CS8632;CS0649;CS0169;CS0414</NoWarn>
+    <EosSdkDir>$(MSBuildThisFileDirectory)..\..\.tools\eos-sdk\SDK\</EosSdkDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(EosSdkDir)Source\**\*.cs" Link="EosSdk\%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="$(EosSdkDir)Bin\EOSSDK-Win64-Shipping.dll" Link="EOSSDK-Win64-Shipping.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(EosSdkDir)..\ThirdPartyNotices\ThirdPartySoftwareNotice.txt" Link="ThirdPartySoftwareNotice.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="host.cmd;join.cmd" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="CheckEosSdk" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('$(EosSdkDir)Bin\EOSSDK-Win64-Shipping.dll')"
+           Text="EOS SDK missing: extract the EOS C# SDK zip into .tools\eos-sdk\ (see docs/MULTIPLAYER.md)." />
+  </Target>
+
+</Project>

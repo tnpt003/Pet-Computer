@@ -545,6 +545,7 @@ public sealed partial class PetWindow
         GuardToyFetch(dt); // PetWindow.ToyFetch.cs: a fullscreen app or a battle drops the ball before it hides.
         GuardToyChase(dt); // PetWindow.ToyChase.cs: the same for chasing the wand or the mouse.
         GuardToyPass(dt); // PetWindow.ToyPass.cs: and for passing the ball, with its label.
+        GuardFavorite(); // PetWindow.FavoriteToy.cs: and for a trip to the favourite toy.
         if (toyBasket == null) return;
         bool show = ToysMayShow, shown = false;
         foreach (var thing in DesktopThings)

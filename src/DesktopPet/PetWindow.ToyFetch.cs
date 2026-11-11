@@ -40,9 +40,12 @@ public sealed partial class PetWindow
         bool ours = fetch is Fetch.Wait or Fetch.Watch;
         if (fetch != Fetch.None && !ours) return;
         var asked = PetAutonomy.BlockedBy(AutoKind.ToyFetch);
-        if (ours) asked &= ~AutoBlock.Feature; // Waiting for this very throw.
+        bool yields = FavoriteYields; // Visiting or inviting with a toy: the user's throw wins (PetWindow.FavoriteToy.cs).
+        if (ours || yields) asked &= ~AutoBlock.Feature; // Waiting for this very throw.
         if (Blocking(asked) != AutoBlock.None || !CatOnFloor || !FetchBallWithCat) return;
-        if (!ours && pet.Action is not (PetAction.Idle or PetAction.Walking)) return;
+        if (!ours && !yields && pet.Action is not (PetAction.Idle or PetAction.Walking)) return;
+        if (yields) StopFavorite();
+        if (!ours || fetchInvite) CountToyPlay(DesktopToyRules.Ball); // A new streak, or the first throw after its invitation (M4).
         fetch = Fetch.Watch;
         fetchInvite = fetchLookOnly = false;
         fetchTime = 0;
@@ -80,7 +83,8 @@ public sealed partial class PetWindow
             if (fetchInviteDue < 0) fetchInviteDue = FetchStreak.NextInvite(featureRandom.NextDouble());
             if ((fetchInviteDue -= dt) > 0) return false;
             fetchInviteDue = FetchStreak.NextInvite(featureRandom.NextDouble());
-            if (!InviteToFetch()) return false;
+            if (!InviteToPlay()) return false; // The ball, or the favourite toy (PetWindow.FavoriteToy.cs).
+            if (fetch == Fetch.None) return false;
         }
         if (fetchInvite && EffectiveQuiet) { StopToyFetch(drop: true); return false; }
         var ball = FetchBall!;

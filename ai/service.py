@@ -77,6 +77,10 @@ BOND_HISTORY_DAYS = 30
 # Bond milestones (docs/LIVING-CORNER.md → M3): new, familiar, close, very close, soulmate. The highest
 # one reached is kept and never goes down; C# opens a behaviour per milestone.
 BOND_LEVELS = (0, 20, 40, 60, 80)
+# Favourite toy (docs/LIVING-CORNER.md → M4): rounds the user played with each toy, halved every 7 days.
+# A favourite needs 5 points and 1.3 times the next toy; a new one must beat it 1.3 times, once a day at most.
+TOY_KINDS = ("ball", "wand", "mouse")
+TOY_HALF_LIFE_DAYS, FAVORITE_MIN, FAVORITE_LEAD = 7, 5.0, 1.3
 
 
 def bond_level(bond) -> int:
@@ -162,6 +166,15 @@ class Brain:
         # Older files start at the milestone their bond has reached.
         self.bond_peak = max(int(number(memory.get("bond_peak"), 0, 0, 5)), bond_level(self.needs["bond"]))
         self.bond_up = None  # A milestone just reached, sent once with the next decision.
+        scores = memory.get("toy_scores") if isinstance(memory.get("toy_scores"), dict) else {}
+        self.toy_scores = {key: number(scores.get(key), 0, 0, 1e6) for key in TOY_KINDS}
+        self.toy_scores_at = number(memory.get("toy_scores_at"), 0, 0, 1e11)
+        favorite = memory.get("favorite_toy")
+        self.favorite_toy = favorite if favorite in TOY_KINDS else None
+        day = memory.get("favorite_day")
+        self.favorite_day = day if isinstance(day, str) and len(day) <= 10 else ""
+        self.favorite_new = False  # Just chosen: one line.
+        self.toy_session, self.toy_counts = "", None
         self.greeted = False
         self.interaction_session = ""
         self.interactions = None
@@ -279,6 +292,37 @@ class Brain:
         for key, count in self.battle_delta.items():
             self.battle_totals[key] += count
 
+    def observe_toys(self, observation, wall):
+        """Rounds the user played with each toy since the last observation; the favourite follows the scores."""
+        if self.toy_scores_at and wall > self.toy_scores_at:
+            fade = 0.5 ** ((wall - self.toy_scores_at) / (TOY_HALF_LIFE_DAYS * 86400))
+            self.toy_scores = {key: value * fade for key, value in self.toy_scores.items()}
+        self.toy_scores_at = wall
+        counts = observation.get("toy_plays")
+        session = observation.get("session_id")
+        if isinstance(counts, dict) and isinstance(session, str) and 0 < len(session) <= 64:
+            current = {key: number(counts.get(key), 0, 0, 1e12) for key in TOY_KINDS}
+            if self.toy_counts is not None and session == self.toy_session:  # The first report is a baseline.
+                for key in TOY_KINDS:
+                    self.toy_scores[key] += max(0, current[key] - self.toy_counts[key])
+            self.toy_session, self.toy_counts = session, current
+        ranked = sorted(TOY_KINDS, key=lambda key: self.toy_scores[key], reverse=True)
+        top, second = ranked[0], ranked[1]
+        score = self.toy_scores[top]
+        today = time.strftime("%Y-%m-%d", time.localtime(wall))
+        if self.favorite_toy is None:
+            choose = score >= FAVORITE_MIN and score > FAVORITE_LEAD * self.toy_scores[second]
+        else:
+            choose = (top != self.favorite_toy and score >= FAVORITE_MIN and score > FAVORITE_LEAD * self.toy_scores[self.favorite_toy]
+                      and self.favorite_day != today)
+        if choose:
+            self.favorite_toy, self.favorite_day, self.favorite_new = top, today, True
+
+    def forget_toys(self):
+        """Forgetting what the cat learned also forgets its favourite toy (unlike the bond milestone)."""
+        self.toy_scores = {key: 0.0 for key in TOY_KINDS}
+        self.favorite_toy, self.favorite_day, self.favorite_new = None, "", False
+
     def observe_farm(self, observation):
         """Farm moments since the last observation of this C# session; only ever a line, nothing is kept."""
         self.farm_delta = {key: 0 for key in FARM_KEYS}
@@ -346,6 +390,7 @@ class Brain:
         reset = observation.get("learning_reset")
         if isinstance(reset, str) and 0 < len(reset) <= 64 and reset != self.learning_reset:
             self.learner.clear()
+            self.forget_toys()
             self.learning_reset = reset
         reward = sum(REWARDS.get(key, 0) * count for key, count in deltas.items())
         emotion = observation.get("emotion")
@@ -379,6 +424,7 @@ class Brain:
                      "farm_goldfish" if farm["goldfish"] else "farm_level_up" if farm["levels"] else
                      "farm_delivered" if farm["deliveries"] else
                      "bond_up" if self.bond_up else
+                     "favorite_toy" if self.favorite_new else
                      "thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
                      "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
                      "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
@@ -438,6 +484,7 @@ class Brain:
         self.observe_battles(observation)
         self.observe_farm(observation)
         self.learn_from_reactions(observation, deltas, now)
+        self.observe_toys(observation, self.wall_clock())  # After a "forget what it learned", which clears the scores.
         ctx = learning_context(observation.get("local_hour"), self.needs, self.energy)
         greeting = None
         hunger, boredom = self.needs["hunger"], self.needs["boredom"]
@@ -549,6 +596,8 @@ class Brain:
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
                            habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
                            bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen), bond_peak=self.bond_peak,
+                           toy_scores={k: round(v, 3) for k, v in self.toy_scores.items()}, toy_scores_at=round(self.toy_scores_at),
+                           favorite_toy=self.favorite_toy, favorite_day=self.favorite_day,
                            learned=self.learner.export(), learning_reset=self.learning_reset,
                            **{key: round(self.needs[key], 3) for key in NEED_KEYS})
         self.dirty = True
@@ -572,6 +621,9 @@ class Brain:
         if self.bond_up:
             decision["bond_up"] = self.bond_up  # Once: C# shows a few hearts.
             self.bond_up = None
+        if self.favorite_toy:
+            decision["favorite_toy"] = self.favorite_toy  # C# opens the favourite-toy behaviours (M4).
+        self.favorite_new = False
         return decision
 
     def diary(self, wall) -> dict:
@@ -582,6 +634,7 @@ class Brain:
                 "petted": int(t["petted"]), "treats": int(t["treats"]), "play": int(t["toy"] + t["ball_clicks"]),
                 "rough_throws": int(t["rough_throws"]), "clicks": int(t["clicked"]), "bond": round(self.needs["bond"], 1),
                 "bond_level": self.bond_peak,
+                "favorite_toy": self.favorite_toy, "toy_plays": {k: int(round(v)) for k, v in self.toy_scores.items()},
                 "battles_won": int(self.battle_totals["won"]), "battles_lost": int(self.battle_totals["lost"]),
                 "combos": int(self.battle_totals["combos"]),
                 "bond_history": [value for _, value in sorted(self.bond_history.items())[-14:]],

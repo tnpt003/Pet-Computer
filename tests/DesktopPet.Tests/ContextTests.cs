@@ -87,6 +87,16 @@ internal static class ContextTests
               AiProtocol.Parse(reply + ",\"bond_level\":9,\"bond_up\":\"x\"}", 3) is { BondLevel: null, BondUp: null, Command: "IDLE" } &&
               AiProtocol.Parse(reply + ",\"bond_level\":2.5,\"bond_up\":0}", 3) is { BondLevel: null, BondUp: null },
             "bond_level and bond_up are read when 1–5 and otherwise dropped, keeping the decision");
+        // Favourite toy (docs/LIVING-CORNER.md → M4): ball, wand or mouse; anything else dropped, the decision kept.
+        check(AiProtocol.Parse(reply + ",\"favorite_toy\":\"mouse\"}", 3).FavoriteToy == "mouse" &&
+              AiProtocol.Parse(reply + "}", 3).FavoriteToy == null &&
+              AiProtocol.Parse(reply + ",\"favorite_toy\":\"laser\"}", 3) is { FavoriteToy: null, Command: "IDLE" } &&
+              AiProtocol.Parse(reply + ",\"favorite_toy\":3}", 3).FavoriteToy == null,
+            "favorite_toy is read for the three toys and otherwise dropped, keeping the decision");
+        string sent = System.Text.Json.JsonSerializer.Serialize(new PetObservation("Idle", true, 0, 0, "", "", ToyPlays: new ToyPlayReport(2, 5, 1)), AiProtocol.Json);
+        check(sent.Contains("\"toy_plays\":{\"ball\":2,\"wand\":5,\"mouse\":1}"), "The observation sends the rounds per toy as toy_plays");
+        check(FavoriteToyRules.IsPlayToy(DesktopToyRules.Mouse) && !FavoriteToyRules.IsPlayToy(DesktopToyRules.Box) && !FavoriteToyRules.IsPlayToy(null)
+              && FavoriteToyRules.NextVisit(0) == 600 && FavoriteToyRules.NextVisit(1) == 900, "Only the three play toys count; a visit every 10–15 minutes");
         check(PetBondRules.Name(1, "vi") == "Mới quen" && PetBondRules.Name(5, "en") == "Soulmates" && PetBondRules.Name(3, "en") == "Good friends"
               && PetBondRules.Opens(1, "en") == null && PetBondRules.Opens(4, "vi") == "Ra đón khi sen quay lại" && PetBondRules.Thresholds[4] == 80,
             "Five milestones with names; each after the first opens one behaviour");

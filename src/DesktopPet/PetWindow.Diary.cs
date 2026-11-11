@@ -70,6 +70,8 @@ public sealed partial class PetWindow
                 $"Last {diary.BondHistory.Length} days: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}")
             : L("Biểu đồ sẽ hiện sau ngày thứ hai.", "The chart appears from the second day."), PetUi.Muted));
 
+        if (diary.ToyPlays is { } plays) AddFavoriteToyCard(diary.FavoriteToy, plays);
+
         AddFarmCard();
 
         var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"), PetMotif.Clock);
@@ -215,6 +217,17 @@ public sealed partial class PetWindow
             }
         }
         return canvas;
+    }
+
+    // The favourite toy (docs/LIVING-CORNER.md → M4): its name and the recent rounds of the three toys.
+    private void AddFavoriteToyCard(string? favorite, AI.ToyPlayReport plays)
+    {
+        var card = AddCard(L("Món yêu thích", "Favourite toy"), PetMotif.Ball);
+        card.Children.Add(TextLine(favorite != null
+            ? LF($"Mèo thích nhất: {PlayToyName(favorite)}", $"The cat's favourite: {PlayToyName(favorite)}")
+            : L("Chưa có món yêu thích: chơi với mèo nhiều hơn một món.", "No favourite yet: play with the cat more with one toy.")));
+        card.Children.Add(TextLine(LF($"Lượt gần đây: {PlayToyName(DesktopToyRules.Ball)} {plays.Ball} · {PlayToyName(DesktopToyRules.Wand)} {plays.Wand} · {PlayToyName(DesktopToyRules.Mouse)} {plays.Mouse}",
+            $"Recent rounds: {PlayToyName(DesktopToyRules.Ball)} {plays.Ball} · {PlayToyName(DesktopToyRules.Wand)} {plays.Wand} · {PlayToyName(DesktopToyRules.Mouse)} {plays.Mouse}"), PetUi.Muted));
     }
 
     // Bond milestones (docs/LIVING-CORNER.md → M3): the highest reached of five, what is open, what comes next.

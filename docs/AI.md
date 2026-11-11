@@ -467,6 +467,19 @@ reaches a new milestone also carries `bond_up` and may say a `bond_up` line. `di
 C# drops values outside 1–5 without rejecting the decision. C# opens one behaviour per milestone and times
 it itself (no new command); with Python off or not answering it treats the cat as having none.
 
+## Favourite toy (1.6, docs/LIVING-CORNER.md → M4)
+
+Each observation carries `toy_plays` ({`ball`, `wand`, `mouse`}): cumulative per-session rounds the user
+started (a fetch or passing streak with the yarn ball, a chase after the wand or the mouse; the cat's own
+invitations are not counted). The first report of a session is a baseline, as for `interactions`. Python adds
+the differences to a score per toy in `ai-memory.json` (`toy_scores`, `toy_scores_at`), halving them every
+7 days, and keeps `favorite_toy`: at least 5 points and 1.3 times the next toy; a new one must beat it 1.3
+times and changes at most once a local day (`favorite_day`). "Forget what it learned" clears the scores and
+the favourite. A decision carries `favorite_toy` while there is one, and a `favorite_toy` line may be said
+once when it is first chosen. `diary.favorite_toy` and `diary.toy_plays` (recent rounded scores) feed the
+diary card. C# drops anything but the three ids without rejecting the decision; with Python off or not
+answering it has no favourite and the cat behaves as before.
+
 ## Gestures, pending lines and the diary (2026-10-13)
 
 **Gestures.** Five short, stationary poses: Kneading, RollingOver, ChasingTail, Scratching

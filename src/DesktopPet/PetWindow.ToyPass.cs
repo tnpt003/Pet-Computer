@@ -56,17 +56,17 @@ public sealed partial class PetWindow
         // A touch the cat did not answer goes stale once the ball lies still.
         if (!RollingToCat(ball)) { if (ball.Motion.AtRest && !ball.Press) count.End(); return false; }
         var asked = PetAutonomy.BlockedBy(AutoKind.ToyPass);
-        bool waiting = fetch == Fetch.Wait; // Sitting after a fetch: the pass wins.
+        bool waiting = fetch == Fetch.Wait || FavoriteYields; // Sitting after a fetch, or by a toy (M4): the pass wins.
         if (waiting) asked &= ~AutoBlock.Feature;
         if (Blocking(asked) != AutoBlock.None || !CatOnFloor) return false;
         if (!waiting && pet.Action is not (PetAction.Idle or PetAction.Walking or PetAction.Sitting or PetAction.Looking)) return false;
-        if (waiting) StopToyFetch(drop: false);
+        if (waiting) { StopToyFetch(drop: false); StopFavorite(); }
         if (SniffFirst(ball)) return true; // A first look before playing (PetWindow.ToyReact.cs).
         pass = toyChaseStreak.Resting ? Pass.Look : Pass.Ready;
         passTime = passIdle = 0;
         passAnchor = pet.X;
         passCameFrom = ball.Motion.X < CatCenter ? -1 : 1;
-        if (pass == Pass.Ready) Interact("toy_started"); // Counts as play for Python, like the laser.
+        if (pass == Pass.Ready) { Interact("toy_started"); CountToyPlay(DesktopToyRules.Ball); } // Counts as play for Python, like the laser; a ball round (M4).
         HoldStill(PetAction.Looking, passCameFrom);
         return true;
     }

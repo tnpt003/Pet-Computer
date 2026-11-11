@@ -125,6 +125,13 @@ internal static class GestureTests
             "Diary battle totals are read, and invalid ones read as 0 without dropping the diary");
         check(AiProtocol.Parse(head + diaryBody + ",\"bond_level\":4}}", 3).Diary is { BondLevel: 4 } && AiProtocol.Parse(head + diaryBody + ",\"bond_level\":7}}", 3).Diary is { BondLevel: 0, Petted: 1 },
             "The diary carries the bond milestone; a bad one reads as none");
+        // Favourite toy (docs/LIVING-CORNER.md → M4): optional in the diary, bad values dropped.
+        check(AiProtocol.Parse(head + diaryBody + ",\"favorite_toy\":\"wand\",\"toy_plays\":{\"ball\":3,\"wand\":6,\"mouse\":0}}}", 3).Diary is
+                  { FavoriteToy: "wand", ToyPlays: { Ball: 3, Wand: 6, Mouse: 0 } } &&
+              AiProtocol.Parse(head + diaryBody + ",\"favorite_toy\":\"laser\",\"toy_plays\":{\"ball\":-1,\"wand\":6,\"mouse\":0}}}", 3).Diary is
+                  { FavoriteToy: null, ToyPlays: null, Petted: 1 } &&
+              withDiary.Diary is { FavoriteToy: null, ToyPlays: null },
+            "The diary carries the favourite toy and recent rounds; bad ones read as none");
         foreach (string bad in new[] { "\"diary\":7", "\"diary\":{\"days\":0,\"since\":\"x\"}",
                      "\"diary\":{\"days\":2,\"since\":\"2026-10-01\",\"petted\":1,\"treats\":1,\"play\":1,\"rough_throws\":1,\"clicks\":1,\"bond\":1,\"bond_history\":[1],\"habits\":[1,2]}",
                      "\"diary\":{\"days\":2,\"since\":\"2026-10-01\",\"petted\":-1,\"treats\":1,\"play\":1,\"rough_throws\":1,\"clicks\":1,\"bond\":1,\"bond_history\":[1],\"habits\":" + habits + "}" })

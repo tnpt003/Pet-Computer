@@ -651,7 +651,7 @@ public sealed partial class PetWindow : Window
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
             preferences.Speech, preferences.Language, preferences.Chattiness, preferences.Name, EffectiveQuiet,
             pet.Speech.LastShown is { } shown ? new SpeechReport(shown.Id, Math.Round(shown.Age, 2)) : null, preferences.LearningReset,
-            breaks.Due && CanDeliverBreak, ContextSnapshot(), preferences.Birthday, BattleReport, FarmReport);
+            breaks.Due && CanDeliverBreak, ContextSnapshot(), preferences.Birthday, BattleReport, FarmReport, ToyPlays);
         try
         {
             // Even a future cached source that completes synchronously must wait until
@@ -663,6 +663,7 @@ public sealed partial class PetWindow : Window
             if (decision == null && !closed && ReferenceEquals(source, ai)) ForgetBond();
             if (decision == null || closed || !ReferenceEquals(source, ai)) return;
             ApplyBondDecision(decision);
+            ApplyFavoriteDecision(decision); // The favourite toy (PetWindow.FavoriteToy.cs).
             if (decision.Needs != null) aiNeeds = decision.Needs;
             if (decision.Learned != null) aiLearned = decision.Learned;
             if (decision.Diary != null) { aiDiary = decision.Diary; RefreshDiary(); }

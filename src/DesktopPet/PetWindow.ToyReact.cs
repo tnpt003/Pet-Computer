@@ -73,10 +73,16 @@ public sealed partial class PetWindow
         var toy = desktopToys.FirstOrDefault(t => !Sniffed(t.Id) && ToysMayShow && t.Window?.IsVisible == true && t.Monitor == monitor
             && !t.Held && !t.Press && !t.Carried && !t.InGame && t.Motion.AtRest && !(t.Id == DesktopToyRules.Box && BoxOccupied));
         if (toy == null) return false;
+        if (WeighNewToys(toy)) return true; // Two new toys close together: it looks at both first (PetWindow.FavoriteToy.cs).
+        StartSniffWalk(toy);
+        return true;
+    }
+
+    private void StartSniffWalk(DesktopThing toy)
+    {
         sniffToy = toy;
         StartReaction(React.SniffWalk, ToyReactRules.SniffWalkSeconds, toy.Motion.X < CatCenter ? -1 : 1);
         System.Diagnostics.Trace.WriteLine($"The cat goes to sniff the new {toy.Id}.");
-        return true;
     }
 
     // From TickFeatures, before the chase and the pass, so a miss holds them a moment. True while it owns the cat.

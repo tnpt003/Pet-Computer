@@ -12,7 +12,13 @@ public sealed record PetObservation(
     double? LocalHour = null, PetInteractions? Interactions = null,
     bool SpeechEnabled = false, string Language = "vi", int Chattiness = 1, string PetName = "", bool Quiet = false,
     SpeechReport? LastSpeech = null, string LearningReset = "",
-    bool BreakDue = false, ContextReport? Context = null, string Birthday = "", BattleReport? Battles = null, FarmReport? Farm = null);
+    bool BreakDue = false, ContextReport? Context = null, string Birthday = "", BattleReport? Battles = null, FarmReport? Farm = null,
+    ToyPlayReport? ToyPlays = null);
+
+// Cumulative per-session rounds the user played with each toy (docs/LIVING-CORNER.md → M4): a fetch streak or
+// a passing streak with the yarn ball, a chase after the feather wand or the wind-up mouse. Python keeps the
+// favourite toy from these; the cat's own invitations are not counted. The diary sends back recent scores.
+public sealed record ToyPlayReport(long Ball, long Wand, long Mouse);
 
 // Cumulative per-session Battle Mode results (finished battles only; "End" does not count).
 // Python turns the differences into diary totals and a line; the fight itself stays in C#.
@@ -36,11 +42,12 @@ public sealed record PetLearned(string[] Likes, string[] Dislikes);
 
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
     string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null, PetDiary? Diary = null,
-    string? SpecialDay = null, int? BondLevel = null, int? BondUp = null);
+    string? SpecialDay = null, int? BondLevel = null, int? BondUp = null, string? FavoriteToy = null);
 
 // Lifetime summary kept by Python for the diary window (display only).
 public sealed record PetDiary(int Days, string Since, long Petted, long Treats, long Play, long RoughThrows, long Clicks,
-    double Bond, double[] BondHistory, double[] Habits, long BattlesWon = 0, long BattlesLost = 0, long Combos = 0, int BondLevel = 0);
+    double Bond, double[] BondHistory, double[] Habits, long BattlesWon = 0, long BattlesLost = 0, long Combos = 0, int BondLevel = 0,
+    string? FavoriteToy = null, ToyPlayReport? ToyPlays = null);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -82,7 +89,21 @@ public static class AiProtocol
             System.Text.RegularExpressions.Regex.IsMatch(day.GetString()!, "^[a-z][a-z0-9_]{0,31}$") ? day.GetString() : null;
         // Bond milestones (docs/LIVING-CORNER.md → M3): 1–5, the highest reached, and one just reached.
         return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root), ParseDiary(root),
-            specialDay, Level(root, "bond_level"), Level(root, "bond_up"));
+            specialDay, Level(root, "bond_level"), Level(root, "bond_up"), FavoriteToy(root));
+    }
+
+    // The favourite toy (docs/LIVING-CORNER.md → M4): ball, wand or mouse; anything else is dropped.
+    private static string? FavoriteToy(JsonElement root) =>
+        root.TryGetProperty("favorite_toy", out var value) && value.ValueKind == JsonValueKind.String && value.GetString() is "ball" or "wand" or "mouse"
+            ? value.GetString() : null;
+
+    private static ToyPlayReport? ToyPlays(JsonElement root)
+    {
+        if (!root.TryGetProperty("toy_plays", out var plays) || plays.ValueKind != JsonValueKind.Object) return null;
+        long? Count(string name) => plays.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number &&
+            value.TryGetDouble(out double parsed) && double.IsFinite(parsed) && parsed >= 0 && parsed <= 1e12 ? (long)Math.Round(parsed) : null;
+        var (ball, wand, mouse) = (Count("ball"), Count("wand"), Count("mouse"));
+        return ball.HasValue && wand.HasValue && mouse.HasValue ? new ToyPlayReport(ball.Value, wand.Value, mouse.Value) : null;
     }
 
     // A bond milestone 1–5; anything else is dropped.
@@ -144,7 +165,7 @@ public static class AiProtocol
         // Battle totals are newer and optional: missing or invalid counts read as 0.
         return new PetDiary((int)days.Value, since, (long)petted.Value, (long)treats.Value, (long)play.Value, (long)rough.Value,
             (long)clicks.Value, bond.Value, history, habits, (long)(Number("battles_won", 1e12) ?? 0), (long)(Number("battles_lost", 1e12) ?? 0),
-            (long)(Number("combos", 1e12) ?? 0), Level(diary, "bond_level") ?? 0);
+            (long)(Number("combos", 1e12) ?? 0), Level(diary, "bond_level") ?? 0, FavoriteToy(diary), ToyPlays(diary));
     }
 
     private static PetNeeds? ParseNeeds(JsonElement root)

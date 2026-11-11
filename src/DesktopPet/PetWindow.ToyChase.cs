@@ -44,11 +44,12 @@ public sealed partial class PetWindow
     private bool ChaseToyWithCat(DesktopThing toy) => ToysMayShow && toy.Window?.IsVisible == true && toy.Monitor == CurrentMonitor().DeviceName;
 
     // The toy the user is playing with right now, if any: the wand in hand, or a mouse wound up and not chased yet.
+    // Both at once: the favourite toy first (living corner M4), else the wand as before.
     private DesktopThing? ChaseLure()
     {
-        if (DesktopToy(DesktopToyRules.Wand) is { Held: true } wand && wand.Feather.Ready) return wand;
-        if (DesktopToy(DesktopToyRules.Mouse) is { } mouse && mouse.WindUp.Running && !mouse.Held && !mouse.Press && mouse.WindUp.Winds != chaseWind) return mouse;
-        return null;
+        var wand = DesktopToy(DesktopToyRules.Wand) is { Held: true } w && w.Feather.Ready ? w : null;
+        var mouse = DesktopToy(DesktopToyRules.Mouse) is { } m && m.WindUp.Running && !m.Held && !m.Press && m.WindUp.Winds != chaseWind ? m : null;
+        return favoriteToy == DesktopToyRules.Mouse ? mouse ?? wand : wand ?? mouse;
     }
 
     // Every frame from TickDesktopToys, before the toys move: the rest timer, and what ends a chase whatever
@@ -65,11 +66,11 @@ public sealed partial class PetWindow
     {
         if (ChaseLure() is not { } lure) return false;
         var asked = PetAutonomy.BlockedBy(AutoKind.ToyChase);
-        bool waiting = fetch == Fetch.Wait; // Sitting after a fetch: the new toy wins.
+        bool waiting = fetch == Fetch.Wait || FavoriteYields; // Sitting after a fetch, or by a toy (M4): the new toy wins.
         if (waiting) asked &= ~AutoBlock.Feature;
         if (Blocking(asked) != AutoBlock.None || !CatOnFloor || !ChaseToyWithCat(lure)) return false;
         if (!waiting && pet.Action is not (PetAction.Idle or PetAction.Walking)) return false;
-        if (waiting) StopToyFetch(drop: false);
+        if (waiting) { StopToyFetch(drop: false); StopFavorite(); }
         if (SniffFirst(lure)) return true; // A first look before playing (PetWindow.ToyReact.cs).
         bool mouse = lure.Id == DesktopToyRules.Mouse;
         if (mouse) chaseWind = lure.WindUp.Winds;
@@ -79,7 +80,7 @@ public sealed partial class PetWindow
         chaseTime = chaseStill = chaseHold = chaseCooldown = 0;
         chaseBored = false;
         wandRhythm.Reset();
-        if (may) Interact("toy_started"); // Counts as play for Python, like the laser.
+        if (may) { Interact("toy_started"); CountToyPlay(lure.Id); } // Counts as play for Python, like the laser; a round of this toy (M4).
         HoldStill(PetAction.Looking, ChaseTarget(lure).X < CatCenter ? -1 : 1);
         return true;
     }
@@ -184,6 +185,7 @@ public sealed partial class PetWindow
         chaseBored = false;
         wandRhythm.Reset();
         Interact("toy_started");
+        CountToyPlay(lure.Id);
         pet.Facing = ChaseTarget(lure).X < CatCenter ? -1 : 1;
         Pounce(mouse ? ChaseRunScale : 1);
         System.Diagnostics.Trace.WriteLine($"The cat pounces out of the box at the {lure.Id}.");

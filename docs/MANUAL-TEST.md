@@ -1634,3 +1634,12 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Lên mốc mới: vài trái tim nhỏ bay trên đầu mèo và một câu "… thân hơn rồi" (nếu bật câu nói). Mèo đang ngủ thì chờ tới lúc thức.
 - [ ] Quiet, Giờ tập trung, app toàn màn hình, trong trận: không có Ngó chào, Ra đón, chuỗi sau khi chơi.
 - [ ] Đọc tên mốc tiếng Nhật "はじめまして", "顔なじみ", "なかよし", "大のなかよし", "心の友" và câu `bond_up` tiếng Nhật (chưa ai duyệt).
+
+## Góc sống M4 — Món yêu thích (12/11, chỉ bản 1.6, cần bật AI)
+- [ ] Chơi với một món (ví dụ Cần câu) ít nhất 5 lượt, nhiều hơn hẳn hai món kia: Nhật ký → thẻ "Món yêu thích" hiện tên món và số lượt ba món; mèo nói một câu "… thích món này nhất" (nếu bật câu nói). Tắt AI: không có thẻ này.
+- [ ] Món yêu thích nằm ngoài desktop cùng màn hình: khoảng 10–15 phút mèo tự đi tới, ngửi hoặc vỗ chân rồi ngồi cạnh ~5 giây; món không nhúc nhích.
+- [ ] Món yêu thích là Cần câu hoặc Chuột: tới lượt rủ chơi (8–15 phút), mèo ngồi cạnh món, nhìn về con trỏ, thỉnh thoảng vỗ món, chờ 20 giây. Cầm cần câu vẩy hoặc click lên dây chuột trong lúc đó: mèo vào trò đuổi như thường. Không chơi: mèo đi việc khác. Món yêu thích là Bóng len hoặc chưa có: mèo tha bóng như M3.
+- [ ] Đặt hai món chơi được cách nhau dưới 250 DIP: khi mèo tự đi tới (ghé, rủ chơi), mèo dừng ở giữa, nhìn món này rồi món kia rồi tới món yêu thích.
+- [ ] Cầm cần câu và lên dây chuột cùng lúc: mèo đuổi món yêu thích.
+- [ ] Đang ghé/rủ: click trái dừng và kéo như thường, click phải mở menu; Quiet, Giờ tập trung, app toàn màn hình, trận, mèo ngủ: không ghé, không rủ.
+- [ ] Đọc câu `favorite_toy` và chữ thẻ Nhật ký tiếng Nhật (chưa ai duyệt).

@@ -39,6 +39,7 @@ public sealed partial class PetWindow
         bondLevel = 0;
         greetWait = afterPlayWait = bondUpWait = -1;
         StopBondAct();
+        ForgetFavorite(); // Nor a favourite toy (PetWindow.FavoriteToy.cs, M4).
     }
 
     // From TickContext, once a second: how long the user has been away, and a greeting when they come back.

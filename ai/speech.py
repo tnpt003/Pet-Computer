@@ -26,6 +26,7 @@ CATEGORY_NAMES = {
     "farm_level_up": {"vi": "câu khi nông trại lên cấp", "en": "a farm level-up line", "ja": "農場レベルアップのセリフ"},
     "farm_goldfish": {"vi": "câu khi câu được Cá vàng", "en": "a golden-fish line", "ja": "金の魚が釣れたときのセリフ"},
     "farm_delivered": {"vi": "câu khi giao hàng cho xe", "en": "a stall-delivery line", "ja": "屋台に納品したときのセリフ"},
+    "favorite_toy": {"vi": "câu khi có món yêu thích", "en": "a favourite-toy line", "ja": "お気に入りのおもちゃのセリフ"},
     "break": {"vi": "câu nhắc nghỉ", "en": "a break reminder", "ja": "休憩のお知らせ"},
     "wake_up": {"vi": "câu khi thức dậy", "en": "a wake-up line", "ja": "起きたときのセリフ"},
     "sleepy": {"vi": "câu buồn ngủ", "en": "a sleepy line", "ja": "眠いときのセリフ"},

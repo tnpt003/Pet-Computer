@@ -10,7 +10,7 @@ internal static class AutonomyTests
         check(kinds.All(k => PetAutonomy.MayAct(k, AutoBlock.None)), "Nothing blocks any kind when no condition holds");
 
         // What the cat does on its own stops in Quiet and with a fullscreen app (AGENTS.md).
-        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore, AutoKind.ToyInvite, AutoKind.ToySniff, AutoKind.PostScratch, AutoKind.PlantVisit, AutoKind.BoxPeek, AutoKind.BondAct };
+        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore, AutoKind.ToyInvite, AutoKind.ToySniff, AutoKind.PostScratch, AutoKind.PlantVisit, AutoKind.BoxPeek, AutoKind.BondAct, AutoKind.FavoriteVisit };
         check(own.All(k => Blocks(k, AutoBlock.Quiet) && Blocks(k, AutoBlock.Fullscreen)), "Autonomous kinds stop in Quiet and with a fullscreen app");
         // The user asked: Quiet does not stop it; a fullscreen app still stops the games.
         var asked = new[] { AutoKind.Treat, AutoKind.UserGame, AutoKind.CallToLook };
@@ -36,6 +36,7 @@ internal static class AutonomyTests
             && Blocks(AutoKind.ToyFetch, AutoBlock.Feature) && Blocks(AutoKind.ToyFetch, AutoBlock.Unsettled), "Fetching a throw works in Quiet, not asleep, busy or with a fullscreen app");
         check(new[] { AutoBlock.Quiet, AutoBlock.Fullscreen, AutoBlock.WakeCooldown, AutoBlock.Away, AutoBlock.Feature, AutoBlock.Battle, AutoBlock.BattleScreens }.All(b => Blocks(AutoKind.ToyInvite, b)),
             "Bringing the ball on its own waits like the box nap, and for the user");
+        check(PetAutonomy.BlockedBy(AutoKind.FavoriteVisit) == PetAutonomy.BlockedBy(AutoKind.ToyInvite), "Visiting the favourite toy is blocked like bringing the ball (living corner M4)");
         // M4: chasing the wand or the mouse the user plays with.
         check(!Blocks(AutoKind.ToyChase, AutoBlock.Quiet) && !Blocks(AutoKind.ToyChase, AutoBlock.WakeCooldown) && !Blocks(AutoKind.ToyChase, AutoBlock.Away)
             && new[] { AutoBlock.Fullscreen, AutoBlock.Feature, AutoBlock.Unsettled, AutoBlock.Held, AutoBlock.Paused, AutoBlock.Battle }.All(b => Blocks(AutoKind.ToyChase, b)),

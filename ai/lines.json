@@ -283,6 +283,29 @@
       {"text": "ご主人がいると、{name}安心するよ。", "personality": ["Calm"]}
     ]
   },
+  "favorite_toy": {
+    "vi": [
+      "{name} biết mình thích món nào nhất rồi nha~",
+      "Món này là món ruột của {name} đó!",
+      "Meo! Chơi món này với {name} nữa nha!",
+      {"text": "Món này vui nhất, chơi tiếp đi sen!", "personality": ["Playful"]},
+      {"text": "{name} thích món này lắm, cứ để nó gần đây nha.", "personality": ["Calm"]}
+    ],
+    "en": [
+      "{name} knows which toy is the best now~",
+      "This one is {name}'s favourite!",
+      "Meow! Play with this one again!",
+      {"text": "This toy is the most fun, more please!", "personality": ["Playful"]},
+      {"text": "{name} likes this one, keep it close.", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "{name}、いちばん好きなおもちゃがわかったよ〜",
+      "これが{name}のお気に入り！",
+      "にゃー！これでまた遊ぼう！",
+      {"text": "このおもちゃがいちばん楽しい、もっと！", "personality": ["Playful"]},
+      {"text": "{name}これが好き、そばに置いといてね。", "personality": ["Calm"]}
+    ]
+  },
   "back": {
     "vi": [
       "Sen về rồi! {name} chợp mắt chút thôi~",

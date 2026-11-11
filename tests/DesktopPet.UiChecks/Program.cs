@@ -994,6 +994,7 @@ internal static class Program
         FocusChecks.Run(window, pet, behavior, preferences, Check);
         ToyChecks.Run(window, pet, behavior, preferences, Check);
         BondChecks.Run(window, pet, behavior, preferences, Check); // Bond milestones (docs/LIVING-CORNER.md → M3).
+        FavoriteToyChecks.Run(window, pet, behavior, preferences, Check); // The favourite toy (docs/LIVING-CORNER.md → M4).
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

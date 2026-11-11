@@ -219,6 +219,62 @@ class BrainTests(unittest.TestCase):
         self.assertEqual(decision["bond_level"], 4)
         self.assertNotIn("bond_up", decision)
 
+    def toys(self, ball=0, wand=0, mouse=0):
+        return {**self.observation(), "session_id": "s1", "toy_plays": {"ball": ball, "wand": wand, "mouse": mouse}}
+
+    def test_favorite_toy_needs_five_rounds_and_a_lead(self):
+        wall = [1_000_000.0]
+        self.brain.wall_clock = lambda: wall[0]
+        first = self.brain.decide(self.toys())  # The first report is a baseline.
+        self.assertNotIn("favorite_toy", first)
+        self.assertIsNone(first["diary"]["favorite_toy"])
+        self.assertNotIn("favorite_toy", self.brain.decide(self.toys(wand=4, mouse=1)))  # Four rounds: not yet.
+        self.assertNotIn("favorite_toy", self.brain.decide(self.toys(wand=5, mouse=4)))  # Five, but no clear lead.
+        decision = self.brain.decide(self.toys(wand=6, mouse=4))
+        self.assertEqual(decision["favorite_toy"], "wand")
+        self.assertEqual(decision["diary"]["toy_plays"], {"ball": 0, "wand": 6, "mouse": 4})
+        self.assertEqual(self.brain.decide(self.toys(wand=6, mouse=4))["favorite_toy"], "wand")  # Kept.
+        # The mouse beats it 1.3 times the same day: still the wand (once a day), then the mouse the next day.
+        self.assertEqual(self.brain.decide(self.toys(wand=6, mouse=12))["favorite_toy"], "wand")
+        wall[0] += 86400
+        self.assertEqual(self.brain.decide(self.toys(wand=6, mouse=12))["favorite_toy"], "mouse")
+
+    def test_favorite_toy_scores_halve_every_week_and_persist(self):
+        wall = [1_000_000.0]
+        self.brain.wall_clock = lambda: wall[0]
+        self.brain.decide(self.toys())
+        self.brain.decide(self.toys(ball=8))
+        self.assertEqual(self.brain.favorite_toy, "ball")
+        wall[0] += 7 * 86400
+        self.brain.decide(self.toys(ball=8))
+        self.assertAlmostEqual(self.brain.toy_scores["ball"], 4, places=3)
+        self.brain.save()
+        again = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now, wall_clock=lambda: wall[0])
+        self.assertEqual(again.favorite_toy, "ball")
+        self.assertAlmostEqual(again.toy_scores["ball"], 4, places=3)
+        decision = again.decide(self.toys(ball=8))  # A new process: a baseline again, nothing counted twice.
+        self.assertAlmostEqual(again.toy_scores["ball"], 4, places=3)
+        self.assertEqual(decision["favorite_toy"], "ball")
+
+    def test_old_memory_has_no_favorite_and_forgetting_clears_it(self):
+        self.memory.write_text(json.dumps({"bond": 50}), encoding="utf-8")
+        old = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now)
+        self.assertEqual((old.favorite_toy, old.toy_scores), (None, {"ball": 0, "wand": 0, "mouse": 0}))
+        old.decide(self.toys())
+        self.assertEqual(old.decide(self.toys(mouse=7))["favorite_toy"], "mouse")
+        forgot = old.decide({**self.toys(mouse=7), "learning_reset": "forget-1"})
+        self.assertNotIn("favorite_toy", forgot)
+        self.assertEqual(old.toy_scores["mouse"], 0)
+
+    def test_favorite_toy_says_a_line_once(self):
+        self.brain.decide(self.toys())
+        talk = {"speech_enabled": True, "language": "vi", "pet_name": "Mochi"}
+        decision = self.brain.decide({**self.toys(wand=5), **talk})
+        self.assertTrue(decision.get("speech", {}).get("id", "").startswith("favorite_toy"), decision.get("speech"))
+        self.now += 30
+        again = self.brain.decide({**self.toys(wand=5), **talk})
+        self.assertFalse(again.get("speech", {}).get("id", "").startswith("favorite_toy"))
+
     def test_bond_up_says_a_line(self):
         self.brain.needs.update(bond=41)
         decision = self.brain.decide({**self.observation(), "speech_enabled": True, "language": "vi", "pet_name": "Mochi"})

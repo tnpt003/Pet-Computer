@@ -225,12 +225,14 @@ public sealed partial class PetWindow
             && pet.Emotions.SecondsWithoutAttention < PetEmotions.SleepyAfter && pet.Action is PetAction.Idle or PetAction.Sitting) GoNap();
         if (cushionNap != CushionNap.Walk) return false;
         napTime += dt;
-        // The bed: the cushion, or the cardboard box (PetWindow.ToyBox.cs). Picked up on the way: no nap, nothing else.
-        if (!(napBox ? BoxReady : CushionReady) || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
-        double target = Math.Clamp((napBox ? BoxCenter : KeepsakeCenter) - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
+        // The bed: the cushion, the cardboard box (PetWindow.ToyBox.cs), or snug against a thing (PetWindow.Bond.cs).
+        // Picked up on the way: no nap, nothing else.
+        if (!(napBox ? BoxReady : napLean ? LeanTargetUsable : CushionReady) || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
+        double target = napLean ? leanX : Math.Clamp((napBox ? BoxCenter : KeepsakeCenter) - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
         if (Math.Abs(target - pet.X) < 4)
         {
             pet.X = target;
+            if (napLean) { StartLeanSleep(); return pet.Action == PetAction.Sleeping; }
             HoldStill(PetAction.Idle, pet.Facing);
             if (behavior.StartManual(pet, PetAction.Sleeping))
             {
@@ -257,7 +259,7 @@ public sealed partial class PetWindow
         if (!MayAct(AutoKind.CushionNap) || !CushionReady
             || Math.Abs(KeepsakeCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
-        napBox = false;
+        napBox = false; napLean = false;
         napTime = 0;
         return true;
     }
@@ -279,19 +281,21 @@ public sealed partial class PetWindow
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         CancelFeatureActivity();
         cushionNap = CushionNap.Walk;
-        napBox = false;
+        napBox = false; napLean = false;
         userAsked |= UserAsked.Nap;
         napTime = 0;
         return true;
     }
 
     // PetBehavior picked a sleep of its own: with the cushion on display or the box out it goes there to sleep instead.
-    private bool SleepOnCushionInstead(PetModel _) => GoNap();
+    // Soulmates (bond M3): with neither, snug against a thing nearby.
+    private bool SleepOnCushionInstead(PetModel _) => GoNap() || GoLeanNap();
 
     private void StopCushionNap()
     {
         if (cushionNap == CushionNap.Walk && pet.Action == PetAction.Walking) { pet.Action = PetAction.Idle; pet.VX = 0; behavior.Reset(pet); }
         cushionNap = CushionNap.None;
+        napLean = false; leanThing = null;
         userAsked &= ~UserAsked.Nap;
     }
 

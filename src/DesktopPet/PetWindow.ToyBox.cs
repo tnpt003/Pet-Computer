@@ -41,7 +41,7 @@ public sealed partial class PetWindow
     {
         if (!MayAct(AutoKind.CushionNap) || !BoxReady || Math.Abs(BoxCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
-        napBox = true;
+        napBox = true; napLean = false;
         napTime = 0;
         return true;
     }
@@ -54,7 +54,7 @@ public sealed partial class PetWindow
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         CancelFeatureActivity();
         cushionNap = CushionNap.Walk;
-        napBox = true;
+        napBox = true; napLean = false;
         userAsked |= UserAsked.Nap;
         napTime = 0;
         return true;

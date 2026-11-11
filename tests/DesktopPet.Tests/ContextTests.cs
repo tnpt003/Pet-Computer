@@ -80,6 +80,16 @@ internal static class ContextTests
         check(AiProtocol.Parse(reply + ",\"special_day\":\"christmas\"}", 3).SpecialDay == "christmas" &&
               AiProtocol.Parse(reply + ",\"special_day\":\"Bad Day!\"}", 3).SpecialDay == null && AiProtocol.Parse(reply + "}", 3).SpecialDay == null,
             "A reply's special_day is read when well formed and otherwise ignored");
+        // Bond milestones (docs/LIVING-CORNER.md → M3): optional, 1–5, dropped without rejecting the decision.
+        check(AiProtocol.Parse(reply + ",\"bond_level\":3,\"bond_up\":3}", 3) is { BondLevel: 3, BondUp: 3 } &&
+              AiProtocol.Parse(reply + ",\"bond_level\":4}", 3) is { BondLevel: 4, BondUp: null } &&
+              AiProtocol.Parse(reply + "}", 3) is { BondLevel: null, BondUp: null } &&
+              AiProtocol.Parse(reply + ",\"bond_level\":9,\"bond_up\":\"x\"}", 3) is { BondLevel: null, BondUp: null, Command: "IDLE" } &&
+              AiProtocol.Parse(reply + ",\"bond_level\":2.5,\"bond_up\":0}", 3) is { BondLevel: null, BondUp: null },
+            "bond_level and bond_up are read when 1–5 and otherwise dropped, keeping the decision");
+        check(PetBondRules.Name(1, "vi") == "Mới quen" && PetBondRules.Name(5, "en") == "Soulmates" && PetBondRules.Name(3, "en") == "Good friends"
+              && PetBondRules.Opens(1, "en") == null && PetBondRules.Opens(4, "vi") == "Ra đón khi sen quay lại" && PetBondRules.Thresholds[4] == 80,
+            "Five milestones with names; each after the first opens one behaviour");
 
         var breaks = new PetBreaks();
         breaks.Step(4000, 0, true);

@@ -74,6 +74,14 @@ NEED_LINE_GAP = {0: 300, 1: 120, 2: 60}  # By chattiness: repeated "I am hungry"
 CHATTER = {1: (90, 0.25), 2: (35, 0.5)}  # chattiness: (min seconds since last line, chance)
 ROLL_OVER_GAP = 120  # Showing the belly is special; at most every two minutes.
 BOND_HISTORY_DAYS = 30
+# Bond milestones (docs/LIVING-CORNER.md → M3): new, familiar, close, very close, soulmate. The highest
+# one reached is kept and never goes down; C# opens a behaviour per milestone.
+BOND_LEVELS = (0, 20, 40, 60, 80)
+
+
+def bond_level(bond) -> int:
+    """1–5: the milestone this bond value has reached."""
+    return sum(1 for threshold in BOND_LEVELS if bond >= threshold)
 
 
 def read_object(path: Path) -> dict:
@@ -151,6 +159,9 @@ class Brain:
         self.bond_gain_today = number(memory.get("bond_gain_today"), 0, 0, BOND_DAILY_GAIN)
         self.bond_loss_today = number(memory.get("bond_loss_today"), 0, 0, BOND_DAILY_LOSS)
         self.last_seen = number(memory.get("last_seen"), 0, 0, 1e11)
+        # Older files start at the milestone their bond has reached.
+        self.bond_peak = max(int(number(memory.get("bond_peak"), 0, 0, 5)), bond_level(self.needs["bond"]))
+        self.bond_up = None  # A milestone just reached, sent once with the next decision.
         self.greeted = False
         self.interaction_session = ""
         self.interactions = None
@@ -367,6 +378,7 @@ class Brain:
                      "battle_lost" if battle["lost"] else
                      "farm_goldfish" if farm["goldfish"] else "farm_level_up" if farm["levels"] else
                      "farm_delivered" if farm["deliveries"] else
+                     "bond_up" if self.bond_up else
                      "thrown_rough" if deltas["rough_throws"] else "treat_thanks" if deltas["treats"] else
                      "petted" if deltas["petted"] else "play" if deltas["ball_clicks"] or deltas["toy"] else
                      "thrown_fun" if observation.get("last_event") == "released" and self.interaction_delta else
@@ -516,6 +528,9 @@ class Brain:
             self.last_thought = now
         if not busy and not upset:
             self.sent = (command, self.action_key(ctx, command), now)
+        level = bond_level(self.needs["bond"])
+        if level > self.bond_peak:
+            self.bond_peak = self.bond_up = level
         speech = self.choose_speech(observation, deltas, thought, greeting, now)
         duration =self.rng.uniform(7, 12) if command == "SLEEP" else self.rng.uniform(2, 6)
         if thought == "love" and command == "FOLLOW_MOUSE": duration = 4.0
@@ -533,7 +548,7 @@ class Brain:
                            bond_history=self.bond_history)
         self.memory.update(energy=round(self.energy, 3), recent_actions=self.recent,
                            habits=self.habits, bond_day=self.bond_day, bond_gain_today=round(self.bond_gain_today, 3),
-                           bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen),
+                           bond_loss_today=round(self.bond_loss_today, 3), last_seen=round(self.last_seen), bond_peak=self.bond_peak,
                            learned=self.learner.export(), learning_reset=self.learning_reset,
                            **{key: round(self.needs[key], 3) for key in NEED_KEYS})
         self.dirty = True
@@ -553,6 +568,10 @@ class Brain:
         language = observation.get("language")
         decision["learned"] = self.learner.summary(lambda key: self.describe_learned(key, language))
         decision["diary"] = self.diary(wall)
+        decision["bond_level"] = self.bond_peak
+        if self.bond_up:
+            decision["bond_up"] = self.bond_up  # Once: C# shows a few hearts.
+            self.bond_up = None
         return decision
 
     def diary(self, wall) -> dict:
@@ -562,6 +581,7 @@ class Brain:
                 "since": time.strftime("%Y-%m-%d", time.localtime(self.first_seen)),
                 "petted": int(t["petted"]), "treats": int(t["treats"]), "play": int(t["toy"] + t["ball_clicks"]),
                 "rough_throws": int(t["rough_throws"]), "clicks": int(t["clicked"]), "bond": round(self.needs["bond"], 1),
+                "bond_level": self.bond_peak,
                 "battles_won": int(self.battle_totals["won"]), "battles_lost": int(self.battle_totals["lost"]),
                 "combos": int(self.battle_totals["combos"]),
                 "bond_history": [value for _, value in sorted(self.bond_history.items())[-14:]],

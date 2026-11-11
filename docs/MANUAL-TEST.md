@@ -1624,3 +1624,13 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Cất chuột dây cót rồi lấy ra lại, lên dây: mèo đuổi ngay lần đầu (lỗi cũ đã sửa).
 - [ ] DPI 125 %/150 %, màn hình phụ: chậu và mèo trong hộp đúng chỗ.
 - [ ] Đọc nhãn tiếng Nhật "植木鉢", "芽", "小さな木", "葉がしげった", "花が咲いた" (chưa ai duyệt).
+
+## Góc sống M3 — Mốc thân thiết (12/11, chỉ bản 1.6, cần bật AI)
+- [ ] Nhật ký → thẻ độ thân thiết có "Mốc thân thiết: … ●●○○○", các dòng ✓ hành vi đã mở và "Mốc kế: … (còn N điểm) · mở: …". Tắt AI: thẻ như cũ, không có mốc.
+- [ ] Mốc Quen mặt trở lên: rời máy hơn 10 phút rồi quay lại, mèo (sau khi thức nếu đang away nap) quay đầu nhìn về phía con trỏ khoảng 1,5 giây. Rời máy 5 phút: không chào. Quay lại lần nữa trong 30 phút: không chào lại.
+- [ ] Mốc Rất thân (sửa `bond`/`bond_peak` trong `ai-memory.json` của dữ liệu thử, không phải dữ liệu thật): quay lại sau 10 phút, mèo đi về phía con trỏ rồi vẫy chân. Click giữa chừng: dừng, kéo như thường.
+- [ ] Mốc Thân trở lên: chơi bóng hết 45 giây, hoặc ném nhặt rồi để yên 20 giây, hoặc chuyền rồi để bóng yên: mèo liếm chân, vươn vai, về chỗ nghỉ đã nhớ hoặc ngồi 5 giây. Trò bị ngắt (click, Cất nhanh) thì không. Không lặp lại trong 5 phút.
+- [ ] Mốc Tri kỷ: để mèo tự chọn ngủ khi có đồ chơi/trụ/chậu/kỷ vật gần (≤ 400 DIP): mèo tới nằm sát món đó; vẫn là giấc ngủ thường (~10 giây, click trái thức và kéo được, click phải mở menu).
+- [ ] Lên mốc mới: vài trái tim nhỏ bay trên đầu mèo và một câu "… thân hơn rồi" (nếu bật câu nói). Mèo đang ngủ thì chờ tới lúc thức.
+- [ ] Quiet, Giờ tập trung, app toàn màn hình, trong trận: không có Ngó chào, Ra đón, chuỗi sau khi chơi.
+- [ ] Đọc tên mốc tiếng Nhật "はじめまして", "顔なじみ", "なかよし", "大のなかよし", "心の友" và câu `bond_up` tiếng Nhật (chưa ai duyệt).

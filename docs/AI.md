@@ -458,6 +458,15 @@ If Python is off, or no line arrives within 15 s, C# shows a built-in line (`bre
 The away nap (`PetBehavior.StartAwayNap`/`EndAwayNap`) is decided entirely in C#.
 Python sees only `Sleeping` and makes no requests while the pet sleeps.
 
+## Bond milestones (1.6, docs/LIVING-CORNER.md → M3)
+
+Python splits the bond into five milestones that only go up (0, 20, 40, 60, 80: new, familiar, good friends,
+best friends, soulmates) and keeps the highest reached as `bond_peak` in `ai-memory.json` (older files start
+from their bond; "forget what it learned" keeps it). Every decision carries `bond_level` (1–5); the one that
+reaches a new milestone also carries `bond_up` and may say a `bond_up` line. `diary.bond_level` is the same.
+C# drops values outside 1–5 without rejecting the decision. C# opens one behaviour per milestone and times
+it itself (no new command); with Python off or not answering it treats the cat as having none.
+
 ## Gestures, pending lines and the diary (2026-10-13)
 
 **Gestures.** Five short, stationary poses: Kneading, RollingOver, ChasingTail, Scratching

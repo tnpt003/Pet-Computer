@@ -6,7 +6,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 |---|---|---|
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
-| M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Luật chờ duyệt |
+| M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Đã có code, còn test tay |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
 | M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
 
@@ -121,7 +121,7 @@ Chậu cây là đồ góc sống có physics như trụ cào (chung giới hạ
 - Sửa kèm (lỗi có sẵn từ M4, test M2 tìm ra): cất chuột rồi lấy ra lại thì lần lên dây đầu có thể bị bỏ qua vì chuột mới đếm số lần lên dây từ 0 mà mèo còn nhớ số của chuột cũ; `NewToy` giờ xóa số nhớ đó.
 - Đã soát ảnh render: chậu 4 dáng, mèo ghé cây, mèo thò đầu trong hộp (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.
 
-## Luật M3 Mốc thân thiết (đề xuất 11/11, chờ duyệt)
+## Luật M3 Mốc thân thiết (duyệt 11/11)
 
 ### Năm mốc, chỉ đi lên
 
@@ -171,6 +171,15 @@ Chậu cây là đồ góc sống có physics như trụ cào (chung giới hạ
 - C#: không mốc khi Python tắt hoặc vừa tắt; sleep lock (không đánh thức), wake, drag, throw, emotion priority, Quiet, Giờ tập trung, fullscreen, trận, Pause; chuỗi sau khi chơi không chạy khi trò bị ngắt; Ngủ tựa vào đồ vẫn là giấc ngủ thường (timer, click thức, kéo được).
 - Soát render trái tim lên mốc, thẻ Nhật ký vi/en/ja.
 
-### Bổ sung ngoại lệ đề xuất (chờ duyệt, ghi vào docs/APPROVED-EXCEPTIONS.md → Hành vi mèo khi duyệt)
+### Bổ sung ngoại lệ (đã duyệt 11/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Mốc thân thiết: Python chia bond thành 5 mốc chỉ đi lên (Mới quen 0, Quen mặt 20, Thân 40, Rất thân 60, Tri kỷ 80) và gửi `bond_level`/`bond_up` (trường tùy chọn); C# mở theo mốc: Ngó chào khi người dùng quay lại sau ≥10 phút (Quen mặt), chuỗi liếm chân → vươn vai → về chỗ nghỉ sau trò người dùng bật kết thúc tự nhiên (Thân, tối đa 1 lần/5 phút), Ra đón đi về phía con trỏ rồi vẫy chân (Rất thân, thay Ngó chào), ngủ nằm sát đồ vật/kỷ vật trong 400 DIP khi mèo tự chọn ngủ (Tri kỷ, giấc ngủ thường). Tất cả là hành vi tự động: chặn khi Quiet, Giờ tập trung, fullscreen, trận, Pause, bận, cảm xúc ưu tiên cao, việc khác; không đánh thức mèo ngủ; click/kéo/cảm xúc ngắt như thường. Python tắt thì không có hành vi mở khóa. Lên mốc: trái tim nhỏ trên đầu ~1,5 s và một câu, không phải cảm xúc, không âm thanh mới.
+
+### Cách code M3 (12/11)
+
+- Python (`ai/service.py`): `BOND_LEVELS`, `bond_level()`, `bond_peak` lưu trong `ai-memory.json` (file cũ tính từ bond hiện tại, không bao giờ giảm), `bond_up` gửi một lần; sự kiện câu nói `bond_up` (`ai/lines.json` vi/en/ja) xếp sau sự kiện nông trại, trước "back". `diary.bond_level`.
+- Giao thức C# (`AiProtocol`): `AiDecision.BondLevel`, `BondUp`, `PetDiary.BondLevel`; giá trị ngoài 1–5 bị bỏ, decision vẫn nhận.
+- Hành vi ở `PetWindow.Bond.cs`, luật số ở `PetBondRules` (Core): `bondLevel` lấy từ decision, xóa về 0 khi AI tắt hoặc một lần hỏi không có trả lời. Ngó chào/Ra đón: `TickContext` ghi thời gian vắng dài nhất, lúc quay lại ≥10 phút thì chờ tối đa 30 giây cho mèo rảnh (`AutoKind.BondAct`). Chuỗi sau khi chơi: `PlayEnded()` gọi khi hết 45 giây bóng, hết 20 giây chờ ném nhặt, hết chuỗi chuyền vì để yên, và lúc bắt đầu 2 phút nghỉ chung của cần câu/chuột/chuyền. Liếm chân, vươn vai, Vẫy chân là tư thế "Làm ngay" của `PetBehavior`; nhìn, đi, ngồi là phần chuyến sở hữu chuyển động.
+- Ngủ tựa vào đồ: `SleepOnCushionInstead` thử `GoNap()` (đệm, hộp) rồi `GoLeanNap()`; chung đường đi của đệm (`cushionNap` Walk, cờ `napLean`), tới nơi là giấc ngủ thường tại chỗ.
+- Trái tim: `PetRenderer.DrawBondHearts`, 1,5 giây, chỉ là hình. Tên mốc tiếng Anh dùng "Good friends", "Best friends" vì "Close" đã là khóa dịch của nút Đóng.
+- Đã soát ảnh render trái tim trên đầu mèo. Chưa xem thẻ Nhật ký và chưa thử quay lại máy thật sau 10 phút, chưa chạy với Python thật qua nhiều ngày; câu tiếng Nhật chưa ai duyệt.

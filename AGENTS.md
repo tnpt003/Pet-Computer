@@ -48,6 +48,7 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Sleep: dùng tư thế ngủ; khóa mọi hành vi/emotion tự động; cursor, AI, background không được đánh thức; tự thức sau SleepDurationSeconds (~10s); waking ~1.2s rồi Idle; left-click thức ngay và vẫn drag được; right-click thức ngay và mở menu; Pause đóng băng cả sleep timer; wake cooldown ~30s.
 - Ngoại lệ đã duyệt: "away nap" sau ≥5 phút không chạm máy. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: menu "Làm ngay" và công tắc "Tự điều khiển cảm xúc". Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
+- Ngoại lệ đã duyệt 11/11: Mốc thân thiết (5 mốc chỉ đi lên do Python giữ; Ngó chào, chuỗi sau khi chơi, Ra đón, ngủ tựa đồ; chặn như hành vi tự động, Python tắt thì không có). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo; luật: docs/LIVING-CORNER.md.
 - Ngoại lệ đã duyệt: Quiet không chặn bóng/laser do người dùng bật. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: "đi trên cửa sổ" (chỉ đọc hình chữ nhật/kiểu/z-order cửa sổ, không đọc nội dung; physics ở C#). Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Hành vi mèo.
 - Ngoại lệ đã duyệt: Battle Mode (tùy chọn, mặc định tắt, không tự bật lại): trong trận C# sở hữu mèo, Python không tham gia; có luật riêng về cầm/ném/sát thương/choáng/Pause. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.

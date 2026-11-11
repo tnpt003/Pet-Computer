@@ -993,6 +993,7 @@ internal static class Program
         FarmChoreChecks.Run(window, pet, behavior, preferences, Check);
         FocusChecks.Run(window, pet, behavior, preferences, Check);
         ToyChecks.Run(window, pet, behavior, preferences, Check);
+        BondChecks.Run(window, pet, behavior, preferences, Check); // Bond milestones (docs/LIVING-CORNER.md → M3).
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

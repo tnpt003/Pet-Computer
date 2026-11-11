@@ -188,7 +188,34 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             dc.Pop();
         }
         if (TeleportPuff is >= 0 and < 1) KeepsakeArt.DrawPuff(dc, TeleportPuff, 56, 66, 92);
+        if (HeartsTime >= 0 && !p.PickedUp) DrawBondHearts(dc, HeartsTime);
         dc.Pop(); // Permanent transparent margin, identical for every state.
+    }
+
+    // A new bond milestone (PetWindow.Bond.cs): three small hearts rising over the head and fading.
+    public double HeartsTime = -1;
+    private static readonly Brush HeartFill = PetUi.Frozen(Color.FromRgb(0xF2, 0x7A, 0x8F));
+    private static readonly Pen HeartLine = PetUi.FrozenPen(PetUi.ArtInk, 1.1);
+    private static void DrawBondHearts(DrawingContext dc, double t)
+    {
+        double life = Math.Clamp(t / PetBondRules.HeartsSeconds, 0, 1);
+        for (int i = 0; i < 3; i++)
+        {
+            double local = Math.Clamp(life * 1.4 - i * 0.2, 0, 1);
+            if (local <= 0) continue;
+            double x = 56 + (i - 1) * 18 + Math.Sin(local * 6 + i) * 3, y = 18 - local * 30, size = 5 + 2 * Math.Sin(local * Math.PI);
+            dc.PushOpacity(Math.Min(1, (1 - local) * 2.5));
+            var heart = new StreamGeometry();
+            using (var g = heart.Open())
+            {
+                g.BeginFigure(new Point(x, y + size), true, true);
+                g.BezierTo(new Point(x - size * 1.6, y), new Point(x - size * 0.8, y - size * 1.1), new Point(x, y - size * 0.3), true, true);
+                g.BezierTo(new Point(x + size * 0.8, y - size * 1.1), new Point(x + size * 1.6, y), new Point(x, y + size), true, true);
+            }
+            heart.Freeze();
+            dc.DrawGeometry(HeartFill, HeartLine, heart);
+            dc.Pop();
+        }
     }
 
     // The "Bring the pet to the main screen" hop, set by PetWindow every frame of it: the cat's

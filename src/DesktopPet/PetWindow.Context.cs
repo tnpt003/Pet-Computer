@@ -54,6 +54,7 @@ public sealed partial class PetWindow
             }
         }
         if (change.CameBack) { behavior.EndAwayNap(pet); pet.Emotions.UserReturned(); }
+        WatchReturnForBond(change.CameBack); // A greeting when the user comes back (PetWindow.Bond.cs).
         if (context.Away && MayAct(AutoKind.AwayNap) && !behavior.HoldSleep && pet.Grounded && !PetActionRules.IsInFlight(pet.Action))
         {
             CancelFeatureActivity();

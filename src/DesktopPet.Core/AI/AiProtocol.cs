@@ -36,11 +36,11 @@ public sealed record PetLearned(string[] Likes, string[] Dislikes);
 
 public sealed record AiDecision(string Command, double DurationSeconds, string Mood, string? Emotion = null, double? Energy = null,
     string? Thought = null, PetNeeds? Needs = null, PetLine? Speech = null, PetLearned? Learned = null, PetDiary? Diary = null,
-    string? SpecialDay = null);
+    string? SpecialDay = null, int? BondLevel = null, int? BondUp = null);
 
 // Lifetime summary kept by Python for the diary window (display only).
 public sealed record PetDiary(int Days, string Since, long Petted, long Treats, long Play, long RoughThrows, long Clicks,
-    double Bond, double[] BondHistory, double[] Habits, long BattlesWon = 0, long BattlesLost = 0, long Combos = 0);
+    double Bond, double[] BondHistory, double[] Habits, long BattlesWon = 0, long BattlesLost = 0, long Combos = 0, int BondLevel = 0);
 
 public interface IPetDecisionSource : IDisposable
 {
@@ -80,9 +80,14 @@ public static class AiProtocol
         // Today's special day (ai/calendar.json id), used only to pick a holiday accessory.
         string? specialDay = root.TryGetProperty("special_day", out var day) && day.ValueKind == JsonValueKind.String &&
             System.Text.RegularExpressions.Regex.IsMatch(day.GetString()!, "^[a-z][a-z0-9_]{0,31}$") ? day.GetString() : null;
+        // Bond milestones (docs/LIVING-CORNER.md → M3): 1–5, the highest reached, and one just reached.
         return new AiDecision(command!, duration, mood!, emotion, energy, thought, ParseNeeds(root), ParseLine(root), ParseLearned(root), ParseDiary(root),
-            specialDay);
+            specialDay, Level(root, "bond_level"), Level(root, "bond_up"));
     }
+
+    // A bond milestone 1–5; anything else is dropped.
+    private static int? Level(JsonElement root, string name) =>
+        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out int level) && level is >= 1 and <= 5 ? level : null;
 
     private static string? Text(JsonElement element, int maxLength)
     {
@@ -139,7 +144,7 @@ public static class AiProtocol
         // Battle totals are newer and optional: missing or invalid counts read as 0.
         return new PetDiary((int)days.Value, since, (long)petted.Value, (long)treats.Value, (long)play.Value, (long)rough.Value,
             (long)clicks.Value, bond.Value, history, habits, (long)(Number("battles_won", 1e12) ?? 0), (long)(Number("battles_lost", 1e12) ?? 0),
-            (long)(Number("combos", 1e12) ?? 0));
+            (long)(Number("combos", 1e12) ?? 0), Level(diary, "bond_level") ?? 0);
     }
 
     private static PetNeeds? ParseNeeds(JsonElement root)

@@ -132,7 +132,7 @@ public sealed partial class PetWindow
                     return true;
                 }
                 HoldStill(PetAction.Sitting, toward);
-                if (BallStill(m) && !ball.Press && (passIdle += dt) > ToyPassRules.IdleSeconds) EndPass(record: true);
+                if (BallStill(m) && !ball.Press && (passIdle += dt) > ToyPassRules.IdleSeconds) { EndPass(record: true); PlayEnded(); } // No more passes (bond M3).
                 return true;
         }
         return false;

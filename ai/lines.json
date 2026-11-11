@@ -260,6 +260,29 @@
       {"text": "ちょっとした空の旅もいいね。", "personality": ["Calm"]}
     ]
   },
+  "bond_up": {
+    "vi": [
+      "{name} thấy mình với sen thân hơn rồi đó~",
+      "Meo! Từ giờ {name} tin sen nhiều hơn nha!",
+      "Ở cạnh sen thích ghê, {name} nói thật đó!",
+      {"text": "Thân rồi thì chơi nhiều hơn nữa nha!", "personality": ["Playful"]},
+      {"text": "Có sen ở đây, {name} thấy yên lòng.", "personality": ["Calm"]}
+    ],
+    "en": [
+      "{name} feels closer to you now~",
+      "Meow! {name} trusts you a little more!",
+      "{name} really likes being around you!",
+      {"text": "Closer friends play more, right?", "personality": ["Playful"]},
+      {"text": "With you here, {name} feels at ease.", "personality": ["Calm"]}
+    ],
+    "ja": [
+      "{name}、ご主人ともっと仲良くなった気がする〜",
+      "にゃー！{name}、ご主人をもっと信じてるよ！",
+      "ご主人のそば、{name}だいすき！",
+      {"text": "仲良しならもっと遊ぼうね！", "personality": ["Playful"]},
+      {"text": "ご主人がいると、{name}安心するよ。", "personality": ["Calm"]}
+    ]
+  },
   "back": {
     "vi": [
       "Sen về rồi! {name} chợp mắt chút thôi~",

@@ -192,6 +192,38 @@ class BrainTests(unittest.TestCase):
             return picks.count("JUMP") + picks.count("FOLLOW_MOUSE")
         self.assertGreater(jumps(100), jumps(0) * 1.3)
 
+    def test_bond_milestones_only_go_up_and_announce_once(self):
+        from service import bond_level
+        self.assertEqual([bond_level(b) for b in (0, 19.9, 20, 39, 40, 60, 79.9, 80, 100)], [1, 1, 2, 2, 3, 4, 4, 5, 5])
+        first = self.brain.decide(self.observation())
+        self.assertEqual(first["bond_level"], 2)  # A new pet starts at bond 30: familiar.
+        self.assertNotIn("bond_up", first)
+        self.assertEqual(first["diary"]["bond_level"], 2)
+        self.brain.needs.update(bond=41)
+        up = self.brain.decide(self.observation())
+        self.assertEqual((up["bond_level"], up.get("bond_up")), (3, 3))
+        self.assertNotIn("bond_up", self.brain.decide(self.observation()))  # Only once.
+        self.brain.needs.update(bond=10)  # Rough throws lower the bond, never the milestone.
+        self.assertEqual(self.brain.decide(self.observation())["bond_level"], 3)
+        self.brain.save()
+        again = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now)
+        self.assertEqual(again.bond_peak, 3)
+        again.learning_reset = ""
+        again.decide({**self.observation(), "learning_reset": "forget-1"})
+        self.assertEqual(again.bond_peak, 3)  # Forgetting what it learned keeps the milestone.
+
+    def test_old_memory_starts_at_the_milestone_of_its_bond(self):
+        self.memory.write_text(json.dumps({"bond": 65}), encoding="utf-8")
+        old = Brain(self.memory, ROOT / "ai/personality.json", random.Random(1), lambda: self.now)
+        decision = old.decide(self.observation())
+        self.assertEqual(decision["bond_level"], 4)
+        self.assertNotIn("bond_up", decision)
+
+    def test_bond_up_says_a_line(self):
+        self.brain.needs.update(bond=41)
+        decision = self.brain.decide({**self.observation(), "speech_enabled": True, "language": "vi", "pet_name": "Mochi"})
+        self.assertTrue(decision.get("speech", {}).get("id", "").startswith("bond_up"), decision.get("speech"))
+
     def test_greets_after_long_absence_with_bond(self):
         wall = [1_000_000.0]
         self.brain.wall_clock = lambda: wall[0]

@@ -119,7 +119,7 @@ public sealed partial class PetWindow
                 WalkToward(target);
                 return true;
             case Fetch.Wait:
-                if (fetchTime > FetchStreak.WaitSeconds) { fetchStreak.Break(); StopToyFetch(drop: false); return false; }
+                if (fetchTime > FetchStreak.WaitSeconds) { fetchStreak.Break(); StopToyFetch(drop: false); PlayEnded(); return false; } // No more throws (bond M3).
                 if (pet.Action != PetAction.Sitting) HoldStill(PetAction.Sitting, pet.Facing); // Sits looking up, waiting.
                 return true;
         }

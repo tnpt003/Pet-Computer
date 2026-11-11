@@ -538,6 +538,7 @@ public sealed partial class PetWindow : Window
         // In the cardboard box: its front panel over the cat, on the floor the lift has moved the window up from.
         renderer.BoxFrontDrop = BoxFrontShown ? boxLift : -1;
         renderer.CarryBall = CarryingBall && !dragging; // PetWindow.ToyFetch.cs
+        renderer.HeartsTime = dragging ? -1 : heartsTime; // A new bond milestone (PetWindow.Bond.cs).
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);
         UpdateFocusLabel(x, y);
@@ -630,6 +631,7 @@ public sealed partial class PetWindow : Window
         aiNeeds = null;
         aiLearned = null;
         aiDiary = null;
+        ForgetBond();
         RefreshDiary();
         specialDay = null; ApplyAccessory(); // Without Python there is no holiday outfit.
     }
@@ -657,7 +659,10 @@ public sealed partial class PetWindow : Window
             await System.Threading.Tasks.Task.Yield();
             var decision = await source.DecideAsync(observation);
             // The await resumes on WPF's dispatcher. No background task touches the pet.
+            // No answer from Python (failed, timed out): nothing a bond milestone opened (PetWindow.Bond.cs).
+            if (decision == null && !closed && ReferenceEquals(source, ai)) ForgetBond();
             if (decision == null || closed || !ReferenceEquals(source, ai)) return;
+            ApplyBondDecision(decision);
             if (decision.Needs != null) aiNeeds = decision.Needs;
             if (decision.Learned != null) aiLearned = decision.Learned;
             if (decision.Diary != null) { aiDiary = decision.Diary; RefreshDiary(); }

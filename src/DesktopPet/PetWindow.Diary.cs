@@ -63,6 +63,7 @@ public sealed partial class PetWindow
                    $"Battles: {diary.BattlesWon} won · {diary.BattlesLost} lost · {diary.Combos} combo{(diary.Combos == 1 ? "" : "s")}"), PetUi.Muted);
 
         var bond = AddCard(LF($"Độ thân thiết: {diary.Bond:F0}/100", $"Bond: {diary.Bond:F0}/100"), PetMotif.Heart);
+        if (PetBondRules.Valid(diary.BondLevel)) AddBondMilestones(bond, diary);
         if (diary.BondHistory.Length >= 2) bond.Children.Add(BondChart(diary.BondHistory));
         bond.Children.Add(TextLine(diary.BondHistory.Length >= 2
             ? LF($"{diary.BondHistory.Length} ngày gần nhất: {string.Join(", ", diary.BondHistory.Select(v => v.ToString("F0")))}",
@@ -214,5 +215,24 @@ public sealed partial class PetWindow
             }
         }
         return canvas;
+    }
+
+    // Bond milestones (docs/LIVING-CORNER.md → M3): the highest reached of five, what is open, what comes next.
+    private void AddBondMilestones(System.Windows.Controls.Panel card, PetDiary diary)
+    {
+        int level = diary.BondLevel;
+        string Name(int l) => L(PetBondRules.Name(l, "vi"), PetBondRules.Name(l, "en"));
+        string steps = string.Concat(Enumerable.Range(1, 5).Select(l => l <= level ? "●" : "○"));
+        card.Children.Add(TextLine(LF($"Mốc thân thiết: {Name(level)} {steps}", $"Milestone: {Name(level)} {steps}")));
+        for (int l = 2; l <= level; l++)
+            card.Children.Add(TextLine("✓ " + L(PetBondRules.Opens(l, "vi")!, PetBondRules.Opens(l, "en")!), PetUi.Muted));
+        if (level < 5)
+        {
+            double left = Math.Max(0, PetBondRules.Thresholds[level] - diary.Bond);
+            string next = L(PetBondRules.Opens(level + 1, "vi")!, PetBondRules.Opens(level + 1, "en")!);
+            card.Children.Add(TextLine(left > 0
+                ? LF($"Mốc kế: {Name(level + 1)} (còn {left:F0} điểm) · mở: {next}", $"Next: {Name(level + 1)} ({left:F0} to go) · opens: {next}")
+                : LF($"Mốc kế: {Name(level + 1)} · mở: {next}", $"Next: {Name(level + 1)} · opens: {next}"), PetUi.Muted));
+        }
     }
 }

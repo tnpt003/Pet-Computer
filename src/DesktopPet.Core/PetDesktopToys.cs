@@ -46,18 +46,20 @@ public sealed class FetchStreak
 // The rules of the toys left out on the desktop; the windows are in PetWindow.Toys.cs.
 public static class DesktopToyRules
 {
-    public const string Ball = "ball", Box = "box";
+    public const string Ball = "ball", Box = "box", Wand = "wand", Mouse = "mouse";
     public const int MaxOut = 3;
     public const double BallHalfWidth = 12, BasketHalfWidth = 34, BasketHeight = 46, Gap = 4, GlideSpeed = 220;
     // The cardboard box (M2): about 100 DIPs wide, its body this tall above the floor.
     public const double BoxHalfWidth = 50, BoxHeight = 44;
-    public static readonly IReadOnlyList<string> All = new[] { Ball, Box };
+    // M4: the feather wand's handle (about 90 DIPs) lying on the floor, and the wind-up mouse.
+    public const double WandHalfWidth = 45, WandHeight = 10, MouseHalfWidth = 18, MouseHeight = 16;
+    public static readonly IReadOnlyList<string> All = new[] { Ball, Box, Wand, Mouse };
 
     public static bool CanTake(int outCount) => outCount < MaxOut;
 
-    public static double HalfWidthOf(string id) => id == Box ? BoxHalfWidth : BallHalfWidth;
-    // Half its height: the ball's radius, half the box's body.
-    public static double HalfHeightOf(string id) => id == Box ? BoxHeight / 2 : BallHalfWidth;
+    public static double HalfWidthOf(string id) => id switch { Box => BoxHalfWidth, Wand => WandHalfWidth, Mouse => MouseHalfWidth, _ => BallHalfWidth };
+    // Half its height: the ball's radius, half the box's body, half the handle, half the mouse.
+    public static double HalfHeightOf(string id) => id switch { Box => BoxHeight / 2, Wand => WandHeight / 2, Mouse => MouseHeight / 2, _ => BallHalfWidth };
 
     // What is left of a saved list: known toys, each once, no more than fit. No basket: nothing is out.
     public static List<SavedToy>? Normalize(IEnumerable<SavedToy>? saved, bool basketShown, IReadOnlyCollection<string>? known = null)

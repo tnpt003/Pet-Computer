@@ -289,6 +289,8 @@ internal static class ToyChecks
         check(window.ToyBasketMenuLabel == "Toy basket", "The menu offers the basket again");
         RunBox(window, pet, behavior, preferences, check);
         RunFetch(window, pet, behavior, preferences, check);
+        RunWand(window, pet, behavior, preferences, check);
+        RunMouse(window, pet, behavior, preferences, check);
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
     }
@@ -303,7 +305,8 @@ internal static class ToyChecks
         window.ToggleToyBasket();
         Tick(window);
         var rows = window.ToyBasketMenuItems();
-        check(rows.Length == 2 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
+        check(rows.Length == 4 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
+        check((string)rows[2].Header == "Feather wand" && (string)rows[3].Header == "Wind-up mouse", "...and the feather wand and the wind-up mouse (M4)");
         check(window.TakeToyOut(Box), "It comes out of the basket");
         Tick(window);
         var motion = window.ToyMotionOf(Box)!;
@@ -622,6 +625,257 @@ internal static class ToyChecks
         Frame();
         Call(window, "Present", false);
         check(!window.ToyBasketShown && !window.Fetching && !renderer.CarryBall && !window.ToyIsOut(Ball), "Quick tidy: the trip ends, the ball is put away");
+        SetField(window, "cursorProbe", null);
+        window.Reset();
+    }
+
+    // M4: the feather wand. The cat chases the feather only while the user holds the wand.
+    private static void RunWand(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        double scale = Field<double>(window, "scale");
+        var bounds = Field<Area>(window, "bounds");
+        var settings = Field<PetSettings>(window, "settings");
+        Point cursor = new(bounds.Left + 300, bounds.Bottom - 150);
+        SetField(window, "cursorProbe", new Func<Point>(() => new Point(cursor.X * scale, cursor.Y * scale)));
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        window.ToyChaseStreak.Step(1000, false);
+        window.ToggleToyBasket();
+        Tick(window);
+        check(window.TakeToyOut(DesktopToyRules.Wand), "The feather wand comes out of the basket");
+        Tick(window);
+        var motion = window.ToyMotionOf(DesktopToyRules.Wand)!;
+        var wandWindow = window.ToyWindowOf(DesktopToyRules.Wand)!;
+        Settle(window, motion);
+        var thing = Thing(window, DesktopToyRules.Wand);
+        var area = GetThing<Area>(thing, "Area");
+        check(wandWindow.IsVisible && motion.Rotation == 0 && Math.Abs(wandWindow.Top - (area.Bottom - DesktopToyRules.WandHeight / 2 - ToyWandArt.CentreY)) < 1.5,
+            "It lies flat on the floor, not rolling");
+        check(preferences.ToysOut!.Any(toy => toy.Id == DesktopToyRules.Wand), "...and is saved");
+        check(!window.ToysAboveCat, "The cat stays in front of it");
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+        var feather = window.FeatherOf(DesktopToyRules.Wand)!;
+        void Hold() { Call(window, "StartToyDrag", thing); SetThing(thing, "GrabX", 0.0); SetThing(thing, "GrabY", 0.0); }
+        void LetGo() => Call(window, "EndToyDrag", thing, false);
+        double middle = (bounds.Left + bounds.Right) / 2;
+        pet.X = middle - PetSettings.CenterX; Free();
+        Snapshot(window, wandWindow, "wand-lying");
+
+        // Held, in Quiet and the wake cooldown: the feather hangs, the cat watches it.
+        preferences.Quiet = true; behavior.Quiet = true;
+        pet.Emotions.FinishSleep(30);
+        cursor = new Point(middle + 250, bounds.Bottom - 150);
+        Hold();
+        Frame();
+        check(feather.Ready && window.ChaseToyId == DesktopToyRules.Wand && window.ChasePhase == "Wand", "Held, in Quiet and the wake cooldown: the cat goes for the feather");
+        check((bool)Call(window, "FeatureOwnsMovement")!, "...and nothing else of its own starts meanwhile (emotions and naps wait)");
+        for (int i = 0; i < 120; i++) Frame();
+        check(Math.Abs(feather.X - (cursor.X + ToyWandArt.HeldTipX)) < 3 && Math.Abs(feather.Y - (cursor.Y - ToyWandArt.HeldTipY + FeatherString.Length)) < 3, "The feather hangs on its string under the tip");
+        Snapshot(window, wandWindow, "wand-held");
+        bool walked = false;
+        for (int i = 0; i < 90; i++) { cursor = new Point(middle + 250 + Math.Sin(i / 6.0) * 60, cursor.Y); Frame(); walked |= pet.Action == PetAction.Walking; }
+        check(walked && pet.Facing == 1, "Swung about out of reach: the cat runs after it");
+        Snapshot(window, wandWindow, "wand-swing");
+
+        // Held still near the cat: it stalks and pounces with its normal jump; landing under it, it holds the feather.
+        cursor = new Point(CatCentre() + 20 - ToyWandArt.HeldTipX, bounds.Bottom - 150);
+        check(Until(() => window.ChasePhase == "Pounce", 600) && pet.Action == PetAction.Jumping && pet.VY < 0, "Still near the cat: it pounces");
+        Free();
+        Frame();
+        check(window.ChasePhase == "Hold" && feather.Pinned, "Landing under it: the feather is in its paws");
+        Snapshot(window, wandWindow, "wand-caught");
+        check(Until(() => window.ChasePhase == "Wand", 60) && !feather.Pinned, "...for under a second, then it lets go");
+
+        // Still and out of reach for 8 seconds: bored, it only looks.
+        cursor = new Point(middle + 300, bounds.Bottom - 150);
+        bool bored = Until(() => window.ChaseBored, 60 * 14);
+        check(bored && pet.Action == PetAction.Looking, $"Held still for 8 seconds: the cat loses interest and watches ({window.ChasePhase}, {feather.Speed:0}, {pet.Action})");
+        for (int i = 0; i < 20; i++) { cursor = new Point(middle + 300 + (i % 2) * 40, cursor.Y); Frame(); }
+        check(!window.ChaseBored && window.ChasePhase == "Wand", "It moves again: the chase goes on");
+
+        // Pause holds it all.
+        window.SetPaused(true);
+        double fx = feather.X, catX = pet.X;
+        for (int i = 0; i < 20; i++) Tick(window);
+        check(feather.X == fx && pet.X == catX && window.ChasePhase == "Wand", "Pause holds the feather and the chase");
+        window.SetPaused(false);
+
+        // A click on the cat: the chase stops (the drag goes on as usual).
+        Call(window, "CancelFeatureActivity");
+        check(window.ChasePhase == "None", "A click on the cat stops the chase");
+        LetGo();
+        Frame();
+        check(window.ChasePhase == "None" && !feather.Ready, "Let go, the wand drops and the feather lies by its tip");
+        Settle(window, motion);
+        check(motion.AtRest && motion.Rotation == 0, "...it lands flat");
+
+        // Asleep: it sleeps on.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Hold();
+        for (int i = 0; i < 30; i++) Frame();
+        check(window.ChasePhase == "None" && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "The wand held over a sleeping cat does not wake it");
+        LetGo(); Settle(window, motion);
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+        preferences.Quiet = false; behavior.Quiet = false;
+
+        // About 90 seconds of chasing, then two minutes of only watching.
+        window.ToyChaseStreak.Wand(ToyChaseStreak.WandSeconds + 1);
+        Hold();
+        Frame();
+        check(window.ChasePhase == "Look", "Resting after 90 seconds: it only watches the feather");
+        walked = false;
+        for (int i = 0; i < 60; i++) { cursor = new Point(middle + 250 + Math.Sin(i / 6.0) * 60, cursor.Y); Frame(); walked |= pet.Action == PetAction.Walking; }
+        check(!walked && pet.Action == PetAction.Looking, "...without running");
+        window.ToyChaseStreak.Step(121, false);
+        LetGo(); Frame(); Free();
+
+        // A fullscreen app: the chase ends and the wand hides.
+        Hold();
+        Frame();
+        check(window.ChasePhase == "Wand", "Held once more");
+        Context(window, true);
+        Tick(window);
+        check(window.ChasePhase == "None" && !wandWindow.IsVisible, "A fullscreen app: the chase stops and the wand hides");
+        Context(window, false);
+        Tick(window); Settle(window, motion);
+        check(wandWindow.IsVisible, "...and is back afterwards");
+        window.ToggleToyBasket(); // Quick tidy.
+        SetField(window, "cursorProbe", null);
+        window.Reset();
+    }
+
+    // M4: the wind-up mouse. A click winds it; the cat chases it while it runs.
+    private static void RunMouse(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        var bounds = Field<Area>(window, "bounds");
+        var settings = Field<PetSettings>(window, "settings");
+        double scale = Field<double>(window, "scale");
+        SetField(window, "cursorProbe", new Func<Point>(() => new Point((bounds.Left + 200) * scale, (bounds.Bottom - 60) * scale)));
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        window.ToyChaseStreak.Step(1000, false);
+        window.ToggleToyBasket();
+        Tick(window);
+        check(window.TakeToyOut(DesktopToyRules.Mouse), "The wind-up mouse comes out of the basket");
+        Tick(window);
+        var motion = window.ToyMotionOf(DesktopToyRules.Mouse)!;
+        var mouseWindow = window.ToyWindowOf(DesktopToyRules.Mouse)!;
+        Settle(window, motion);
+        var thing = Thing(window, DesktopToyRules.Mouse);
+        var area = GetThing<Area>(thing, "Area");
+        var windUp = window.WindUpOf(DesktopToyRules.Mouse)!;
+        check(mouseWindow.IsVisible && !windUp.Busy && Math.Abs(mouseWindow.Top - (area.Bottom - ToyMouseArt.ArtHeight)) < 1.5, "It sits on the floor, still");
+        Snapshot(window, mouseWindow, "mouse-still");
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+        void Click() { SetThing(thing, "Press", true); Call(window, "EndToyDrag", thing, true); }
+        void Place(double x, int direction) { motion.X = x; windUp.Direction = direction; }
+        double middle = (bounds.Left + bounds.Right) / 2;
+        pet.X = middle - PetSettings.CenterX; Free();
+
+        // A click winds it up; the cat runs after it, in Quiet too.
+        preferences.Quiet = true; behavior.Quiet = true;
+        Place(middle + 300, 1);
+        Click();
+        check(windUp.Running, "A click winds the mouse up");
+        Frame();
+        check(window.ChaseToyId == DesktopToyRules.Mouse && window.ChasePhase == "Run", "In Quiet too, the cat goes after the running mouse");
+        Frame();
+        check(pet.Action == PetAction.Walking && Math.Abs(pet.VX) > settings.WalkSpeed * 1.8 && pet.Facing == 1, "...at a run");
+        Snapshot(window, mouseWindow, "mouse-run");
+        Click();
+        check(windUp.Winds == 1, "A click while it runs does nothing");
+
+        // Close by: a pounce; landing on it, the cat pins it and the mouse stops.
+        motion.X = CatCentre() + 60;
+        Frame();
+        check(window.ChasePhase == "Pounce" && pet.Action == PetAction.Jumping, "Close by, the cat pounces");
+        Free(); motion.X = CatCentre() + 10;
+        Frame();
+        check(window.ChasePhase == "Hold" && !windUp.Running, "Landing on it: caught, the mouse stops");
+        check(window.ToyChaseStreak.MiceInARow == 1, "One mouse counted");
+        check(Until(() => window.ChasePhase == "None", 90) && pet.Action == PetAction.Sitting, "After about a second the cat sits");
+        Settle(window, motion);
+        check(preferences.ToysOut!.Any(toy => toy.Id == DesktopToyRules.Mouse), "Once still the mouse is saved where it lies");
+
+        // A miss: the chase goes on; the mouse running out ends it.
+        Free();
+        Place(CatCentre() + 300, -1);
+        Click();
+        check(Until(() => window.ChasePhase == "Run", 5), "Wound again");
+        motion.X = CatCentre() + 60;
+        Frame();
+        check(window.ChasePhase == "Pounce", "...a pounce");
+        Free(); motion.X = CatCentre() + 200;
+        Frame();
+        check(window.ChasePhase == "Run" && windUp.Running, "A miss: it chases on");
+        windUp.RunLeft = 0;
+        Frame();
+        check(window.ChasePhase == "None", "The mouse stops: the chase ends");
+        Settle(window, motion);
+
+        // The same winding is chased once: a click on the cat ends it for good.
+        Free();
+        Place(CatCentre() + 300, 1);
+        Click();
+        Frame();
+        check(window.ChasePhase == "Run", "Another round");
+        Call(window, "CancelFeatureActivity");
+        Frame(); Frame();
+        check(window.ChasePhase == "None" && windUp.Running, "A click on the cat stops the chase; that run is not chased again");
+        windUp.RunLeft = 0; Settle(window, motion);
+
+        // Picked up while it runs: it stops, and so does the chase.
+        Free();
+        Place(CatCentre() + 300, 1);
+        Click();
+        Frame();
+        Call(window, "StartToyDrag", thing);
+        Frame();
+        check(window.ChasePhase == "None" && !windUp.Running, "Picked up while it runs: the mouse and the chase stop");
+        Call(window, "EndToyDrag", thing, false);
+        Settle(window, motion);
+
+        // Asleep: it sleeps on.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Click();
+        for (int i = 0; i < 20; i++) Frame();
+        check(window.ChasePhase == "None" && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "A running mouse does not wake the sleeping cat");
+        windUp.RunLeft = 0; Settle(window, motion);
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+        preferences.Quiet = false; behavior.Quiet = false;
+
+        // Five in a row, then two minutes of only watching.
+        window.ToyChaseStreak.Step(1000, false);
+        for (int i = 0; i < ToyChaseStreak.MouseInARow; i++) window.ToyChaseStreak.TryMouse();
+        Place(CatCentre() + 300, 1);
+        Click();
+        Frame();
+        check(window.ChasePhase == "Look", "After five in a row it only watches the mouse");
+        bool walked = false;
+        for (int i = 0; i < 30; i++) { Frame(); walked |= pet.Action == PetAction.Walking; }
+        check(!walked, "...without running");
+        windUp.RunLeft = 0; Frame();
+        check(window.ChasePhase == "None", "...until it stops");
+        window.ToyChaseStreak.Step(121, false);
+        Settle(window, motion);
+
+        // Three out: the fourth is greyed. Quick tidy puts everything away mid-chase.
+        check(window.TakeToyOut(Ball) && window.TakeToyOut(DesktopToyRules.Wand), "The ball and the wand come out too");
+        check(window.ToyBasketMenuItems()[1] is { IsEnabled: false } boxRow && ((string)boxRow.Header).Contains("3"), "Three out: the box's row is greyed");
+        Free();
+        Place(CatCentre() + 300, 1);
+        Click();
+        Frame();
+        check(window.ChasePhase == "Run", "Running once more");
+        window.ToggleToyBasket();
+        Frame();
+        check(!window.ToyBasketShown && window.ChasePhase == "None" && !window.ToyIsOut(DesktopToyRules.Mouse), "Quick tidy: the chase ends, everything is put away");
         SetField(window, "cursorProbe", null);
         window.Reset();
     }

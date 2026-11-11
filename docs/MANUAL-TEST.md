@@ -1566,3 +1566,21 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Có cả đệm slime/thùng carton: mèo vẫn tự đi ngủ như M2, không bỏ dở chuyến tha bóng giữa chừng để đi ngủ.
 - [ ] DPI 125 %/150 % và màn hình phụ: bóng nhả ra đúng ở miệng, không nhảy chỗ; ném bóng sang màn khác mèo thì mèo không đi nhặt.
 - [ ] Đọc nhãn tiếng Nhật "猫がくわえています" (chưa ai duyệt).
+
+## Chơi cùng sen M4 — Cần câu lông vũ và chuột dây cót (11/11, chỉ bản 1.6)
+
+- [ ] Giỏ có 4 hàng: Bóng len, Thùng carton, Cần câu lông vũ, Chuột dây cót. Lấy đủ 3 món thì món thứ tư mờ, ghi "tối đa 3 món".
+- [ ] Cần câu nằm ngang trên sàn, lông vũ cạnh đầu cần; ném thì rơi, trượt ngắn, không lăn. Bấm không kéo: cần rung nhẹ.
+- [ ] Cầm cán cần câu, vẩy qua lại: lông vũ đung đưa trên dây, trễ sau đầu cần, không giật, không chớp; đưa thấp thì lông quét trên sàn.
+- [ ] Mèo thức, đứng trên sàn: mèo nhìn lông, chạy theo, rình khi lông dừng gần, vồ bằng cú nhảy thường; vồ trúng thì giữ lông dưới chân khoảng 1 giây rồi buông. Kéo cần ra xa lúc mèo giữ: lông tuột khỏi chân mèo. Mèo không giật cần khỏi tay.
+- [ ] Giữ cần yên quá 8 giây: mèo chán, ngồi nhìn; vẩy lại thì đuổi tiếp. Thả cần: mèo thôi đuổi.
+- [ ] Bấm chuột dây cót: chuột chạy dọc sàn khoảng 5 giây, chìa khóa trên lưng quay, gặp mép màn hình hoặc vùng đất thì quay đầu, rồi chậm dần và dừng. Bấm lúc chuột đang chạy: không có gì.
+- [ ] Mèo đuổi chuột (chạy nhanh hơn đi bộ), tới gần thì vồ; trúng thì chuột dừng, mèo đè khoảng 1 giây rồi ngồi; trượt thì đuổi tiếp tới khi chuột dừng.
+- [ ] Ném chuột mạnh xuống sàn: chuột lật ngửa, bánh quay khoảng 1 giây rồi tự lật lại.
+- [ ] Bật Quiet, hoặc mèo vừa thức (~30 giây): vẫn đuổi. Mèo đang ngủ: cầm cần hay lên dây chuột không đánh thức, mèo không đuổi. Pause: mọi thứ đứng yên, không cầm được đồ.
+- [ ] Đang đuổi: click trái mèo → thôi đuổi, kéo mèo như thường; click phải → thôi đuổi, menu mở. Cảm xúc tự động không chen vào lúc đuổi.
+- [ ] Đuổi cần câu liên tục khoảng 90 giây, hoặc 5 lượt chuột liên tiếp: sau đó khoảng 2 phút mèo chỉ nhìn, không chạy.
+- [ ] Đang đuổi: mở app toàn màn hình hoặc vào trận → mèo thôi đuổi, đồ ẩn rồi hiện lại. Cất nhanh → đồ về giỏ. Kéo đồ sang màn hình khác mèo: mèo thôi đuổi.
+- [ ] Trò "Chơi bóng", laser, ném nhặt vẫn như cũ; đang chơi laser thì cầm cần câu mèo không đuổi.
+- [ ] DPI 125 %/150 % và màn hình phụ: lông vũ treo đúng dưới đầu cần, chuột chạy đúng trên sàn.
+- [ ] Đọc nhãn tiếng Nhật "羽根のねこじゃらし", "ぜんまいネズミ" (chưa ai duyệt).

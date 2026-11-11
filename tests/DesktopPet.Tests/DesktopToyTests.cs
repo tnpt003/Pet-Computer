@@ -83,6 +83,69 @@ internal static class DesktopToyTests
         streak.Step(double.NaN);
         check(!streak.Resting, "A broken frame changes nothing");
 
+        // M4: the feather wand and the wind-up mouse.
+        check(DesktopToyRules.All.SequenceEqual(new[] { "ball", "box", "wand", "mouse" }) && DesktopToyRules.HalfWidthOf("wand") == 45 && DesktopToyRules.HalfWidthOf("mouse") == 18,
+            "The basket has four toys: the wand's handle is about 90 DIPs long");
+        check(DesktopToyRules.Normalize(new[] { new SavedToy { Id = "wand" }, new SavedToy { Id = "mouse" } }, true)!.Count == 2, "A saved wand and mouse are kept");
+        var chase = new ToyChaseStreak();
+        for (int i = 0; i < 89 * 60; i++) chase.Wand(1 / 60.0);
+        check(!chase.Resting && chase.WandPlayed > 88, "The cat chases the wand for up to about 90 seconds");
+        for (int i = 0; i < 70; i++) chase.Wand(1 / 60.0);
+        check(chase.Resting && chase.RestLeft == 120 && !chase.TryMouse(), "...then rests two minutes, the mouse included");
+        chase.Step(120.01, false);
+        int mice = 0;
+        for (int i = 0; i < 6; i++) if (chase.TryMouse()) mice++;
+        check(mice == 5 && chase.Resting, "Five mice in a row, then the rest");
+        chase.Step(121, false);
+        chase.TryMouse(); chase.Wand(10);
+        chase.Step(19, false);
+        check(chase.MiceInARow == 1 && chase.WandPlayed == 10, "A short break keeps the count");
+        chase.Step(1.01, false);
+        check(chase.MiceInARow == 0 && chase.WandPlayed == 0, "Twenty seconds without play: it starts afresh");
+
+        var feather = new FeatherString();
+        for (int i = 0; i < 600; i++) feather.Step(1 / 60.0, 500, 100, 1000);
+        check(Math.Abs(feather.X - 500) < 1 && Math.Abs(feather.Y - (100 + FeatherString.Length)) < 1 && feather.Speed < 5, "Held still, the feather hangs on its string under the tip");
+        for (int i = 0; i < 10; i++) feather.Step(1 / 60.0, 500 + (i + 1) * 12, 100, 1000);
+        check(feather.X < 500 + 120 - 20 && feather.Speed > 200, "The tip swept across: the feather lags behind and swings");
+        double far = Math.Sqrt((feather.X - 620) * (feather.X - 620) + (feather.Y - 100) * (feather.Y - 100));
+        check(far <= FeatherString.Length + 0.01, "...never farther than the string");
+        for (int i = 0; i < 120; i++) feather.Step(1 / 60.0, 620, 950, 1000);
+        check(feather.Y <= 1000, "Low down it lies along the floor");
+        feather.Pin(640, 1000);
+        feather.Step(1 / 60.0, 620, 950, 1000);
+        check(feather.Pinned && feather.X == 640, "In the cat's paws it stays");
+        feather.Step(1 / 60.0, 620, 800, 1000);
+        check(!feather.Pinned, "...until the string is pulled tight");
+
+        var toy = new ToyBall { X = 500 };
+        var mouse = new WindUpMouse { Direction = 1 };
+        check(mouse.Wind(toy) && mouse.Running && mouse.Winds == 1, "A click winds the mouse up");
+        check(!mouse.Wind(toy) && mouse.Winds == 1, "...a click while it runs does nothing");
+        double ran = 0, top = 0;
+        for (int i = 0; i < 60; i++) { mouse.Step(toy, 1 / 60.0, 30, 2000, null, 18); top = Math.Max(top, Math.Abs(toy.VX)); }
+        ran = toy.X - 500;
+        check(Math.Abs(top - WindUpMouse.Speed) < 1 && ran > 170 && ran < 190, "It runs along the floor at about 180 DIPs/s");
+        for (int i = 0; i < 6 * 60; i++) mouse.Step(toy, 1 / 60.0, 30, 2000, null, 18);
+        check(!mouse.Running && toy.AtRest && toy.X - 500 < 5 * 180 && toy.X - 500 > 4 * 180 - 1, "About 5 seconds, slowing down at the end, then it stops");
+        var edge = new ToyBall { X = 1990 };
+        var turner = new WindUpMouse { Direction = 1 };
+        turner.Wind(edge);
+        for (int i = 0; i < 30; i++) turner.Step(edge, 1 / 60.0, 30, 2000, null, 18);
+        check(turner.Direction == -1 && edge.X < 1990, "At the screen's edge it turns round");
+        var landed = new ToyBall { X = 800 };
+        var lander = new WindUpMouse { Direction = -1 };
+        lander.Wind(landed);
+        var lands = new List<(double, double)> { (700, 760) };
+        for (int i = 0; i < 60; i++) lander.Step(landed, 1 / 60.0, 30, 2000, lands, 18);
+        check(lander.Direction == 1 && landed.X - 18 >= 760, "At a farm land it turns round too");
+        var thrown = new ToyBall { X = 500, Height = 300, VX = 200 };
+        var tumbler = new WindUpMouse();
+        bool flipped = false;
+        for (int i = 0; i < 180; i++) { tumbler.Step(thrown, 1 / 60.0, 30, 2000, null, 18); flipped |= tumbler.Flipped; }
+        check(flipped && !tumbler.Flipped && !tumbler.Running, "A hard landing turns it over for about a second, then it rights itself");
+        check(!tumbler.Wind(new ToyBall { Height = 20 }), "It cannot be wound in the air");
+
         string folder = Path.Combine(Path.GetTempPath(), "pet-toys-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try

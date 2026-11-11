@@ -49,6 +49,7 @@ public enum AutoKind
     FarmChore,      // The cat going to water, harvest or chase a bird off the field on its own.
     ToyFetch,       // Fetching the yarn ball the user threw (allowed in Quiet and the wake cooldown, like the ball game).
     ToyInvite,      // Bringing the yarn ball to the user on its own, to ask for a game.
+    ToyChase,       // Chasing the feather wand the user holds or the mouse the user wound (allowed in Quiet and the wake cooldown).
 }
 
 public static class PetAutonomy
@@ -79,6 +80,7 @@ public static class PetAutonomy
         AutoKind.Weather => AutoBlock.AnyQuiet | AutoBlock.AnyBattle,
         AutoKind.FarmChore => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         AutoKind.ToyFetch => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
+        AutoKind.ToyChase => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
         AutoKind.ToyInvite => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };

@@ -44,6 +44,7 @@ public static class PetUi
 
     public const string Battle = ""; // Game controller.
     public const string Box = ""; // Package (the cardboard box).
+    public const string Wand = "", WindUpMouse = ""; // Pen (the feather wand), mouse (the wind-up mouse).
     public const string Quiet = "", Sound = ""; // Moon (quiet hours), speaker.
     public const string Status = ""; // Heart.
     public const string Focus = ""; // Clock (the focus timer).

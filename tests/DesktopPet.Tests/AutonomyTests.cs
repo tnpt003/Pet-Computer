@@ -36,6 +36,10 @@ internal static class AutonomyTests
             && Blocks(AutoKind.ToyFetch, AutoBlock.Feature) && Blocks(AutoKind.ToyFetch, AutoBlock.Unsettled), "Fetching a throw works in Quiet, not asleep, busy or with a fullscreen app");
         check(new[] { AutoBlock.Quiet, AutoBlock.Fullscreen, AutoBlock.WakeCooldown, AutoBlock.Away, AutoBlock.Feature, AutoBlock.Battle, AutoBlock.BattleScreens }.All(b => Blocks(AutoKind.ToyInvite, b)),
             "Bringing the ball on its own waits like the box nap, and for the user");
+        // M4: chasing the wand or the mouse the user plays with.
+        check(!Blocks(AutoKind.ToyChase, AutoBlock.Quiet) && !Blocks(AutoKind.ToyChase, AutoBlock.WakeCooldown) && !Blocks(AutoKind.ToyChase, AutoBlock.Away)
+            && new[] { AutoBlock.Fullscreen, AutoBlock.Feature, AutoBlock.Unsettled, AutoBlock.Held, AutoBlock.Paused, AutoBlock.Battle }.All(b => Blocks(AutoKind.ToyChase, b)),
+            "Chasing the wand or the mouse works in Quiet, not asleep, held, busy or with a fullscreen app");
         check(Blocks(AutoKind.Admire, AutoBlock.Feature) && !Blocks(AutoKind.CallToLook, AutoBlock.Feature), "Admiring on its own waits for other features; a double click does not");
         check(Blocks(AutoKind.Ledges, AutoBlock.Battle) && !Blocks(AutoKind.Ledges, AutoBlock.Quiet), "Ledges are ground in Quiet, not in a battle");
     }

@@ -34,6 +34,11 @@ public sealed partial class PetWindow
         // In the cat's mouth (PetWindow.ToyFetch.cs): its window hidden, its motion still.
         public bool Carried;
         public Point PressAt;
+        // M4 (PetWindow.ToyChase.cs): the wand's feather on its string, the mouse's clockwork, and the
+        // side the wand's tip or the mouse's nose points to.
+        public readonly FeatherString Feather = new();
+        public readonly WindUpMouse WindUp = new();
+        public int Facing = 1;
     }
 
     private const double ToySide = 56;
@@ -83,6 +88,7 @@ public sealed partial class PetWindow
         if (toyWindow != null || laserWindow != null) CancelFeatureActivity();
         toyGameStowing = false;
         StopToyFetch(drop: false); // A ball in the mouth goes back to the basket too.
+        StopToyChase();
         foreach (var toy in desktopToys) CloseDesktopThing(toy);
         desktopToys.Clear();
         WriteToyPlaces();
@@ -149,6 +155,7 @@ public sealed partial class PetWindow
     private void StowToy(DesktopThing toy)
     {
         if (toy.Id == DesktopToyRules.Ball) StopToyFetch(drop: false);
+        if (chaseToy == toy) StopToyChase();
         CloseDesktopThing(toy);
         desktopToys.Remove(toy);
         WriteToyPlaces();
@@ -192,6 +199,7 @@ public sealed partial class PetWindow
             thing.GrabX *= ratio; thing.GrabY *= ratio;
             if (thing.Glide is double glide) thing.Glide = glide * ratio;
             thing.Tracker.Clear();
+            thing.Feather.Clear(); // Hangs again under the tip in the new DIPs.
             thing.Placed = false;
         }
         if (moved || !thing.Area.Equals(area)) thing.Placed = false;
@@ -227,6 +235,19 @@ public sealed partial class PetWindow
             thing.Window = CreateOverlayWindow(surface, "Pet cardboard box");
             thing.Window.Width = ToyBoxArt.ArtWidth; thing.Window.Height = ToyBoxArt.ArtHeight;
         }
+        else if (thing.Id == DesktopToyRules.Wand)
+        {
+            // Big enough for the feather swinging on its string while held; only what is drawn takes clicks.
+            surface = thing.Art = new ToyWandArt { Cursor = Cursors.Hand, RenderTransformOrigin = new Point(0.5, 0.5) };
+            thing.Window = CreateOverlayWindow(surface, "Pet feather wand");
+            thing.Window.Width = ToyWandArt.ArtWidth; thing.Window.Height = ToyWandArt.ArtHeight;
+        }
+        else if (thing.Id == DesktopToyRules.Mouse)
+        {
+            surface = thing.Art = new ToyMouseArt { Cursor = Cursors.Hand };
+            thing.Window = CreateOverlayWindow(surface, "Pet wind-up mouse");
+            thing.Window.Width = ToyMouseArt.ArtWidth; thing.Window.Height = ToyMouseArt.ArtHeight;
+        }
         else
         {
             var grid = new Grid { Width = ToySide, Height = ToySide, Cursor = Cursors.Hand };
@@ -257,14 +278,20 @@ public sealed partial class PetWindow
     // One row per toy: ticked while it is out; a click takes it out or puts it back.
     public MenuItem[] ToyBasketMenuItems() => DesktopToyRules.All.Select(id =>
     {
-        bool box = id == DesktopToyRules.Box;
-        bool isOut = ToyIsOut(id), playing = id == DesktopToyRules.Ball && toyWindow != null, full = !isOut && !DesktopToyRules.CanTake(desktopToys.Count);
+        bool box = id == DesktopToyRules.Box, ballRow = id == DesktopToyRules.Ball;
+        bool isOut = ToyIsOut(id), playing = ballRow && toyWindow != null, full = !isOut && !DesktopToyRules.CanTake(desktopToys.Count);
         bool sleeping = box && isOut && BoxOccupied;
-        bool carried = !box && CarryingBall;
-        string name = box ? L("Thùng carton", "Cardboard box") : L("Bóng len", "Yarn ball");
+        bool carried = ballRow && CarryingBall;
+        string name = id switch
+        {
+            DesktopToyRules.Box => L("Thùng carton", "Cardboard box"),
+            DesktopToyRules.Wand => L("Cần câu lông vũ", "Feather wand"),
+            DesktopToyRules.Mouse => L("Chuột dây cót", "Wind-up mouse"),
+            _ => L("Bóng len", "Yarn ball")
+        };
         string? why = playing ? L("đang chơi", "in play") : sleeping ? L("mèo đang ngủ", "the cat is asleep in it") : carried ? L("mèo đang ngậm", "in the cat's mouth")
             : full ? L("tối đa 3 món", "3 out at most") : null;
-        var item = PetUi.MenuItem(box ? PetUi.Box : PetUi.Ball);
+        var item = PetUi.MenuItem(id switch { DesktopToyRules.Box => PetUi.Box, DesktopToyRules.Wand => PetUi.Wand, DesktopToyRules.Mouse => PetUi.WindUpMouse, _ => PetUi.Ball });
         item.Header = why == null ? name : $"{name} ({why})";
         item.IsCheckable = true; item.IsChecked = isOut; item.IsEnabled = why == null;
         item.Click += (_, _) => { if (ToyIsOut(id)) StowToy(id); else TakeToyOut(id); };
@@ -312,6 +339,8 @@ public sealed partial class PetWindow
         thing.GrabX = cursor.X - thing.Motion.X;
         thing.GrabY = cursor.Y - ToyCentreY(thing);
         thing.Motion.VX = thing.Motion.VY = 0;
+        thing.WindUp.Stop(thing.Motion); thing.WindUp.FlipLeft = 0; // Picked up: the mouse stops running.
+        thing.Feather.Clear(); // The feather starts hanging from where it lay.
         thing.Tracker.Clear();
         thing.Tracker.Add(clock.Elapsed.TotalSeconds, cursor.X, cursor.Y);
         PlayPetSound("swoosh");
@@ -343,7 +372,9 @@ public sealed partial class PetWindow
             if (!letGo || paused) return;
             // A click. Nothing here reaches the cat: not awake, not asleep.
             if (thing == toyBasket) OpenToyBasketMenu();
-            else if (thing.Id == DesktopToyRules.Box) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }
+            else if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }
+            // Wound up: it runs (PetWindow.ToyChase.cs); a click while it runs does nothing.
+            else if (thing.Id == DesktopToyRules.Mouse) { if (thing.WindUp.Wind(thing.Motion)) PlayPetSound("ball_tap"); }
             else { thing.Motion.Nudge(ToyCursor(thing).X - thing.Motion.X); PlayPetSound("ball_tap"); }
             return;
         }
@@ -419,6 +450,25 @@ public sealed partial class PetWindow
             // A click's little shake, dying out with Feedback.
             if (thing.Art != null) thing.Art.RenderTransform = motion.Feedback > 0 ? new RotateTransform(Math.Sin(motion.Feedback * 45) * motion.Feedback * 9) : Transform.Identity;
         }
+        else if (thing.Id == DesktopToyRules.Wand && thing.Art is ToyWandArt wand)
+        {
+            double left = motion.X - ToyWandArt.CentreX, top = ToyCentreY(thing) - ToyWandArt.CentreY;
+            MoveWindow(thing.Window, left, top, thing.Scale);
+            wand.Held = thing.Held && thing.Feather.Ready;
+            wand.Facing = thing.Facing;
+            wand.Feather = new Point(thing.Feather.X - left, thing.Feather.Y - top);
+            wand.Floor = thing.Area.Bottom - top;
+            wand.InvalidateVisual();
+            wand.RenderTransform = motion.Feedback > 0 ? new RotateTransform(Math.Sin(motion.Feedback * 45) * motion.Feedback * 6) : Transform.Identity;
+        }
+        else if (thing.Id == DesktopToyRules.Mouse && thing.Art is ToyMouseArt mouse)
+        {
+            MoveWindow(thing.Window, motion.X - ToyMouseArt.ArtWidth / 2, thing.Area.Bottom - ToyMouseArt.ArtHeight - motion.Height, thing.Scale);
+            mouse.Facing = thing.WindUp.Direction;
+            mouse.Flipped = thing.WindUp.Flipped;
+            mouse.Turn = thing.WindUp.Wheel;
+            mouse.InvalidateVisual();
+        }
         else
         {
             MoveWindow(thing.Window, motion.X - ToySide / 2, thing.Area.Bottom - 40 - motion.Height, thing.Scale);
@@ -450,6 +500,7 @@ public sealed partial class PetWindow
         if (!toysLoaded) LoadDesktopToys();
         TickBoxNap(dt); // PetWindow.ToyBox.cs: also when the basket has just been tidied away.
         GuardToyFetch(dt); // PetWindow.ToyFetch.cs: a fullscreen app or a battle drops the ball before it hides.
+        GuardToyChase(dt); // PetWindow.ToyChase.cs: the same for chasing the wand or the mouse.
         if (toyBasket == null) return;
         bool show = ToysMayShow, shown = false;
         foreach (var thing in DesktopThings)
@@ -485,7 +536,14 @@ public sealed partial class PetWindow
         if (thing.InGame || thing.Carried) return false;
         var motion = thing.Motion;
         if (thing.Halo != null) thing.Halo.Opacity = Math.Max(motion.Feedback / 0.35, thing.Surface?.IsMouseOver == true ? 0.45 : 0);
-        if (thing.Held) { UpdateToyDrag(thing); PositionDesktopThing(thing); return false; }
+        if (thing.Held)
+        {
+            UpdateToyDrag(thing);
+            if (thing.Id == DesktopToyRules.Wand) StepFeather(thing, dt);
+            PositionDesktopThing(thing);
+            return false;
+        }
+        if (thing.Feather.Ready) { thing.Feather.Clear(); thing.Placed = false; } // Let go: it lies by the tip again.
         if (thing.Press) return false;
         if (checkPlaces) RefreshToyPlace(thing);
         if (thing.Glide is double to)
@@ -499,15 +557,17 @@ public sealed partial class PetWindow
             PositionDesktopThing(thing);
             return false;
         }
-        if (thing != toyBasket && (!motion.AtRest || motion.Feedback > 0))
+        if (thing != toyBasket && (!motion.AtRest || motion.Feedback > 0 || thing.WindUp.Busy))
         {
             double left = thing.Area.Left + thing.HalfWidth, right = Math.Max(left, thing.Area.Right - thing.HalfWidth);
-            if (thing.Id == DesktopToyRules.Box) motion.StepBox(dt, left, right); else motion.Step(dt, left, right);
+            if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand) motion.StepBox(dt, left, right);
+            else if (thing.Id == DesktopToyRules.Mouse) thing.WindUp.Step(motion, dt, left, right, thing.WindUp.Running ? ToyObstacles(thing.Monitor) : null, thing.HalfWidth);
+            else motion.Step(dt, left, right);
             double ceiling = ToyCeiling(thing);
             if (motion.Height > ceiling) { motion.Height = ceiling; motion.VY = -Math.Abs(motion.VY) * 0.3; }
             PositionDesktopThing(thing);
         }
-        if (!motion.AtRest) return false;
+        if (!motion.AtRest || thing.WindUp.Busy) return false;
         // The box with the cat in it stays put until the cat is out.
         if ((thing.Unsaved || checkPlaces) && !(thing.Id == DesktopToyRules.Box && BoxOccupied) && SlideOffLand(thing)) return false;
         if (!thing.Unsaved) return false;

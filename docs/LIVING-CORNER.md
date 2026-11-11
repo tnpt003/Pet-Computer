@@ -7,7 +7,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Đã có code, còn test tay |
-| M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
+| M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Luật duyệt 12/11, chưa code |
 | M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
 
 Quyết định chung (người dùng đồng ý 11/11):
@@ -183,3 +183,56 @@ Mốc thân thiết: Python chia bond thành 5 mốc chỉ đi lên (Mới quen 
 - Ngủ tựa vào đồ: `SleepOnCushionInstead` thử `GoNap()` (đệm, hộp) rồi `GoLeanNap()`; chung đường đi của đệm (`cushionNap` Walk, cờ `napLean`), tới nơi là giấc ngủ thường tại chỗ.
 - Trái tim: `PetRenderer.DrawBondHearts`, 1,5 giây, chỉ là hình. Tên mốc tiếng Anh dùng "Good friends", "Best friends" vì "Close" đã là khóa dịch của nút Đóng.
 - Đã soát ảnh render trái tim trên đầu mèo. Chưa xem thẻ Nhật ký và chưa thử quay lại máy thật sau 10 phút, chưa chạy với Python thật qua nhiều ngày; câu tiếng Nhật chưa ai duyệt.
+
+## Luật M4 Món yêu thích và lựa chọn (duyệt 12/11)
+
+### Món nào được tính
+
+- Chỉ ba món người dùng chơi cùng mèo: **Bóng len, Cần câu lông vũ, Chuột dây cót**. Không tính laser (không phải đồ trên desktop), thùng carton, trụ cào, chậu cây (việc mèo tự làm, tính vào thì mèo tự "nuôi" món yêu thích).
+- Một lượt là một lần trò do người dùng bật: một chuỗi ném nhặt, một chuỗi chuyền, một lượt đuổi cần câu, một lượt đuổi chuột. Mèo rủ chơi mà người dùng không chơi tiếp thì không tính.
+
+### Python giữ món yêu thích
+
+- C# gửi thêm trường tùy chọn `toy_plays` trong observation: số đếm cộng dồn theo món (`ball`, `wand`, `mouse`), giống các bộ đếm tương tác hiện có. Bộ đếm `toy` cũ giữ nguyên cách tính.
+- Python lưu điểm từng món trong `ai-memory.json`, điểm **giảm một nửa sau mỗi 7 ngày** để món yêu thích có thể đổi.
+- Món yêu thích cần ít nhất 5 điểm và hơn món thứ hai 1,3 lần. Đã có món yêu thích thì món khác phải vượt món đó 1,3 lần mới thay; đổi tối đa một lần mỗi ngày.
+- "Quên điều mèo đã học" xóa điểm món và món yêu thích (khác mốc thân thiết M3, vì đây là điều mèo học được).
+- **Python tắt hoặc lỗi: không có món yêu thích**, mèo chạy đúng như hiện nay (rủ chơi bằng bóng như M3). Món biết được trong phiên bị xóa khi AI tắt, như mốc M3.
+
+### Ba hành vi mở thêm
+
+Chỉ khi có món yêu thích, món đó đang nằm ngoài desktop, cùng màn hình với mèo.
+
+1. **Ghé món thích:** mỗi khoảng 10–15 phút mèo đi tới món, ngửi hoặc vỗ chân rồi ngồi cạnh khoảng 5 giây. Món không dịch chuyển, đồ vẫn không chạm mèo.
+2. **Rủ chơi bằng món thích:** dùng chung lịch 8–15 phút của rủ chơi M3.
+   - Bóng len: giữ nguyên rủ chơi M3 (ngậm bóng tới chỗ con trỏ).
+   - Cần câu hoặc chuột: mèo không tha (tha chuột vẫn để sau). Mèo tới ngồi cạnh món, nhìn về phía con trỏ, vỗ nhẹ món (chỉ là hình, món không động) và chờ 20 giây. Trong 20 giây người dùng vẩy cần câu hoặc lên dây chuột thì vào trò M4 Đợt 1 như thường (tính lượt và 2 phút nghỉ chung), không thì mèo đi việc khác.
+3. **Chọn một trong hai:**
+   - Mèo tự đi tới đồ (ghé, rủ chơi, ngửi đồ mới) mà có hai món chơi được nằm trong khoảng 250 DIP của nhau: mèo dừng ở giữa, nhìn món này rồi món kia (khoảng 1 giây mỗi bên) rồi tới món yêu thích; không có món yêu thích thì chọn ngẫu nhiên.
+   - Người dùng chơi cần câu và chuột cùng lúc: mèo đuổi món yêu thích, thay cho cách chọn hiện có; món kia vẫn chạy bình thường.
+
+### Chặn và ngắt
+
+- Là việc mèo tự làm, chặn như rủ chơi M3 và các chuyến tới đồ: Quiet, Giờ tập trung, app toàn màn hình, trận và màn hình trận, Pause, mèo bận/bị kéo/đang bay, cảm xúc ưu tiên cao, đang có việc khác, wake cooldown, người dùng vắng. Không đánh thức mèo ngủ.
+- Ngắt như các chuyến tới đồ: click trái/kéo dừng và kéo như thường, click phải dừng và mở menu, cảm xúc ưu tiên cao nhường, Pause đóng băng.
+- Không âm thanh mới. Lúc món yêu thích mới được chọn có một câu nói một lần (tình huống `favorite_toy` trong `ai/lines.json`, vi/en; hệ thống câu nói hiện có, có cooldown, im trong Quiet).
+- Không phải tương tác của người dùng: needs, bond, learning không đổi vì các hành vi này; chỉ lượt người dùng chơi mới được cộng.
+
+### Nhật ký
+
+- Thẻ "Món yêu thích": tên món và số lượt gần đây của ba món. Python tắt thì không có thẻ này.
+
+### Giao thức (thêm trường tùy chọn, không đổi trường cũ)
+
+- Observation thêm `toy_plays` (object, số nguyên ≥ 0 cho `ball`, `wand`, `mouse`). Decision thêm `favorite_toy` (`ball`/`wand`/`mouse`, có thể vắng); `diary` thêm `favorite_toy` và `toy_plays` gần đây. Giá trị sai bị bỏ qua, decision vẫn nhận.
+- Không có lệnh mới: C# tự chạy hành vi theo món nhận được.
+
+### Khi code cần kiểm tra
+
+- Python: đếm theo món, giảm một nửa 7 ngày, ngưỡng 5 điểm và 1,3 lần, đổi tối đa 1 lần/ngày, file cũ không có điểm món, quên-đã-học xóa điểm, câu `favorite_toy` vi/en.
+- C#: không có món yêu thích khi Python tắt hoặc vừa tắt (rủ chơi bóng M3 như cũ); đếm đúng lượt người dùng bật, không đếm rủ chơi bị bỏ; sleep lock (không đánh thức), wake, drag, throw, emotion priority, Quiet, Giờ tập trung, fullscreen, trận, Pause; rủ chơi cần câu/chuột chuyển sang trò M4 Đợt 1 đúng lượt và nghỉ; chọn một trong hai khi hai món gần nhau và khi chơi cần câu với chuột cùng lúc.
+- Soát render mèo vỗ món, nhìn hai bên; thẻ Nhật ký vi/en/ja.
+
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
+
+Món yêu thích: C# gửi `toy_plays` (lượt người dùng chơi Bóng len, Cần câu, Chuột dây cót), Python giữ điểm giảm một nửa mỗi 7 ngày và gửi `favorite_toy` (≥5 điểm, hơn 1,3 lần, đổi tối đa 1 lần/ngày). C# mở: ghé món thích mỗi 10–15 phút (ngửi/vỗ/ngồi cạnh, món không động), rủ chơi bằng món thích chung lịch 8–15 phút của M3 (bóng như cũ; cần câu/chuột thì ngồi cạnh vỗ nhẹ, chờ 20 giây), hai món trong 250 DIP thì nhìn hai bên rồi chọn món thích, chơi cần câu và chuột cùng lúc thì đuổi món thích. Hành vi tự động: chặn như rủ chơi M3, không đánh thức mèo ngủ, click/kéo/cảm xúc ngắt như thường; không âm thanh mới, đồ không chạm mèo. Python tắt thì không có món yêu thích.

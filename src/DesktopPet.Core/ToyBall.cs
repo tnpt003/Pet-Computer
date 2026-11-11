@@ -24,6 +24,26 @@ public sealed class ToyBall
         Feedback = 0.35;
     }
     public bool AtRest => Height <= 0 && VX == 0 && VY == 0;
+    // A click on the cardboard box: it only shakes a little where it stands (Feedback drives the art).
+    public void Wobble() => Feedback = 0.35;
+    // The cardboard box falls heavier, bounces low and slides a short way; it never rolls or turns.
+    public void StepBox(double dt, double left, double right)
+    {
+        if (!double.IsFinite(dt) || dt <= 0) return;
+        Feedback = Math.Max(0, Feedback - dt);
+        int steps = Math.Max(1, (int)Math.Ceiling(Math.Min(dt, 0.1) * 120));
+        double step = Math.Min(dt, 0.1) / steps;
+        for (int i = 0; i < steps; i++)
+        {
+            X += VX * step;
+            VY -= 1400 * step; Height += VY * step;
+            if (Height < 0) { Height = 0; VY = Math.Abs(VY) > 160 ? -VY * 0.22 : 0; }
+            if (X < left || X > right) { X = Math.Clamp(X, left, Math.Max(left, right)); VX *= -0.3; }
+            VX *= Math.Exp(-(Height <= 0 ? 7 : 0.4) * step);
+            if (Math.Abs(VX) < 4 && Height <= 0) VX = 0;
+        }
+        Rotation = 0;
+    }
     public void Bat(int direction, double variation = 1)
     {
         VX = direction * 180 * Math.Clamp(variation, 0.9, 1.1);

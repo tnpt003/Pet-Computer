@@ -167,6 +167,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         // Lost the battle, or stunned by a dash: seeing stars, nothing worse. A stunned cat that is
         // picked up gets the one orbit above (the stronger of the two dizziness amounts).
         else if (pet.BattleDazed || pet.BattleStun > 0 || pet.Bonk > 0) DrawDizzyOrbit(dc, p);
+        // Asleep in the cardboard box (PetWindow.ToyBox.cs): the same front panel as the box's window right under this one.
+        if (BoxFrontDrop >= 0 && !p.PickedUp) ToyBoxArt.DrawFront(dc, 56, 112 + BoxFrontDrop);
         DrawOverlays(dc, p);
         if (pet.BattleBuff) DrawCheerSparkles(dc, pet.BattleTime);
         if (pet.BattleShield) DrawShieldBubble(dc, pet.BattleTime);
@@ -192,6 +194,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     // The "Bring the pet to the main screen" hop, set by PetWindow every frame of it: the cat's
     // scale around its feet, how far above the floor it is, and the puff (0..1, negative: none).
     public double TeleportPop = 1, TeleportDrop, TeleportPuff = -1;
+    // The cardboard box's front panel over the cat: how far below the cat's floor line it stands (negative: none).
+    public double BoxFrontDrop = -1;
 
     private Pose ComputePose()
     {

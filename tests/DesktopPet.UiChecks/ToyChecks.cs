@@ -10,7 +10,7 @@ using static PetPrivate;
 // here reads the real cursor: drags are started and ended directly.
 internal static class ToyChecks
 {
-    private const string Ball = DesktopToyRules.Ball;
+    private const string Ball = DesktopToyRules.Ball, Box = DesktopToyRules.Box;
 
     private static void Context(PetWindow window, bool fullscreen)
     {
@@ -52,6 +52,33 @@ internal static class ToyChecks
         check(File.Exists(Path.Combine(folder, "toy-basket-full.png")), "The basket is rendered for review");
     }
 
+    private static VisualBrush Exact(Visual visual, double width, double height) =>
+        new(visual) { Stretch = Stretch.None, ViewboxUnits = BrushMappingMode.Absolute, Viewbox = new Rect(0, 0, width, height), AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
+
+    // The cat's window over the box's, where they stand on the screen (PET_RENDER_REVIEW only).
+    private static void Snapshot(PetWindow window, Window box, string name)
+    {
+        if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is not { Length: > 0 } folder) return;
+        Call(window, "Present", false);
+        var renderer = Field<PetRenderer>(window, "renderer");
+        renderer.UpdateLayout();
+        double left = Math.Min(window.Left, box.Left) - 10, top = Math.Min(window.Top, box.Top) - 10;
+        int width = (int)(Math.Max(window.Left + window.Width, box.Left + box.Width) - left + 10), height = (int)(Math.Max(window.Top + window.Height, box.Top + box.Height) - top + 10);
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+        {
+            dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0x7A, 0x9C, 0xB8)), null, new Rect(0, 0, width, height));
+            dc.DrawRectangle(Exact((Visual)box.Content, box.Width, box.Height), null, new Rect(box.Left - left, box.Top - top, box.Width, box.Height));
+            dc.DrawRectangle(Exact(renderer, window.Width, window.Height), null, new Rect(window.Left - left, window.Top - top, window.Width, window.Height));
+        }
+        var bitmap = new RenderTargetBitmap(width * 2, height * 2, 192, 192, PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var stream = File.Create(Path.Combine(folder, name + ".png"));
+        encoder.Save(stream);
+    }
+
     public static void Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
     {
         void FeatureStep(double dt) => Call(window, "TickFeatures", dt);
@@ -71,7 +98,7 @@ internal static class ToyChecks
         check(window.ToyBasketMenuLabel == "Quick tidy", "The same row now tidies up");
         var basketArt = Field<ToyBasketArt?>(window, "toyBasketArt")!;
         check(basketArt.HasBall, "The ball is in the basket");
-        var row = window.ToyBasketMenuItems().Single();
+        var row = window.ToyBasketMenuItems().First();
         check((string)row.Header == "Yarn ball" && row.IsEnabled && !row.IsChecked, "The list shows the ball");
 
         // Out of the basket.
@@ -86,7 +113,7 @@ internal static class ToyChecks
         check(motion.AtRest && preferences.ToysOut is { Count: 1 } && preferences.ToysOut[0].Id == Ball, "Once at rest it is saved");
         var area = GetThing<Area>(Thing(window, Ball), "Area");
         check(Math.Abs(toyWindow.Top - (area.Bottom - 40)) < 1.5 && Math.Abs(toyWindow.Left - (motion.X - 28)) < 1.5, "Its window lies on the floor at the ball");
-        check(window.ToyBasketMenuItems().Single().IsChecked, "The list ticks what is out");
+        check(window.ToyBasketMenuItems().First().IsChecked, "The list ticks what is out");
         check(!window.ToysAboveCat, "The cat stays in front of the toys");
 
         // Resting costs no window moves.
@@ -166,7 +193,7 @@ internal static class ToyChecks
         var bounds = Field<Area>(window, "bounds");
         check(Field<Window?>(window, "toyWindow") != null && !toyWindow.IsVisible, "The game takes over the ball lying out");
         check(Math.Abs(gameBall.X - Math.Clamp(place, bounds.Left + 12, bounds.Right - 12)) < 0.01, "...from where it lies");
-        check(window.ToyBasketMenuItems().Single().IsEnabled == false && ((string)window.ToyBasketMenuItems().Single().Header).Contains("in play"), "The list says it is in play");
+        check(window.ToyBasketMenuItems().First().IsEnabled == false && ((string)window.ToyBasketMenuItems().First().Header).Contains("in play"), "The list says it is in play");
         gameBall.X = 700; gameBall.Height = 0; gameBall.VX = 0; gameBall.VY = 0;
         Call(window, "CancelFeatureActivity");
         Tick(window);
@@ -260,7 +287,152 @@ internal static class ToyChecks
         check(!window.ToyBasketShown && !window.ToyIsOut(Ball) && Field<Window?>(window, "toyWindow") == null, "Quick tidy puts everything away and stops the game");
         check(!preferences.ToyBasketShown && preferences.ToysOut == null && pet.X == catX, "...remembered, with the cat still there");
         check(window.ToyBasketMenuLabel == "Toy basket", "The menu offers the basket again");
+        RunBox(window, pet, behavior, preferences, check);
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
+    }
+
+    // M2: the cardboard box, and the cat napping in it as an ordinary sleep.
+    private static void RunBox(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt) => Call(window, "TickFeatures", dt);
+        var renderer = Field<PetRenderer>(window, "renderer");
+        double FrontDrop() { Call(window, "Present", false); return renderer.BoxFrontDrop; }
+        window.Reset(); pet.Emotions.FinishSleep(0);
+        window.ToggleToyBasket();
+        Tick(window);
+        var rows = window.ToyBasketMenuItems();
+        check(rows.Length == 2 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
+        check(window.TakeToyOut(Box), "It comes out of the basket");
+        Tick(window);
+        var motion = window.ToyMotionOf(Box)!;
+        var boxWindow = window.ToyWindowOf(Box)!;
+        Settle(window, motion);
+        var thing = Thing(window, Box);
+        var area = GetThing<Area>(thing, "Area");
+        check(boxWindow.IsVisible && Math.Abs(boxWindow.Top - (area.Bottom - ToyBoxArt.ArtHeight)) < 1.5 && Math.Abs(boxWindow.Left - (motion.X - ToyBoxArt.ArtWidth / 2)) < 1.5,
+            "It stands on the floor");
+        check(preferences.ToysOut!.Any(toy => toy.Id == Box) && GetThing<double>(thing, "HalfWidth") == DesktopToyRules.BoxHalfWidth, "...and is saved, about 100 DIPs wide");
+        check(!window.ToysAboveCat, "The cat stays in front of the box");
+
+        // A click shakes it; a throw lands low and short, never turning.
+        double x = motion.X;
+        SetThing(thing, "Press", true);
+        Call(window, "EndToyDrag", thing, true);
+        check(motion.Feedback > 0 && motion.X == x && motion.AtRest, "A click shakes the box where it stands");
+        Tick(window, 0.5);
+        check(motion.Feedback == 0 && motion.X == x, "...and it settles");
+        Call(window, "StartToyDrag", thing);
+        var tracker = GetThing<ThrowTracker>(thing, "Tracker");
+        tracker.Clear(); tracker.Add(1000, 100, 100); tracker.Add(1000.05, 130, 90);
+        motion.X = (area.Left + area.Right) / 2; motion.Height = 150;
+        Call(window, "EndToyDrag", thing, true);
+        check(motion.VX > 0 && motion.VY > 0, "Let go: it flies with the hand's speed");
+        double peak = 0; bool landed = false;
+        for (int i = 0; i < 900 && !motion.AtRest; i++)
+        {
+            Tick(window);
+            if (motion.Height == 0) landed = true; else if (landed) peak = Math.Max(peak, motion.Height);
+            if (motion.Rotation != 0) { check(false, "A box never turns"); break; }
+        }
+        check(motion.AtRest && peak < 20, $"It lands with a low bounce ({peak:F1} DIPs) and stops");
+        Tick(window, 1.1); // Off the land, if it fell on one.
+        Settle(window, motion);
+
+        // The cat on the same floor, 300 DIPs away.
+        var bounds = Field<Area>(window, "bounds");
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Away(double distance)
+        {
+            double side = motion.X - bounds.Left > distance + 120 ? -1 : 1;
+            pet.X = motion.X + side * distance - PetSettings.CenterX; pet.Action = PetAction.Idle; pet.VX = 0;
+        }
+        void Arrive() { pet.X = motion.X - PetSettings.CenterX; FeatureStep(1 / 60.0); Tick(window, 0.1); }
+        Away(300);
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(!window.GoNapInBox(), "In Quiet the cat does not go to the box on its own");
+        preferences.Quiet = false; behavior.Quiet = false;
+        check(window.GoNapInBox() && window.GoingToBox, "With the box out the cat may go to nap in it");
+        FeatureStep(1 / 60.0);
+        check(pet.Action == PetAction.Walking, "It walks to the box");
+        SetThing(thing, "Held", true);
+        FeatureStep(1 / 60.0);
+        check(!window.GoingToBox && pet.Action != PetAction.Walking, "The box picked up on the way: the trip is off");
+        SetThing(thing, "Held", false);
+        check(!window.BoxNear && !window.SleepInBoxNow(), "Far from the box \"Sleep in the box\" does nothing (greyed out)");
+
+        check(window.GoNapInBox(), "Off again");
+        Arrive();
+        check(window.NappingInBox && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked && window.BoxLift > PetWindow.BoxFloor + 5,
+            $"In the box it falls asleep, after a little hop in (lift {window.BoxLift:F1})");
+        Tick(window, 0.4);
+        check(window.BoxLift == PetWindow.BoxFloor && FrontDrop() == PetWindow.BoxFloor, "Asleep in it, behind its front panel drawn by the cat's window");
+        Snapshot(window, boxWindow, "toy-box-asleep");
+        check(!window.StowToy(Box) && window.ToyBasketMenuItems()[1] is { IsEnabled: false } asleepRow && ((string)asleepRow.Header).Contains("asleep"), "The box cannot be put away while the cat is in it");
+        double sleptBefore = pet.Emotions.SleepElapsed;
+        window.SetPaused(true);
+        Tick(window, 0.5);
+        check(window.NappingInBox && pet.Emotions.SleepElapsed == sleptBefore, "Pause holds the nap in the box");
+        window.SetPaused(false);
+
+        // Woken (a click): wakes in the box, then hops out of it.
+        behavior.WakeByClick(pet);
+        Tick(window, 0.1);
+        check(pet.Action == PetAction.Waking && window.NappingInBox && window.BoxFrontShown, "Woken, it wakes up in the box");
+        Snapshot(window, boxWindow, "toy-box-waking");
+        pet.Action = PetAction.Idle;
+        Tick(window);
+        check(!window.NappingInBox && window.BoxFrontShown && window.BoxLift > 0, "Awake, it hops out");
+        Tick(window, 0.1);
+        Snapshot(window, boxWindow, "toy-box-hop-out");
+        Tick(window, 0.4);
+        check(!window.BoxFrontShown && window.BoxLift == 0 && FrontDrop() < 0, "...and stands in front of the box");
+        Snapshot(window, boxWindow, "toy-box-out");
+        pet.Emotions.FinishSleep(0);
+
+        // "Do now → Sleep in the box": close by, even in Quiet and in the wake cooldown.
+        Away(150);
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(window.BoxNear && window.SleepInBoxNow() && window.GoingToBox, "Close to it \"Sleep in the box\" works even in Quiet");
+        Arrive();
+        check(window.NappingInBox && pet.Action == PetAction.Sleeping, "...and the cat sleeps in it");
+        preferences.Quiet = false; behavior.Quiet = false;
+
+        // Picked up: straight out of the box, no hop.
+        SetField(window, "dragging", true); pet.Action = PetAction.Dragging; pet.Grounded = false;
+        Tick(window);
+        check(!window.NappingInBox && !window.BoxFrontShown && window.BoxLift == 0 && FrontDrop() < 0, "Picked up, it is lifted straight out");
+        SetField(window, "dragging", false); window.Reset(); pet.Emotions.FinishSleep(0);
+        Tick(window);
+
+        // Quick tidy with the cat in the box: the box goes, the cat sleeps on.
+        Away(100);
+        check(window.SleepInBoxNow(), "Back to the box");
+        Arrive();
+        check(window.NappingInBox, "...asleep in it");
+        window.ToggleToyBasket();
+        Tick(window);
+        check(!window.ToyBasketShown && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked && !window.NappingInBox && window.BoxLift == 0,
+            "Quick tidy: the box goes, the cat sleeps on where it is");
+        behavior.WakeByClick(pet); pet.Action = PetAction.Idle; pet.Emotions.FinishSleep(0);
+
+        // A fullscreen app hides the box: the cat sleeps on there too.
+        window.ToggleToyBasket();
+        window.TakeToyOut(Box);
+        Tick(window);
+        motion = window.ToyMotionOf(Box)!;
+        Settle(window, motion); Tick(window, 1.1); Settle(window, motion);
+        thing = Thing(window, Box);
+        Away(100);
+        check(window.SleepInBoxNow(), "Into the box again");
+        Arrive();
+        Context(window, true);
+        Tick(window);
+        check(pet.Action == PetAction.Sleeping && !window.NappingInBox && !window.ToyWindowOf(Box)!.IsVisible, "A fullscreen app hides the box; the cat sleeps on");
+        Context(window, false);
+        behavior.WakeByClick(pet); pet.Action = PetAction.Idle; pet.Emotions.FinishSleep(0);
+        Tick(window, 0.5);
+        window.ToggleToyBasket();
+        check(!window.ToyBasketShown, "Tidied away");
     }
 }

@@ -1537,3 +1537,17 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Pause: bóng đứng yên giữa không trung, không cầm được. Quiet: vẫn cầm được. App toàn màn hình và trận: giỏ, bóng ẩn, sau đó hiện lại đúng chỗ.
 - [ ] Hai màn hình, DPI khác nhau: kéo bóng qua màn khác không nhảy vị trí; rút màn hình thì bóng về màn chính; bóng ở màn khác mèo rồi "Chơi bóng" thì bóng về cạnh mèo.
 - [ ] Đọc nhãn tiếng Nhật trong menu và danh sách giỏ (chưa ai duyệt).
+
+## Chơi cùng sen M2 — Thùng carton (11/11, chỉ bản 1.6)
+
+- [ ] Bấm giỏ → "Thùng carton": hộp nhảy ra, nằm trên sàn, nắp mở hai bên. Có bóng và hộp thì đếm là 2 món; đủ 3 thì món còn lại mờ.
+- [ ] Bấm hộp: chỉ rung nhẹ tại chỗ. Kéo quá một đoạn ngắn mới cầm; ném thì rơi, nảy thấp, trượt ngắn, không lăn, không xoay. Thả đè lên vùng đất: tự trượt sang chỗ trống.
+- [ ] Để hộp gần mèo, chuột phải mèo → Làm ngay → "Ngủ trong hộp": mèo đi tới, nhảy nhẹ vào, ngủ, chỉ lộ đầu và tai. Ở xa thì mục mờ, rê chuột thấy "Mèo ở xa hộp quá". Có mục cả khi Quiet.
+- [ ] Để yên vài phút (không Quiet): mèo tự đi vào hộp ngủ. Có cả đệm slime và hộp: mèo chọn cái gần hơn.
+- [ ] Mèo ngủ trong hộp: rê chuột, AI, ném bóng trúng đều không đánh thức. Khoảng 10 giây sau tự thức: thò đầu lên khoảng 1 giây rồi nhảy nhẹ ra trước hộp.
+- [ ] Click trái mèo trong hộp: thức ngay; kéo được và mèo được nhấc thẳng ra, không thấy hộp dính theo hay mặt trước hộp còn đè lên mèo. Click phải: thức và mở menu.
+- [ ] Pause khi mèo trong hộp: đứng yên, hết Pause thì ngủ tiếp đủ thời gian. Sau khi thức, trong khoảng 30 giây mèo không tự vào hộp nữa.
+- [ ] Mèo trong hộp: không cầm được hộp; danh sách giỏ ghi "mèo đang ngủ". Cất nhanh, app toàn màn hình, vào trận: hộp biến mất, mèo ngủ tiếp trên sàn, không thức.
+- [ ] Nhìn kỹ mép mặt trước hộp lúc mèo ngủ: không lệch, không thấy viền đôi; thử cả DPI 125 %/150 % và màn hình phụ nếu có.
+- [ ] Mèo đang đi tới hộp mà nhấc hộp lên: chuyến đi hủy, mèo đứng lại, không có gì khác.
+- [ ] Đọc nhãn tiếng Nhật "段ボール箱", "箱で寝る" (chưa ai duyệt).

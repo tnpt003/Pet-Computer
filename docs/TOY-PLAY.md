@@ -5,7 +5,7 @@ Người dùng duyệt kế hoạch 2026-11-09. Luật từng mốc viết và d
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Nền đồ vật | Tối đa 3 món, Giỏ đồ chơi, Cất nhanh, lưu vị trí | Đã có code, còn test tay |
-| M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Luật đã duyệt 11/11, chưa code |
+| M2. Thùng carton | Ngủ trong hộp theo đúng luật ngủ thường: click trái thức và vẫn kéo được | Đã có code, còn test tay |
 | M3. Tha đồ, ném nhặt | Mèo tha đồ và chơi ném nhặt | Chưa viết luật |
 | M4. Cần câu lông vũ, chuột dây cót | Hai đồ chơi mới | Chưa viết luật |
 | M5. Chuyền bóng, phản ứng | Chuyền bóng và các phản ứng | Chưa viết luật |
@@ -88,3 +88,11 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
 - Mặt trước hộp phải che thân mèo mà cửa sổ mèo luôn nằm trên cửa sổ hộp: vẽ mặt trước trong cửa sổ mèo khi mèo ở trong hộp, để mọi click vẫn rơi vào mèo và luật thức, kéo không cần đường input mới. Soát mọi tư thế ngủ, waking, lúc bị nhấc ra.
 - Test lại sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, wake cooldown, và đệm slime khi có cả hai.
+
+### Cách code M2 (11/11)
+
+- Hộp là món `box` trong giỏ, chung khung cầm, ném, lưu, tránh vùng đất của M1 (`PetWindow.Toys.cs`). Physics riêng `ToyBall.StepBox`: trọng lực 1400, chỉ nảy khi chạm sàn nhanh hơn 160 DIP/s và giữ 22 % tốc độ, ma sát sàn mạnh, không xoay. Bấm không kéo gọi `Wobble`: hộp rung tại chỗ.
+- Giấc ngủ trong hộp dùng chung trạng thái đi tới và ngủ của đệm slime (`cushionNap` trong `PetWindow.KeepsakePlay.cs`), cờ `napBox` chọn giường. `GoNap` chọn cái gần hơn khi có cả hai. Phần riêng của hộp ở `PetWindow.ToyBox.cs`: chỉ là hình, gồm nhảy vào 0,35 giây cao 32 DIP, nằm cao hơn sàn 3 DIP, nhảy ra 0,3 giây, cùng mặt trước hộp vẽ trong cửa sổ mèo (`ToyBoxArt.DrawFront`, `PetRenderer.BoxFrontDrop`).
+- Nhảy ra chỉ khi giấc ngủ kết thúc mà mèo vẫn đứng trên sàn, hộp còn dưới mèo và không ai kéo. Bị kéo thì mặt trước tắt ngay. Hộp mất thì giấc ngủ chỉ mất phần hình, mèo ngủ tiếp tại chỗ.
+- Kỷ vật rơi trúng mèo đang ngủ trong hộp vẫn gây Bonk như mọi giấc ngủ (ngoại lệ Kệ kỷ vật có physics). Chỉ đệm bỏ qua Bonk, vì lúc đó mèo nằm trên chính món kỷ vật.
+- Đã soát ảnh render (ghép cửa sổ mèo lên cửa sổ hộp) lúc ngủ, waking, giữa cú nhảy ra và sau khi ra: mặt trước hai cửa sổ trùng khít. Chưa xem trên desktop thật, chưa thử DPI khác, nhiều màn hình.

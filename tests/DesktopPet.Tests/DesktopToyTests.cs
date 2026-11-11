@@ -44,6 +44,27 @@ internal static class DesktopToyTests
         ball.Step(1 / 60.0, 112, 1088);
         check(ball.AtRest && ball.X == rested, "...and stays at rest");
 
+        // M2: the cardboard box.
+        check(DesktopToyRules.All.Contains(DesktopToyRules.Box) && DesktopToyRules.HalfWidthOf(DesktopToyRules.Box) == 50 && DesktopToyRules.HalfWidthOf(DesktopToyRules.Ball) == 12, "The basket has the box too, about 100 DIPs wide");
+        check(DesktopToyRules.Normalize(new[] { new SavedToy { Id = "box" }, new SavedToy { Id = "ball" } }, true)!.Count == 2, "A saved box is kept");
+        var box = new ToyBall { X = 500 };
+        box.Wobble();
+        for (int i = 0; i < 30; i++) box.StepBox(1 / 60.0, 150, 1050);
+        check(box.AtRest && box.X == 500 && box.Rotation == 0 && box.Feedback == 0, "A click only shakes the box where it stands");
+        var thrownBall = new ToyBall { X = 500, Height = 200, VX = 600 };
+        var thrownBox = new ToyBall { X = 500, Height = 200, VX = 600 };
+        double ballPeak = 0, boxPeak = 0;
+        bool boxLanded = false, ballLanded = false;
+        for (int i = 0; i < 1200; i++)
+        {
+            thrownBall.Step(1 / 60.0, 112, 9000); thrownBox.StepBox(1 / 60.0, 150, 9000);
+            if (thrownBall.Height == 0) ballLanded = true; else if (ballLanded) ballPeak = Math.Max(ballPeak, thrownBall.Height);
+            if (thrownBox.Height == 0) boxLanded = true; else if (boxLanded) boxPeak = Math.Max(boxPeak, thrownBox.Height);
+        }
+        check(thrownBox.AtRest && thrownBox.Rotation == 0, "A thrown box comes to rest without turning");
+        check(boxPeak < ballPeak * 0.4, "...bounces low");
+        check(thrownBox.X - 500 < (thrownBall.X - 500) * 0.6, "...and slides a shorter way than the ball rolls");
+
         string folder = Path.Combine(Path.GetTempPath(), "pet-toys-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try

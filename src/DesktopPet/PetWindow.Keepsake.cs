@@ -335,7 +335,8 @@ public sealed partial class PetWindow
             keepsakeOrderDue = Environment.TickCount64 + FarmOrderMilliseconds;
             KeepKeepsakeBelowCat();
         }
-        if (!TrophiesVisible && (cushionNap != CushionNap.None || napLift > 0)) { cushionNap = CushionNap.None; napLift = 0; } // The cushion is gone.
+        // The cushion is gone (a nap in the cardboard box goes on: PetWindow.ToyBox.cs).
+        if (!TrophiesVisible && ((cushionNap != CushionNap.None && !napBox) || napLift > 0)) { if (!napBox) cushionNap = CushionNap.None; napLift = 0; }
         if (paused || !TrophiesVisible) return;
         if (pet.Bonk > 0)
         {
@@ -403,7 +404,7 @@ public sealed partial class PetWindow
     // sleep lock, as a click: waking, then the wake cooldown) and sees stars too.
     private void CheckKeepsakeBonk(double bottomBefore)
     {
-        if (keepsake.Held || pet.Bonk > 0 || keepsakeHop != KeepsakeHop.None || !KeepsakeBesideCat || cushionNap == CushionNap.Asleep) return;
+        if (keepsake.Held || pet.Bonk > 0 || keepsakeHop != KeepsakeHop.None || !KeepsakeBesideCat || NappingOnCushion) return;
         if (!pet.Grounded || pet.Action is PetAction.Dragging or PetAction.Climbing || PetActionRules.IsInFlight(pet.Action)) return;
         double w = KeepsakeArtWidth, bottom = KeepsakeFloor - keepsake.Height, top = bottom - KeepsakeArtHeight;
         double headLeft = pet.X + PetSettings.HeadLeft, headRight = pet.X + PetSettings.HeadRight, headTop = pet.Y + PetSettings.HeadTop;

@@ -36,6 +36,8 @@ public sealed partial class PetWindow
         var actions = new MenuItem[CommandItems.Length];
         var cushionSleep = new MenuItem();
         cushionSleep.Click += (_, _) => SleepOnCushionNow(); // PetWindow.KeepsakePlay.cs
+        var boxSleep = new MenuItem();
+        boxSleep.Click += (_, _) => SleepInBoxNow(); // PetWindow.ToyBox.cs
         for (int i = 0; i < CommandItems.Length; i++)
         {
             var action = CommandItems[i].Action;
@@ -45,7 +47,7 @@ public sealed partial class PetWindow
             // Groups: basic poses, self-care, gestures.
             if (action is PetAction.SeekingAttention or PetAction.Stretching) root.Items.Add(new Separator());
             // Right under "Sleep": sleep on the slime cushion, when it is on display and close by.
-            if (action == PetAction.Sleeping) root.Items.Add(cushionSleep);
+            if (action == PetAction.Sleeping) { root.Items.Add(cushionSleep); root.Items.Add(boxSleep); }
         }
         // Emotions have their own submenu: the manual-control switch, then the emotions it unlocks.
         var feelings = PetUi.MenuItem(PetUi.Emotions);
@@ -77,6 +79,12 @@ public sealed partial class PetWindow
             cushionSleep.IsEnabled = CushionNear;
             cushionSleep.ToolTip = CushionNear ? null : L("Mèo ở xa đệm quá", "The cat is too far from the cushion");
             ToolTipService.SetShowOnDisabled(cushionSleep, true);
+            // The same for the cardboard box out on the desktop.
+            boxSleep.Visibility = BoxOut ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            boxSleep.Header = L("Ngủ trong hộp", "Sleep in the box");
+            boxSleep.IsEnabled = BoxNear;
+            boxSleep.ToolTip = BoxNear ? null : L("Mèo ở xa hộp quá", "The cat is too far from the box");
+            ToolTipService.SetShowOnDisabled(boxSleep, true);
             manual.Header = L("Tự điều khiển cảm xúc", "Control emotions myself");
             manual.IsChecked = pet.Emotions.ManualMode;
             for (int i = 0; i < emotions.Length; i++)

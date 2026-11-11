@@ -36,7 +36,7 @@ public sealed partial class PetWindow
     public const double NapEvery = 240, NapBeforeSleepy = 25, NapWalkSeconds = 20, CushionReach = 1200;
 
     public long KeepsakeLedgeId => keepsakeLedgeId;
-    public bool NappingOnCushion => cushionNap == CushionNap.Asleep;
+    public bool NappingOnCushion => cushionNap == CushionNap.Asleep && !napBox;
     public bool GoingToNap => cushionNap == CushionNap.Walk;
     public double NapLift => napLift;
     private bool KeepsakeOnFloor => keepsakeLedgeId == 0 && keepsake.Ground == 0;
@@ -218,15 +218,16 @@ public sealed partial class PetWindow
         if (cushionNap == CushionNap.None && napVisit <= 0)
         {
             napVisit = NapEvery + featureRandom.NextDouble() * 180;
-            if (pet.Action is PetAction.Idle or PetAction.Sitting) GoNapOnCushion();
+            if (pet.Action is PetAction.Idle or PetAction.Sitting) GoNap();
         }
         // Left alone and nearly sleepy: to the cushion first, rather than falling asleep where it stands.
         if (cushionNap == CushionNap.None && pet.Emotions.SecondsWithoutAttention >= PetEmotions.SleepyAfter - NapBeforeSleepy
-            && pet.Emotions.SecondsWithoutAttention < PetEmotions.SleepyAfter && pet.Action is PetAction.Idle or PetAction.Sitting) GoNapOnCushion();
+            && pet.Emotions.SecondsWithoutAttention < PetEmotions.SleepyAfter && pet.Action is PetAction.Idle or PetAction.Sitting) GoNap();
         if (cushionNap != CushionNap.Walk) return false;
         napTime += dt;
-        if (!CushionReady || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
-        double target = Math.Clamp(KeepsakeCenter - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
+        // The bed: the cushion, or the cardboard box (PetWindow.ToyBox.cs). Picked up on the way: no nap, nothing else.
+        if (!(napBox ? BoxReady : CushionReady) || napTime > NapWalkSeconds) { StopCushionNap(); return false; }
+        double target = Math.Clamp((napBox ? BoxCenter : KeepsakeCenter) - settings.Width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - settings.Width));
         if (Math.Abs(target - pet.X) < 4)
         {
             pet.X = target;
@@ -234,7 +235,8 @@ public sealed partial class PetWindow
             if (behavior.StartManual(pet, PetAction.Sleeping))
             {
                 cushionNap = CushionNap.Asleep;
-                System.Diagnostics.Trace.WriteLine("The cat naps on the slime cushion.");
+                if (napBox) boxHopIn = 0; // A little hop in (drawn only).
+                System.Diagnostics.Trace.WriteLine(napBox ? "The cat naps in the cardboard box." : "The cat naps on the slime cushion.");
             }
             else StopCushionNap();
             return cushionNap == CushionNap.Asleep;
@@ -255,8 +257,18 @@ public sealed partial class PetWindow
         if (!MayAct(AutoKind.CushionNap) || !CushionReady
             || Math.Abs(KeepsakeCenter - CatCenter) > CushionReach) return false;
         cushionNap = CushionNap.Walk;
+        napBox = false;
         napTime = 0;
         return true;
+    }
+
+    // The cat's own naps (the timers, a sleep it picks): to the cushion or the cardboard box, the nearer of the two.
+    private bool GoNap()
+    {
+        bool cushion = CushionReady && Math.Abs(KeepsakeCenter - CatCenter) <= CushionReach;
+        bool box = BoxReady && Math.Abs(BoxCenter - CatCenter) <= CushionReach;
+        if (cushion && box) return Math.Abs(BoxCenter - CatCenter) < Math.Abs(KeepsakeCenter - CatCenter) ? GoNapInBox() : GoNapOnCushion();
+        return box ? GoNapInBox() : GoNapOnCushion();
     }
 
     // "Do now → Sleep on the cushion": only near it; like every "Do now" also in Quiet and during the
@@ -267,13 +279,14 @@ public sealed partial class PetWindow
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         CancelFeatureActivity();
         cushionNap = CushionNap.Walk;
+        napBox = false;
         userAsked |= UserAsked.Nap;
         napTime = 0;
         return true;
     }
 
-    // PetBehavior picked a sleep of its own: with the cushion on display it goes there to sleep instead.
-    private bool SleepOnCushionInstead(PetModel _) => GoNapOnCushion();
+    // PetBehavior picked a sleep of its own: with the cushion on display or the box out it goes there to sleep instead.
+    private bool SleepOnCushionInstead(PetModel _) => GoNap();
 
     private void StopCushionNap()
     {
@@ -307,12 +320,12 @@ public sealed partial class PetWindow
     // the sleep (waking up there is fine) or when the cushion is gone from under it.
     private void TickNapLift(double dt)
     {
-        if (cushionNap == CushionNap.Asleep)
+        if (cushionNap == CushionNap.Asleep && !napBox) // The box keeps its own (PetWindow.ToyBox.cs).
         {
             bool still = pet.Action is PetAction.Sleeping or PetAction.Waking && pet.Grounded && CushionReady && Math.Abs(KeepsakeCenter - CatCenter) < 24;
             if (!still) { cushionNap = CushionNap.None; userAsked &= ~UserAsked.Nap; }
         }
-        double target = cushionNap == CushionNap.Asleep ? CushionSurface : 0;
+        double target = cushionNap == CushionNap.Asleep && !napBox ? CushionSurface : 0;
         napLift += (target - napLift) * (1 - Math.Exp(-dt * 12));
         if (Math.Abs(napLift - target) < 0.05) napLift = target;
     }

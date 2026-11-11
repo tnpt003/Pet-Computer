@@ -738,6 +738,22 @@ internal static class ExpeditionChecks
             Keepsake(0.6);
             pet.Emotions.FinishSleep(0);
             check(Call(window, "SleepOnCushionInstead", pet) is true && window.GoingToNap, "A sleep the cat picks on its own goes to the cushion instead");
+            // With the cardboard box out too (docs/TOY-PLAY.md → M2): the nearer of the two.
+            Call(window, "StopCushionNap");
+            window.ToggleToyBasket(); window.TakeToyOut(DesktopToyRules.Box);
+            var boxMotion = window.ToyMotionOf(DesktopToyRules.Box)!;
+            for (int i = 0; i < 600 && !boxMotion.AtRest; i++) Call(window, "TickDesktopToys", 1.0 / 60);
+            Call(window, "TickDesktopToys", 1.0 / 60);
+            double side = cushionCenter - area.Left > 520 ? -1 : 1; // Towards the roomier side of the cushion.
+            pet.X = cushionCenter + side * 350 - 56; pet.Action = PetAction.Idle;
+            boxMotion.X = cushionCenter + side * 230;
+            check(Call(window, "SleepOnCushionInstead", pet) is true && window.GoingToBox, "Cushion and box: the box, nearer, gets the nap");
+            Call(window, "StopCushionNap");
+            pet.X = cushionCenter + side * 150 - 56; pet.Action = PetAction.Idle;
+            boxMotion.X = cushionCenter + side * 430;
+            check(Call(window, "SleepOnCushionInstead", pet) is true && window.GoingToNap && !window.GoingToBox, "...the cushion when it is the nearer one");
+            Call(window, "StopCushionNap");
+            window.ToggleToyBasket();
             window.Reset(); pet.Emotions.FinishSleep(0);
             Keepsake(0.5);
 

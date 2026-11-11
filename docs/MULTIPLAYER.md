@@ -68,13 +68,17 @@ Chưa xác nhận, mốc 0 phải đo:
 | **M0 Bản thử kết nối** | Chương trình console riêng ở `tools/EosProbe/`, không vào app: Device ID login, tạo phòng có mã 6 ký tự, tìm và vào phòng bằng mã, gửi ping P2P | Hai máy khác mạng (một máy dùng 4G) vào được phòng; đo độ trễ khi nối thẳng và khi `ForceRelays`; ghi số đo vào file này |
 | M1 Lớp mạng trong app | Giao diện truyền tin + bản EOS, build tùy chọn khi có SDK; nút "Mời bạn"/"Vào phòng" | Bật/tắt mạng không làm đổi hành vi mèo; test tự động với đường truyền giả |
 | M2 Mèo bạn ghé thăm | Mèo bạn hiện trên desktop mình theo trạng thái gửi về | Luật ghé thăm được duyệt; giữ mọi bất biến mèo |
-| M3 Trận hai mèo | `BattleSim` nhận nhiều mèo, host gửi trạng thái, luật quái nhắm, độ khó, ba boss, rớt mạng | Luật trận hai mèo được duyệt; mô phỏng cân bằng; chơi thử thật hai máy |
+| M3 Trận hai mèo | Chế độ "Trận chung" riêng (mục 6.1): `BattleSim` nhận thêm mèo thứ hai chỉ trong chế độ này, host gửi trạng thái, luật quái nhắm, độ khó, rớt mạng | Luật Trận chung được duyệt; các chế độ một người cho kết quả y như cũ (test hồi quy cùng seed); chơi thử thật hai máy |
 | M4 Phát hành | EULA, ThirdPartyNotices, trang Quyền riêng tư, publish kèm DLL, link mời | Smoke bản phát hành; kiểm không có SDK/mã client trong git |
+
+### 6.1 Người dùng chốt 11/11
+
+- **Trận chung là chế độ riêng**, tách khỏi Phiêu lưu, Viễn chinh, Vô tận và trận tự do. Các chế độ một người không đổi luật, số liệu hay cân bằng.
+- **2 người co-op trước.** Lobby EOS cho tới 64 người, nhưng game giới hạn 2; code mạng không khóa cứng số 2 để sau này cân nhắc tối đa 4.
 
 ## 7. Còn chờ người dùng quyết
 
 1. Thời điểm: làm sau khi xong 1.6 (kế hoạch 1.6 không gồm "Nhiều mèo"), hay chen M0 vào trước. M0 độc lập, không đụng app.
-2. Luật trận hai mèo: quái nhắm ai, độ khó tăng bao nhiêu, ba boss xử lý ra sao, một người rớt mạng thì trận tiếp hay dừng.
+2. Luật Trận chung: dạng trận (sóng quái, boss riêng hay mục tiêu khác), quái nhắm ai, hồi sinh/cứu bạn, một người rớt mạng thì trận tiếp hay dừng, mỗi mèo mang đồ/thẻ của mình hay dùng bộ chung, phần thưởng có về tiến trình một người không.
 3. Mèo ghé thăm làm được gì trên desktop chủ nhà, có lúc ngoài trận không, chủ nhà có kéo/ném được mèo khách không.
-4. Phòng chỉ 2 người hay nhiều hơn.
-5. Dùng `AllowRelays` (nhanh hơn, hai máy có thể thấy IP nhau) hay `ForceRelays` (giấu IP, trễ hơn); quyết sau khi có số đo M0.
+4. Dùng `AllowRelays` (nhanh hơn, hai máy có thể thấy IP nhau) hay `ForceRelays` (giấu IP, trễ hơn); quyết sau khi có số đo M0.

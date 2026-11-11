@@ -58,7 +58,7 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 - Bổ sung #58 đã duyệt 06/11: đai Slime Nén đi từ boss và chỉ gây damage khi đầu quét chạm; mèo tự đánh Khóa ZIP đủ 5 nhát để mở, không cần quái gần. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode.
 - Bổ sung #57 đã duyệt 06/11: giấy Slime Nén bám có giới hạn quay, quét toàn thân khi bế/rơi/bounce; file mech theo làn tránh boss và không bị bom thường xóa. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode; luật: docs/ZIP-SLIME.md.
 - Ngoại lệ đã duyệt: kệ kỷ vật có physics; rơi/ném trúng mèo gây choáng Bonk, KHÔNG phải Dizzy. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Kệ kỷ vật có physics.
-- Ngoại lệ đã duyệt 09/11: đồ chơi trên desktop có physics do người dùng cầm/ném; không chạm mèo, không gây Bonk/Dizzy/cảm xúc, không đánh thức mèo ngủ. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics; luật: docs/TOY-PLAY.md.
+- Ngoại lệ đã duyệt 09/11: đồ chơi trên desktop có physics do người dùng cầm/ném; không chạm mèo, không gây Bonk/Dizzy/cảm xúc, không đánh thức mèo ngủ. Bổ sung 11/11: mèo tự vào thùng carton ngủ theo luật đệm slime và mọi luật ngủ thường. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics; luật: docs/TOY-PLAY.md.
 - Âm thanh: giữ cue phong cách hoạt hình (assets CC0 đã xử lý, không thay bằng beep hay tiếng mèo thật); auto sound có cooldown, không overlap; preview chạy dù auto bị mute, volume 0 thì im; không sửa trực tiếp buffer dùng chung.
 - DPI/monitor: PerMonitorV2; đổi DPI phải đồng bộ position/velocity/drag offset và bỏ throw samples cũ; vị trí lưu theo monitor-relative, fallback primary screen.
 - FPS: active ~60, sleeping ~30, paused ~10.

@@ -295,6 +295,8 @@ internal static class ToyChecks
         RunPass(window, pet, behavior, preferences, check);
         RunReact(window, pet, behavior, preferences, check);
         RunPost(window, pet, behavior, preferences, check);
+        RunPlant(window, pet, behavior, preferences, check);
+        RunPeek(window, pet, behavior, preferences, check);
         preferences.ToysSniffed = null;
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
@@ -310,7 +312,7 @@ internal static class ToyChecks
         window.ToggleToyBasket();
         Tick(window);
         var rows = window.ToyBasketMenuItems();
-        check(rows.Length == 5 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
+        check(rows.Length == 6 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
         check((string)rows[2].Header == "Feather wand" && (string)rows[3].Header == "Wind-up mouse", "...and the feather wand and the wind-up mouse (M4)");
         check(window.TakeToyOut(Box), "It comes out of the basket");
         Tick(window);
@@ -1147,7 +1149,7 @@ internal static class ToyChecks
         window.ToggleToyBasket();
         Tick(window);
         var rows = window.ToyBasketMenuItems();
-        check(rows.Length == 5 && (string)rows[4].Header == "Scratching post" && rows[4].IsEnabled, "The basket lists the scratching post");
+        check(rows.Length == 6 && (string)rows[4].Header == "Scratching post" && rows[4].IsEnabled, "The basket lists the scratching post");
         check(window.TakeToyOut(Ball) && window.TakeToyOut(Box) && window.TakeToyOut(DesktopToyRules.Wand), "Three toys out");
         rows = window.ToyBasketMenuItems();
         check(!rows[3].IsEnabled && rows[4].IsEnabled, "Three toys out: the mouse waits, the post does not (its own limit)");
@@ -1258,5 +1260,212 @@ internal static class ToyChecks
         check(!window.ToyBasketShown && window.PostTripPhase == "None" && pet.Action != PetAction.Walking, "Quick tidy ends the trip");
         preferences.ToysSniffed = null;
         window.Reset();
+    }
+
+    // Living corner M2: the plant pot, the cat's visits and the plant growing.
+    private static void RunPlant(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        const string Plant = DesktopToyRules.Plant, Post = DesktopToyRules.Post;
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); pet.ActionTime += 1 / 60.0; }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        var cooldown = typeof(PetBehavior).GetField("selfCareCooldown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+        void CooldownOver() => cooldown.SetValue(behavior, 0.0);
+        var bounds = Field<Area>(window, "bounds");
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        preferences.Quiet = false; behavior.Quiet = false;
+        preferences.ToysSniffed = DesktopToyRules.All.ToList();
+        preferences.PlantPoints = 4; preferences.PlantPointAt = null;
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+
+        window.ToggleToyBasket();
+        Tick(window);
+        var rows = window.ToyBasketMenuItems();
+        check((string)rows[5].Header == "Plant pot (sprout)", $"The basket lists the plant pot with how far it has grown ({rows[5].Header})");
+        check(window.TakeToyOut(Post) && window.TakeToyOut(Plant), "The post and the pot come out together");
+        rows = window.ToyBasketMenuItems();
+        check(rows[4].IsChecked && rows[5].IsChecked, "...both ticked: the living corner is full");
+        window.StowToy(Post);
+        rows = window.ToyBasketMenuItems();
+        check(rows[4].IsEnabled, "With the post back the pot leaves room for it again");
+        Tick(window);
+        var motion = window.ToyMotionOf(Plant)!;
+        var thing = Thing(window, Plant);
+        double middle = (bounds.Left + bounds.Right) / 2;
+        motion.X = middle; Call(window, "RefreshToyPlace", thing); SetThing(thing, "Placed", false);
+        Settle(window, motion); Tick(window, 1.1); Settle(window, motion);
+        var potWindow = window.ToyWindowOf(Plant)!;
+        var area = GetThing<Area>(thing, "Area");
+        check(potWindow.IsVisible && Math.Abs(potWindow.Top - (area.Bottom - ToyPlantArt.ArtHeight)) < 1.5, "The pot stands on the floor");
+        var art = (ToyPlantArt)GetThing<FrameworkElement>(thing, "Art");
+        check(art.Stage == 0, "A sprout at 4 points");
+
+        // A click sways the leaves.
+        double potX = motion.X;
+        SetThing(thing, "Press", true);
+        Call(window, "EndToyDrag", thing, true);
+        Tick(window, 0.05);
+        check(art.Rustle != 0 && motion.X == potX, "A click sways the leaves; the pot stays");
+        Tick(window, 0.6);
+        check(art.Rustle == 0, "...then they are still");
+
+        // Its own visits: not in Quiet, asleep, the wake cooldown, the self-care cooldown.
+        void Away(double distance) { pet.X = motion.X - distance - PetSettings.CenterX; Free(); }
+        double Stand() => motion.X - DesktopToyRules.PlantHalfWidth - PlantRules.Reach - PetSettings.CenterX;
+        Away(300); CooldownOver();
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(!window.GoVisitPlant(), "In Quiet the cat does not go to the plant");
+        preferences.Quiet = false; behavior.Quiet = false;
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        check(!window.GoVisitPlant(), "Asleep, it sleeps on");
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(30); Free();
+        check(!window.GoVisitPlant(), "In the wake cooldown it does not go");
+        pet.Emotions.FinishSleep(0); Free();
+        cooldown.SetValue(behavior, 20.0);
+        check(!window.GoVisitPlant(), "Nor within the shared self-care cooldown");
+        CooldownOver();
+        check(window.GoVisitPlant() && window.PlantTripPhase == "Walk", "Otherwise it sets off to the plant");
+        FeatureStep();
+        check(pet.Action == PetAction.Walking, "It walks to the pot");
+        SetThing(thing, "Held", true);
+        FeatureStep();
+        check(window.PlantTripPhase == "None" && pet.Action != PetAction.Walking && preferences.PlantPoints == 4, "The pot picked up on the way: no visit, no point");
+        SetThing(thing, "Held", false);
+
+        // There: one of the three, then a point; the fifth point makes it a small plant, with a glitter.
+        Free();
+        check(window.GoVisitPlant(), "Off again");
+        pet.X = Stand(); FeatureStep();
+        check(window.PlantTripPhase == "Visit" && pet.Action == PetAction.Sitting && pet.Facing == 1, $"At the pot it {window.PlantVisitKind}s, facing it");
+        string first = window.PlantVisitKind;
+        Snapshot(window, potWindow, "toy-plant-visit");
+        check(Until(() => window.PlantTripPhase == "None") && pet.Action == PetAction.Idle, "...then it is free");
+        check(preferences.PlantPoints == 5 && preferences.PlantPointAt != null && window.PlantStage == 1, "A whole visit: a point, and a small plant at five");
+        Tick(window);
+        check(art.Stage == 1 && art.Sparkle >= 0, "The pot shows the new stage with a glitter");
+        Tick(window, 1.3);
+        check(art.Sparkle < 0, "...that fades");
+        Free();
+        check(window.GoVisitPlant(), "Another visit");
+        pet.X = Stand(); FeatureStep();
+        check(window.PlantVisitKind != first, "Never the same as last time");
+        check(Until(() => window.PlantTripPhase == "None") && preferences.PlantPoints == 5, "No new point within ten minutes");
+
+        // A click or an emotion ends a visit: no point.
+        preferences.PlantPointAt = null; Free();
+        window.GoVisitPlant(); pet.X = Stand(); FeatureStep();
+        SetField(window, "pressPending", true);
+        FeatureStep();
+        SetField(window, "pressPending", false);
+        check(window.PlantTripPhase == "None" && preferences.PlantPoints == 5, "A click ends the visit, no point");
+        Free();
+        window.GoVisitPlant(); pet.X = Stand(); FeatureStep();
+        pet.Emotions.Startle(); pet.Emotions.Step(pet, 0.1);
+        FeatureStep();
+        check(window.PlantTripPhase == "None" && preferences.PlantPoints == 5, "An emotion that owns the cat ends it too");
+        pet.Emotions.Reset(); Free();
+
+        // Stowed and out again, it keeps its stage; it never wilts.
+        window.StowToy(Plant);
+        window.TakeToyOut(Plant);
+        Tick(window);
+        check(window.PlantStage == 1 && ((ToyPlantArt)GetThing<FrameworkElement>(Thing(window, Plant), "Art")).Stage == 1, "Put away and out again: still a small plant");
+        foreach (var (pts, name) in new[] { (0, "sprout"), (5, "small"), (15, "leafy"), (30, "flower") })
+        {
+            preferences.PlantPoints = pts;
+            Tick(window);
+            Snapshot(window, window.ToyWindowOf(Plant)!, "toy-plant-" + name);
+        }
+        window.ToggleToyBasket();
+        preferences.PlantPoints = 0; preferences.PlantPointAt = null;
+        preferences.ToysSniffed = null;
+        window.Reset();
+    }
+
+    // Living corner M2: hiding in the box awake, head out; a nap there; a pounce out at a toy going by.
+    private static void RunPeek(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); pet.ActionTime += 1 / 60.0; }
+        bool Until(Func<bool> done, int frames = 1200) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        var renderer = Field<PetRenderer>(window, "renderer");
+        double FrontDrop() { Call(window, "Present", false); return renderer.BoxFrontDrop; }
+        var bounds = Field<Area>(window, "bounds");
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        preferences.Quiet = false; behavior.Quiet = false;
+        preferences.ToysSniffed = DesktopToyRules.All.ToList();
+        window.ToyChaseStreak.Step(1000, false);
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+        window.ToggleToyBasket();
+        window.TakeToyOut(Box);
+        Tick(window);
+        var motion = window.ToyMotionOf(Box)!;
+        var thing = Thing(window, Box);
+        double middle = (bounds.Left + bounds.Right) / 2;
+        motion.X = middle; Call(window, "RefreshToyPlace", thing); SetThing(thing, "Placed", false);
+        Settle(window, motion); Tick(window, 1.1); Settle(window, motion);
+        var boxWindow = window.ToyWindowOf(Box)!;
+        void Away(double distance) { pet.X = motion.X - distance - PetSettings.CenterX; Free(); }
+        void Arrive() { pet.X = motion.X - PetSettings.CenterX; FeatureStep(); Tick(window, 0.4); }
+
+        Away(300);
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(!window.GoPeekInBox(), "In Quiet the cat does not hide in the box on its own");
+        preferences.Quiet = false; behavior.Quiet = false;
+        pet.Emotions.FinishSleep(30); Free();
+        check(!window.GoPeekInBox(), "Nor in the wake cooldown");
+        pet.Emotions.FinishSleep(0); Free();
+        check(window.GoPeekInBox() && window.BoxPeekPhase == "Walk", "Otherwise it goes to hide in the box");
+        Arrive();
+        check(window.BoxPeekPhase == "In" && pet.Action == PetAction.Looking && !pet.Emotions.SleepLocked, "In the box, awake, peeking out");
+        check(window.BoxFrontShown && FrontDrop() == PetWindow.BoxFloor && window.BoxLift == PetWindow.BoxFloor, "Behind the box's front panel, head over the edge");
+        Snapshot(window, boxWindow, "toy-box-peek");
+        check(!window.StowToy(Box), "The box cannot be put away with the cat in it");
+        check(Until(() => window.BoxPeekPhase == "None") && window.BoxLift > 0, "After a while it hops out");
+        Tick(window, 0.4);
+        check(!window.BoxFrontShown && window.BoxLift == 0 && pet.Action == PetAction.Idle, "...and stands in front of the box");
+
+        // A right click (CancelFeatureActivity): out with the hop; lifted: straight out.
+        Free(); window.GoPeekInBox(); Arrive();
+        Call(window, "CancelFeatureActivity");
+        Tick(window);
+        check(window.BoxPeekPhase == "None" && window.BoxLift > 0, "A click: out of the box with the little hop");
+        Tick(window, 0.4);
+        Free(); window.GoPeekInBox(); Arrive();
+        SetField(window, "dragging", true); pet.Action = PetAction.Dragging; pet.Grounded = false;
+        FeatureStep(); Tick(window);
+        check(window.BoxPeekPhase == "None" && !window.BoxFrontShown && window.BoxLift == 0, "Picked up: lifted straight out");
+        SetField(window, "dragging", false); window.Reset(); pet.Emotions.FinishSleep(0); Free();
+        Tick(window);
+
+        // Its nap time while in there: an ordinary sleep in the box.
+        window.GoPeekInBox(); Arrive();
+        SetField(window, "napVisit", 0.0);
+        FeatureStep(); Tick(window);
+        check(window.NappingInBox && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked && window.BoxPeekPhase == "None", "Nap time while in the box: it sleeps in it");
+        behavior.WakeByClick(pet); pet.Action = PetAction.Idle; pet.Emotions.FinishSleep(0);
+        Tick(window, 0.5); Free();
+
+        // The wind-up mouse going by: a crouch, then a pounce out and the chase.
+        window.TakeToyOut(DesktopToyRules.Mouse);
+        Tick(window);
+        var mouseMotion = window.ToyMotionOf(DesktopToyRules.Mouse)!;
+        Settle(window, mouseMotion);
+        var mouseThing = Thing(window, DesktopToyRules.Mouse);
+        mouseMotion.X = middle + 400; Call(window, "RefreshToyPlace", mouseThing); SetThing(mouseThing, "Placed", false); Tick(window);
+        Free(); window.GoPeekInBox(); Arrive();
+        window.WindUpOf(DesktopToyRules.Mouse)!.Wind(mouseMotion);
+        FeatureStep();
+        check(window.BoxPeekPhase == "In", "A mouse running far away: it keeps peeking");
+        mouseMotion.X = middle + 150;
+        FeatureStep();
+        check(window.BoxPeekPhase == "Stalk" && pet.Action == PetAction.Sitting, $"Close by: it crouches in the box");
+        for (int i = 0; i < 40 && window.BoxPeekPhase == "Stalk"; i++) FeatureStep();
+        check(window.BoxPeekPhase == "None" && window.ChasePhase == "Pounce" && pet.Action == PetAction.Jumping && pet.Facing == 1, "...then pounces out at it");
+        check(window.BoxLift == 0 || !window.BoxFrontShown, "Out of the box in the pounce");
+        window.ToggleToyBasket();
+        Tick(window);
+        window.Reset(); pet.Grounded = true; pet.Action = PetAction.Idle;
+        preferences.ToysSniffed = null;
     }
 }

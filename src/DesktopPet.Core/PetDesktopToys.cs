@@ -46,7 +46,7 @@ public sealed class FetchStreak
 // The rules of the toys left out on the desktop; the windows are in PetWindow.Toys.cs.
 public static class DesktopToyRules
 {
-    public const string Ball = "ball", Box = "box", Wand = "wand", Mouse = "mouse", Post = "post";
+    public const string Ball = "ball", Box = "box", Wand = "wand", Mouse = "mouse", Post = "post", Plant = "plant";
     // Toys: 3 out at most. Living-corner things (docs/LIVING-CORNER.md: the scratching post) have their own 2.
     public const int MaxOut = 3, MaxLivingOut = 2;
     public const double BallHalfWidth = 12, BasketHalfWidth = 34, BasketHeight = 46, Gap = 4, GlideSpeed = 220;
@@ -56,18 +56,20 @@ public static class DesktopToyRules
     public const double WandHalfWidth = 45, WandHeight = 10, MouseHalfWidth = 18, MouseHeight = 16;
     // Đợt 2 M1: the scratching post, a wooden base about 60 DIPs wide and 110 tall to the top of its disc.
     public const double PostHalfWidth = 30, PostHeight = 110;
-    public static readonly IReadOnlyList<string> All = new[] { Ball, Box, Wand, Mouse, Post };
+    // M2: the plant pot, a clay pot about 50 DIPs wide; its height is the pot's (the leaves only draw above it).
+    public const double PlantHalfWidth = 25, PlantHeight = 36;
+    public static readonly IReadOnlyList<string> All = new[] { Ball, Box, Wand, Mouse, Post, Plant };
 
-    public static bool IsLiving(string id) => id == Post;
+    public static bool IsLiving(string id) => id is Post or Plant;
     public static int LimitOf(string id) => IsLiving(id) ? MaxLivingOut : MaxOut;
 
     public static bool CanTake(int outCount) => outCount < MaxOut;
     // Room for this one among what is out: each group counts only its own.
     public static bool CanTake(string id, IEnumerable<string> outIds) => outIds.Count(other => IsLiving(other) == IsLiving(id)) < LimitOf(id);
 
-    public static double HalfWidthOf(string id) => id switch { Box => BoxHalfWidth, Wand => WandHalfWidth, Mouse => MouseHalfWidth, Post => PostHalfWidth, _ => BallHalfWidth };
+    public static double HalfWidthOf(string id) => id switch { Box => BoxHalfWidth, Wand => WandHalfWidth, Mouse => MouseHalfWidth, Post => PostHalfWidth, Plant => PlantHalfWidth, _ => BallHalfWidth };
     // Half its height: the ball's radius, half the box's body, half the handle, half the mouse, half the post.
-    public static double HalfHeightOf(string id) => id switch { Box => BoxHeight / 2, Wand => WandHeight / 2, Mouse => MouseHeight / 2, Post => PostHeight / 2, _ => BallHalfWidth };
+    public static double HalfHeightOf(string id) => id switch { Box => BoxHeight / 2, Wand => WandHeight / 2, Mouse => MouseHeight / 2, Post => PostHeight / 2, Plant => PlantHeight / 2, _ => BallHalfWidth };
 
     // What is left of a saved list: known toys, each once, no more than fit. No basket: nothing is out.
     public static List<SavedToy>? Normalize(IEnumerable<SavedToy>? saved, bool basketShown, IReadOnlyCollection<string>? known = null)
@@ -121,4 +123,54 @@ public static class PostScratchRules
         }
         return null;
     }
+}
+
+// The plant pot (docs/LIVING-CORNER.md → M2): the cat's visits, and the plant growing with them. It never
+// wilts: points only go up, and only a whole visit earns one, at most one every ten minutes.
+public static class PlantRules
+{
+    public const double VisitMin = 480, VisitMax = 720, WalkSeconds = 15, PointGapSeconds = 600, Reach = 30;
+    public const double SniffSeconds = 1.5, PawSeconds = 1.2, SitSeconds = 4;
+    public static readonly int[] StageAt = { 0, 5, 15, 30 }; // Sprout, small plant, leafy, in flower.
+    public const int MaxPoints = 9999;
+
+    public enum Visit { Sniff, Paw, Sit }
+
+    public static double NextVisit(double random) => VisitMin + Math.Clamp(double.IsFinite(random) ? random : 0, 0, 1) * (VisitMax - VisitMin);
+
+    public static int StageOf(int points)
+    {
+        int stage = 0;
+        for (int i = 0; i < StageAt.Length; i++) if (points >= StageAt[i]) stage = i;
+        return stage;
+    }
+
+    public static double SecondsOf(Visit visit) => visit switch { Visit.Sniff => SniffSeconds, Visit.Paw => PawSeconds, _ => SitSeconds };
+
+    // One of the three, never the last one again (random in [0, 1)).
+    public static Visit NextKind(Visit? last, double random)
+    {
+        var kinds = new[] { Visit.Sniff, Visit.Paw, Visit.Sit }.Where(k => k != last).ToArray();
+        return kinds[Math.Clamp((int)(Math.Clamp(double.IsFinite(random) ? random : 0, 0, 0.999999) * kinds.Length), 0, kinds.Length - 1)];
+    }
+
+    // A whole visit: one more point unless the last one came less than ten minutes ago (a clock set
+    // back counts as long enough). True when it earned one.
+    public static bool Earn(ref int points, ref DateTime? lastPoint, DateTime now)
+    {
+        if (lastPoint is DateTime last && now >= last && (now - last).TotalSeconds < PointGapSeconds) return false;
+        points = Math.Min(MaxPoints, Math.Max(0, points) + 1);
+        lastPoint = now;
+        return true;
+    }
+}
+
+// The cat hiding in the cardboard box awake, its head over the edge (docs/LIVING-CORNER.md → M2), and
+// pouncing out at the wind-up mouse or the feather the user plays with going by.
+public static class BoxPeekRules
+{
+    public const double VisitMin = 480, VisitMax = 720, PeekMin = 8, PeekMax = 15, LureReach = 200, StalkSeconds = 0.5;
+
+    public static double NextVisit(double random) => VisitMin + Math.Clamp(double.IsFinite(random) ? random : 0, 0, 1) * (VisitMax - VisitMin);
+    public static double PeekLength(double random) => PeekMin + Math.Clamp(double.IsFinite(random) ? random : 0, 0, 1) * (PeekMax - PeekMin);
 }

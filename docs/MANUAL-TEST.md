@@ -1610,3 +1610,17 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Ném đồ hay trụ trúng mèo: đi xuyên, không Bonk, không Dizzy, không đánh thức mèo ngủ.
 - [ ] Tắt app rồi mở lại: trụ ở chỗ cũ. DPI 125 %/150 % và màn hình phụ: trụ đúng chỗ, mèo đứng sát cột khi cào.
 - [ ] Đọc nhãn tiếng Nhật "爪とぎポール", "コーナー用品は2個まで" (chưa ai duyệt).
+
+## Góc sống M2 — Chậu cây và hộp thêm trạng thái (11/11, chỉ bản 1.6)
+- [ ] Giỏ có hàng "Chậu cây (mầm)". Lấy được cả trụ cào và chậu cùng 3 đồ chơi; có trụ và chậu rồi thì nhóm góc sống đủ. Chậu nhìn rõ trên nền sáng và nền tối.
+- [ ] Bấm chậu không kéo: lá rung rồi đứng yên. Kéo/ném: rơi nảy thấp, không lăn, không vỡ, không đổ đất.
+- [ ] Đợi 8–12 phút (mèo thức, trên sàn, không Quiet): mèo tự tới chậu, ngồi cạnh và ngửi lá, vỗ lá (lá rung) hoặc ngồi nhìn cây khoảng 4 giây; hai lần liền nhau không giống nhau.
+- [ ] Sau 5 lần ghé (mỗi lần cách ít nhất 10 phút) cây thành "cây nhỏ" có lấp lánh ngắn; 15 lần sum suê, 30 lần ra hoa. Cất chậu, tắt app, vắng máy lâu: cây không nhỏ lại.
+- [ ] Quiet, Giờ tập trung, mèo ngủ, vừa thức, đang chơi đồ khác: mèo không tự ghé cây. Click/kéo/cảm xúc giữa lúc ghé: dừng ngay, lần đó không được điểm.
+- [ ] Đợi 8–12 phút có thùng carton: mèo tự chui vào ngồi thức, thò đầu nhìn quanh 8–15 giây rồi nhảy nhẹ ra. Không cầm hay cất được hộp lúc đó.
+- [ ] Đang thò đầu: click trái rồi kéo nhấc mèo thẳng ra; click phải mèo nhảy ra và mở menu; Cất nhanh hoặc app toàn màn hình: hộp biến mất, mèo đứng lại.
+- [ ] Để mèo thò đầu mà không chạm máy khoảng 1,5 phút: mèo ngủ luôn trong hộp (giấc ngủ thường, click trái thức và kéo được).
+- [ ] Đang thò đầu, lên dây chuột cho chạy ngang gần hộp (trong ~200 DIP) hoặc vẩy cần câu cho lông xuống gần: mèo rình rồi vồ ra, đuổi tiếp như M4. Đang nghỉ 2 phút của M4: mèo chỉ quay đầu nhìn. Bóng lăn ngang: mèo không vồ.
+- [ ] Cất chuột dây cót rồi lấy ra lại, lên dây: mèo đuổi ngay lần đầu (lỗi cũ đã sửa).
+- [ ] DPI 125 %/150 %, màn hình phụ: chậu và mèo trong hộp đúng chỗ.
+- [ ] Đọc nhãn tiếng Nhật "植木鉢", "芽", "小さな木", "葉がしげった", "花が咲いた" (chưa ai duyệt).

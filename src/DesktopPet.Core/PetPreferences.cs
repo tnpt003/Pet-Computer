@@ -85,6 +85,9 @@ public sealed class PetPreferences
     // M5: the longest pass streak (shown in the basket) and the toys the cat has sniffed once.
     public int ToyPassBest { get; set; }
     public List<string>? ToysSniffed { get; set; }
+    // Living corner M2 (docs/LIVING-CORNER.md): the plant pot's points (it grows, never wilts) and when the last one came.
+    public int PlantPoints { get; set; }
+    public DateTime? PlantPointAt { get; set; }
     // Where the user dragged the battle HUD, per monitor (device name): its left and top as fractions
     // of the room left in that monitor's work area. A monitor not listed: centred at the top.
     public Dictionary<string, double[]>? BattleHudSpots { get; set; }
@@ -139,6 +142,7 @@ public sealed class PetPreferences
         p.ToysOut = DesktopToyRules.Normalize(p.ToysOut, p.ToyBasketShown);
         p.ToyPassBest = Math.Clamp(p.ToyPassBest, 0, 9999);
         p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
+        p.PlantPoints = Math.Clamp(p.PlantPoints, 0, PlantRules.MaxPoints);
         if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
         return p;
     }

@@ -127,6 +127,8 @@ public sealed partial class PetWindow
     private DesktopThing NewToy(string id, string? monitor)
     {
         var toy = new DesktopThing { Id = id, HalfWidth = DesktopToyRules.HalfWidthOf(id), Monitor = monitor };
+        // A new mouse counts its winds from zero: the one the cat last chased (another mouse) must not hide its first.
+        if (id == DesktopToyRules.Mouse) chaseWind = -1;
         RefreshToyPlace(toy);
         return toy;
     }
@@ -159,6 +161,7 @@ public sealed partial class PetWindow
         if (toy.Id == DesktopToyRules.Ball) { StopToyFetch(drop: false); StopToyPass(); }
         if (chaseToy == toy) StopToyChase();
         if (toy.Id == DesktopToyRules.Post) StopPostTrip();
+        if (toy.Id == DesktopToyRules.Plant) StopPlantTrip();
         if (sniffToy == toy) StopToyReact();
         CloseDesktopThing(toy);
         desktopToys.Remove(toy);
@@ -252,6 +255,12 @@ public sealed partial class PetWindow
             thing.Window = CreateOverlayWindow(surface, "Pet scratching post");
             thing.Window.Width = ToyPostArt.ArtWidth; thing.Window.Height = ToyPostArt.ArtHeight;
         }
+        else if (thing.Id == DesktopToyRules.Plant)
+        {
+            surface = thing.Art = new ToyPlantArt { Cursor = Cursors.Hand, Stage = PlantStage };
+            thing.Window = CreateOverlayWindow(surface, "Pet plant pot");
+            thing.Window.Width = ToyPlantArt.ArtWidth; thing.Window.Height = ToyPlantArt.ArtHeight;
+        }
         else if (thing.Id == DesktopToyRules.Mouse)
         {
             surface = thing.Art = new ToyMouseArt { Cursor = Cursors.Hand };
@@ -304,13 +313,15 @@ public sealed partial class PetWindow
             DesktopToyRules.Wand => L("Cần câu lông vũ", "Feather wand"),
             DesktopToyRules.Mouse => L("Chuột dây cót", "Wind-up mouse"),
             DesktopToyRules.Post => L("Trụ cào", "Scratching post"),
+            DesktopToyRules.Plant => L("Chậu cây", "Plant pot"),
             _ => L("Bóng len", "Yarn ball")
         };
         string? why = playing ? L("đang chơi", "in play") : sleeping ? L("mèo đang ngủ", "the cat is asleep in it") : carried ? L("mèo đang ngậm", "in the cat's mouth")
             : full ? (DesktopToyRules.IsLiving(id) ? L("tối đa 2 món góc sống", "2 corner things out at most") : L("tối đa 3 món", "3 out at most")) : null;
-        var item = PetUi.MenuItem(id switch { DesktopToyRules.Box => PetUi.Box, DesktopToyRules.Wand => PetUi.Wand, DesktopToyRules.Mouse => PetUi.WindUpMouse, DesktopToyRules.Post => PetUi.Post, _ => PetUi.Ball });
+        var item = PetUi.MenuItem(id switch { DesktopToyRules.Box => PetUi.Box, DesktopToyRules.Wand => PetUi.Wand, DesktopToyRules.Mouse => PetUi.WindUpMouse, DesktopToyRules.Post => PetUi.Post, DesktopToyRules.Plant => PetUi.Plant, _ => PetUi.Ball });
         // The pass record (M5) is a note, not a reason to grey the row.
         string? note = why ?? (ballRow && preferences.ToyPassBest > 0 ? L("kỷ lục chuyền", "best pass streak") + " " + preferences.ToyPassBest : null);
+        if (why == null && id == DesktopToyRules.Plant) note = PlantStageName(PlantStage); // How far it has grown (M2).
         item.Header = note == null ? name : $"{name} ({note})";
         item.IsCheckable = true; item.IsChecked = isOut; item.IsEnabled = why == null;
         item.Click += (_, _) => { if (ToyIsOut(id)) StowToy(id); else TakeToyOut(id); };
@@ -391,7 +402,7 @@ public sealed partial class PetWindow
             if (!letGo || paused) return;
             // A click. Nothing here reaches the cat: not awake, not asleep.
             if (thing == toyBasket) OpenToyBasketMenu();
-            else if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand or DesktopToyRules.Post) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }
+            else if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand or DesktopToyRules.Post or DesktopToyRules.Plant) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }
             // Wound up: it runs (PetWindow.ToyChase.cs); a click while it runs does nothing.
             else if (thing.Id == DesktopToyRules.Mouse) { if (thing.WindUp.Wind(thing.Motion)) PlayPetSound("ball_tap"); }
             else { thing.Motion.Nudge(ToyCursor(thing).X - thing.Motion.X); PlayPetSound("ball_tap"); PassTouched(thing); } // It may roll to the cat (PetWindow.ToyPass.cs).
@@ -488,6 +499,11 @@ public sealed partial class PetWindow
             MoveWindow(thing.Window, motion.X - ToyPostArt.ArtWidth / 2, thing.Area.Bottom - ToyPostArt.ArtHeight - motion.Height, thing.Scale);
             DrawPostScratch(thing); // A click only sways the pompom (PetWindow.ToyPost.cs).
         }
+        else if (thing.Id == DesktopToyRules.Plant)
+        {
+            MoveWindow(thing.Window, motion.X - ToyPlantArt.ArtWidth / 2, thing.Area.Bottom - ToyPlantArt.ArtHeight - motion.Height, thing.Scale);
+            DrawPlant(thing); // A click only sways the leaves (PetWindow.ToyPlant.cs).
+        }
         else if (thing.Id == DesktopToyRules.Mouse && thing.Art is ToyMouseArt mouse)
         {
             MoveWindow(thing.Window, motion.X - ToyMouseArt.ArtWidth / 2, thing.Area.Bottom - ToyMouseArt.ArtHeight - motion.Height, thing.Scale);
@@ -550,6 +566,7 @@ public sealed partial class PetWindow
         if (toyBasketArt != null) toyBasketArt.HasBall = !ToyIsOut(DesktopToyRules.Ball) && toyWindow == null;
         foreach (var thing in DesktopThings) if (!thing.Placed && !thing.InGame && !thing.Carried) PositionDesktopThing(thing);
         if (DesktopPost is { Window.IsVisible: true } post) DrawPostScratch(post); // The rope while the cat scratches it.
+        if (DesktopPlant is { Window.IsVisible: true } plant) DrawPlant(plant, paused ? 0 : dt); // Its stage, swaying leaves, a new stage's glitter.
         if (paused) return;
         toysAreaTimer += dt;
         bool checkPlaces = toysAreaTimer >= 1;
@@ -589,7 +606,7 @@ public sealed partial class PetWindow
         if (thing != toyBasket && (!motion.AtRest || motion.Feedback > 0 || thing.WindUp.Busy))
         {
             double left = thing.Area.Left + thing.HalfWidth, right = Math.Max(left, thing.Area.Right - thing.HalfWidth);
-            if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand or DesktopToyRules.Post) motion.StepBox(dt, left, right);
+            if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand or DesktopToyRules.Post or DesktopToyRules.Plant) motion.StepBox(dt, left, right);
             else if (thing.Id == DesktopToyRules.Mouse) thing.WindUp.Step(motion, dt, left, right, thing.WindUp.Running ? ToyObstacles(thing.Monitor) : null, thing.HalfWidth);
             else motion.Step(dt, left, right);
             double ceiling = ToyCeiling(thing);

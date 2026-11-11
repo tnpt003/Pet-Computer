@@ -5,7 +5,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
-| M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Luật chờ duyệt |
+| M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Chưa viết luật |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
 | M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
@@ -65,7 +65,7 @@ Trụ cào là đồ góc sống có physics như thùng carton (giới hạn ri
 - Tư thế Cào móng vẽ chân trước ở phía đối diện đuôi, nên mèo quay phía đó vào trụ; tâm mèo cách tâm trụ 34 DIP (`PostScratchRules.StandOff`), chân rơi lên mép dây thừng gần mèo.
 - Đã soát ảnh render ghép cửa sổ mèo lên cửa sổ trụ lúc cào (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.
 
-## Luật M2 Chậu cây và hộp thêm trạng thái (đề xuất 11/11, chờ duyệt)
+## Luật M2 Chậu cây và hộp thêm trạng thái (duyệt 11/11)
 
 ### Chậu cây là đồ góc sống
 
@@ -107,6 +107,16 @@ Trụ cào là đồ góc sống có physics như thùng carton (giới hạn ri
 - Giới hạn nhóm góc sống khi có cả trụ và chậu; `preferences.json` cũ (chưa có chậu) vẫn đọc được.
 - Đo FPS với 3 đồ chơi, trụ và chậu nằm yên; soát render chậu 4 dáng, mèo ghé cây, mèo thò đầu trong hộp trên nền sáng/tối.
 
-### Bổ sung ngoại lệ đề xuất (chờ duyệt, ghi vào docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics khi duyệt)
+### Bổ sung ngoại lệ (đã duyệt 11/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics)
 
 Chậu cây là đồ góc sống có physics như trụ cào (chung giới hạn 2 món góc sống). Mèo tự ghé cây mỗi 8–12 phút, chặn như trụ cào và chờ cooldown tự chăm sóc; ngửi, chạm lá hoặc ngồi cạnh; mỗi lần ghé trọn vẹn được 1 điểm (tối đa 1 điểm/10 phút), cây lớn qua 4 dáng và không bao giờ héo; lưu ở `preferences.json`, Python không tham gia. Thùng carton thêm việc mèo tự vào ngồi thức, thò đầu 8–15 giây (mỗi 8–12 phút, chặn như vào hộp ngủ); click trái nhấc thẳng ra và kéo được, click phải ra và mở menu, cảm xúc ưu tiên cao thì nhảy ra; đang thò đầu mà tới dịp ngủ thì ngủ trong hộp theo luật ngủ thường. Đang thò đầu, chuột dây cót hoặc lông vũ người dùng đang chơi đi ngang trong ~200 DIP thì mèo vồ ra rồi đuổi theo luật M4 (chung lượt và nghỉ). Đồ vẫn không chạm mèo: không Bonk, Dizzy, cảm xúc, không đánh thức; không âm thanh mới.
+
+### Cách code M2 (11/11)
+
+- Chậu là món `plant` trong nhóm góc sống (`DesktopToyRules.Plant`, rộng 50 DIP, thân chậu cao 36 DIP; lá vẽ phía trên). Chung khung cầm, ném, lưu, tránh vùng đất; physics `StepBox` như hộp. Icon menu là glyph chiếc lá E8BE của Segoe.
+- Hình `ToyPlantArt` (84×112 DIP): 4 dáng theo `PlantRules.StageOf` (0/5/15/30 điểm), lá rung theo `Feedback` (bấm, mèo vỗ), lấp lánh 1,2 giây khi lên dáng (đồng hồ chạy theo khung hình, Pause đóng băng).
+- Chuyến ghé cây ở `PetWindow.ToyPlant.cs`: `PlantTrip` Walk → Visit, cả chuyến sở hữu chuyển động (`FeatureOwnsMovement`), nên click, kéo, cảm xúc mạnh hủy qua `CancelFeatureActivity`. Mèo đứng cách tâm chậu nửa chậu + 30 DIP, quay về phía chậu (cùng hướng như ngửi đồ mới M5). Ghé xong trọn vẹn mới gọi `PlantRules.Earn`; điểm và giờ điểm cuối lưu `PlantPoints`, `PlantPointAt` trong `preferences.json` (giờ UTC; đồng hồ bị lùi không chặn điểm).
+- Thò đầu ở `PetWindow.ToyBox.cs`: `BoxPeek` Walk → In → Stalk. Dùng chung cú nhảy vào/ra, độ nâng và mặt trước hộp của giấc ngủ trong hộp (`BoxOccupied`, `BoxFrontShown` tính cả lúc thò đầu). Tới dịp ngủ (đồng hồ đệm/hộp hoặc gần buồn ngủ vì không ai chạm) thì chuyển thẳng sang giấc ngủ thường trong hộp. Bị ngắt thì nhảy nhẹ ra, trừ khi đang bị kéo hoặc hộp đã mất.
+- Vồ ra: `PeekLure` lấy món người dùng đang chơi (`ChaseLure` của M4) trong 200 DIP quanh hộp và đủ thấp để vồ; rình 0,5 giây rồi `PounceFromBox` (ToyChase.cs) mở lượt đuổi M4 bằng cú vồ, tính chung lượt chuột và thời gian nghỉ.
+- Sửa kèm (lỗi có sẵn từ M4, test M2 tìm ra): cất chuột rồi lấy ra lại thì lần lên dây đầu có thể bị bỏ qua vì chuột mới đếm số lần lên dây từ 0 mà mèo còn nhớ số của chuột cũ; `NewToy` giờ xóa số nhớ đó.
+- Đã soát ảnh render: chậu 4 dáng, mèo ghé cây, mèo thò đầu trong hộp (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.

@@ -54,6 +54,8 @@ public enum AutoKind
     ToySniff,       // Going to sniff a toy it has never seen, on its own (blocked like the fetch invitation).
     ToyReact,       // A short reaction to the user's doing (a new accessory); allowed in Quiet.
     PostScratch,    // Walking to the scratching post on its own (blocked like a nap in the cardboard box).
+    PlantVisit,     // Walking to the plant pot on its own (blocked like the scratching post).
+    BoxPeek,        // Hiding in the cardboard box awake, its head over the edge (blocked like a nap in the box).
 }
 
 public static class PetAutonomy
@@ -89,6 +91,8 @@ public static class PetAutonomy
         AutoKind.ToySniff => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         AutoKind.ToyReact => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
         AutoKind.PostScratch => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown,
+        AutoKind.PlantVisit => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown,
+        AutoKind.BoxPeek => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown,
         AutoKind.ToyInvite => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };

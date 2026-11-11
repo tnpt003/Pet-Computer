@@ -172,6 +172,24 @@ public sealed partial class PetWindow
         return false;
     }
 
+    // Out of the cardboard box at a toy going by (PetWindow.ToyBox.cs, living corner M2): the chase starts with
+    // a pounce, counted like any other round (the mouse's five, the shared rest). False when it may not.
+    private bool PounceFromBox(DesktopThing lure)
+    {
+        bool mouse = lure.Id == DesktopToyRules.Mouse;
+        if (mouse ? !toyChaseStreak.TryMouse() : toyChaseStreak.Resting) return false;
+        if (mouse) chaseWind = lure.WindUp.Winds;
+        chaseToy = lure;
+        chaseTime = chaseStill = chaseHold = chaseCooldown = 0;
+        chaseBored = false;
+        wandRhythm.Reset();
+        Interact("toy_started");
+        pet.Facing = ChaseTarget(lure).X < CatCenter ? -1 : 1;
+        Pounce(mouse ? ChaseRunScale : 1);
+        System.Diagnostics.Trace.WriteLine($"The cat pounces out of the box at the {lure.Id}.");
+        return true;
+    }
+
     // The same impulse as a normal jump, a little faster across for the mouse.
     private void Pounce(double across)
     {

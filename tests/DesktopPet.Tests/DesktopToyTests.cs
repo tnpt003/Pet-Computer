@@ -144,6 +144,28 @@ internal static class DesktopToyTests
             "Two living-corner things out: no more of them");
         var mixed = DesktopToyRules.Normalize(new[] { "ball", "box", "wand", "post", "mouse" }.Select(id => new SavedToy { Id = id }), true)!;
         check(mixed.Select(t => t.Id).SequenceEqual(new[] { "ball", "box", "wand", "post" }), "A saved list keeps three toys and the post");
+
+        // M2: the plant pot (living corner, with the post), its stages and points, and peeking out of the box.
+        check(DesktopToyRules.IsLiving(DesktopToyRules.Plant) && DesktopToyRules.All.Last() == DesktopToyRules.Plant, "The plant pot is in the basket's living-corner group");
+        check(!DesktopToyRules.CanTake(DesktopToyRules.Plant, new[] { "post", "ball", "box", "wand" }) == false && !DesktopToyRules.CanTake(DesktopToyRules.Plant, new[] { "post", "plant" }),
+            "The post and the pot fit together; that is the two");
+        var withPlant = DesktopToyRules.Normalize(new[] { "post", "plant", "ball" }.Select(id => new SavedToy { Id = id }), true)!;
+        check(withPlant.Count == 3 && withPlant.Any(t => t.Id == "plant") && withPlant.Any(t => t.Id == "post"), "A saved pot and post are kept");
+        check(PlantRules.StageOf(0) == 0 && PlantRules.StageOf(4) == 0 && PlantRules.StageOf(5) == 1 && PlantRules.StageOf(14) == 1 && PlantRules.StageOf(15) == 2 && PlantRules.StageOf(30) == 3 && PlantRules.StageOf(9999) == 3,
+            "Four stages: sprout 0, small plant 5, leafy 15, in flower 30");
+        int points = 0; DateTime? lastPoint = null; var t0 = new DateTime(2026, 11, 11, 10, 0, 0, DateTimeKind.Utc);
+        check(PlantRules.Earn(ref points, ref lastPoint, t0) && points == 1 && lastPoint == t0, "A whole visit earns a point");
+        check(!PlantRules.Earn(ref points, ref lastPoint, t0.AddMinutes(9)) && points == 1, "...not again within ten minutes");
+        check(PlantRules.Earn(ref points, ref lastPoint, t0.AddMinutes(10)) && points == 2, "...again after ten");
+        check(PlantRules.Earn(ref points, ref lastPoint, t0.AddDays(-1)) && points == 3, "A clock set back does not block it");
+        points = PlantRules.MaxPoints; lastPoint = null;
+        check(PlantRules.Earn(ref points, ref lastPoint, t0) && points == PlantRules.MaxPoints, "Points never go past the cap (and never down)");
+        check(PlantRules.NextKind(PlantRules.Visit.Sniff, 0) != PlantRules.Visit.Sniff && PlantRules.NextKind(PlantRules.Visit.Sit, 0.99) != PlantRules.Visit.Sit && PlantRules.NextKind(null, double.NaN) == PlantRules.Visit.Sniff,
+            "Sniff, paw or sit: never the same as last time");
+        check(PlantRules.NextVisit(0) == 480 && PlantRules.NextVisit(1) == 720 && BoxPeekRules.NextVisit(0) == 480 && BoxPeekRules.PeekLength(0) == 8 && BoxPeekRules.PeekLength(1) == 15,
+            "Visits 8–12 minutes apart; peeking out 8–15 seconds");
+        var oldPrefs = System.Text.Json.JsonSerializer.Deserialize<PetPreferences>("{\"PlantPoints\": -4}")!;
+        check(Math.Clamp(oldPrefs.PlantPoints, 0, PlantRules.MaxPoints) == 0 && new PetPreferences().PlantPointAt == null, "Preferences without a plant start at a sprout");
         check(DesktopToyRules.HalfWidthOf(DesktopToyRules.Post) == 30 && DesktopToyRules.HalfHeightOf(DesktopToyRules.Post) == 55, "The post is about 60 DIPs wide, 110 tall");
         check(PostScratchRules.NextVisit(0) == 360 && PostScratchRules.NextVisit(0.999999) < 600.01 && PostScratchRules.NextVisit(double.NaN) == 360,
             "The cat's own visits are 6–10 minutes apart");

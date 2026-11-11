@@ -138,6 +138,8 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
 ### Cách code M3 (11/11)
 
+Commit/publish 12d60f3, smoke 3/3 PASS.
+
 - Trạng thái chuyến ở `PetWindow.ToyFetch.cs`: `Watch` (nhìn bóng bay) → `Run` (tới bóng) → `Carry` (ngậm, về dưới con trỏ) → `Wait` (nhả, ngồi chờ 20 giây). Rủ chơi bắt đầu thẳng ở `Run`, cờ `fetchInvite`, đi bộ; ném nhặt chạy nhanh gấp 1,6. Luật thuần (ngưỡng 400 DIP/s, 5 lần rồi nghỉ 120 giây, hẹn 480–900 giây) ở `FetchStreak` (`PetDesktopToys.cs`).
 - Cổng: `AutoKind.ToyFetch` chặn như trò bóng (bận, ngủ, bị kéo, đang bay, app toàn màn hình, trận, việc khác) nhưng không chặn Quiet và wake cooldown; ném lại khi mèo đang chờ thì bỏ điều kiện "việc khác" vì việc đó là chính chuyến này. `AutoKind.ToyInvite` chặn như ngủ trong hộp, thêm người dùng vắng. Lúc có chuyến, `FeatureOwnsMovement` đúng nên cảm xúc tự động, ngủ đệm/hộp, leo cửa sổ đều chờ.
 - Bắt đầu từ `EndToyDrag` (`BallThrown`); bóng tới trong 10 DIP của miệng và thấp dưới 24 DIP thì ngậm. Lúc ngậm, món bóng có cờ `Carried`: cửa sổ ẩn, physics và lưu bỏ qua; `PetRenderer.CarryBall` vẽ bóng bán kính 8,5 ở miệng trong `DrawHead`, theo mọi transform của đầu và hướng mặt. Nhấc mèo thì không vẽ.

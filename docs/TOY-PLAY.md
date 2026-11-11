@@ -230,6 +230,8 @@ Chung: chỉ là hành động ngắn (tối đa khoảng 2 giây), dùng lại 
 
 ### Cách code M5 (11/11)
 
+Commit/publish 361d893, smoke 3/3 PASS.
+
 - Luật thuần ở `PetToyPass.cs` (Core), có unit test: `ToyPassRules` (tầm 400 DIP, bước tới 150, bóng dừng ngắn 120, 6 giây, nhãn 1,5 giây; lực vỗ = 1,25 × khoảng tới con trỏ, trong 120–300 DIP/s, đúng với ma sát sàn của `ToyBall.Step`; con trỏ trong 60 DIP trên đầu mèo thì trả về hướng bóng tới), `ToyPassCount` (lượt chỉ tính khi người dùng vừa chạm; kỷ lục nâng ngay mỗi lượt nên thoát app không mất; báo "Kỷ lục mới!" khi từ 5 lượt), `ToyReactRules`. `ToyChaseStreak` thêm `Pass`/`Passed` (90 giây hoặc 20 lượt) dùng chung thời gian nghỉ với M4. `preferences.json` thêm `ToyPassBest`, `ToysSniffed`.
 - Chuyền ở `PetWindow.ToyPass.cs`: `Ready` (hạ người, bước tới tối đa 150 DIP gặp bóng sẽ dừng ngắn, đi tới bóng đã dừng trong 120 DIP, vỗ khi bóng trong 49 DIP và thấp dưới 24 DIP) → `Wait` (ngồi nhìn; người dùng chạm và bóng lăn tới thì `Ready` lại; bóng nằm yên 6 giây thì hết) / `Look` (đang nghỉ, chỉ nhìn). Bấm bóng (`Nudge`, lăn như cũ) và thả bóng chậm hơn ngưỡng ném nhặt đều là "người dùng chạm" (`PassTouched` trong `EndToyDrag`). Cổng `AutoKind.ToyPass` như `ToyChase`; đang ngồi chờ ném nhặt thì chuyền giành quyền. Nhãn đếm là cửa sổ phủ click xuyên qua kiểu nhãn Giờ tập trung, chỉ tạo khi cần, ẩn theo đồ.
 - Khác bản luật: người dùng cầm bóng giữa chuỗi thì chuỗi chờ (mèo ngồi nhìn), thả nhẹ về phía mèo là chuyền tiếp; ném mạnh (ném nhặt) mới kết thúc chuỗi. Lý do: ném nhẹ là một cách chuyền đã duyệt, nếu cầm là hết chuỗi thì không chuyền bằng tay được. "Kỷ lục mới!" chỉ hiện khi chuỗi tự hết (6 giây hoặc bóng lăn qua), không hiện khi bị click mèo, Cất nhanh.

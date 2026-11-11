@@ -1551,3 +1551,18 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Nhìn kỹ mép mặt trước hộp lúc mèo ngủ: không lệch, không thấy viền đôi; thử cả DPI 125 %/150 % và màn hình phụ nếu có.
 - [ ] Mèo đang đi tới hộp mà nhấc hộp lên: chuyến đi hủy, mèo đứng lại, không có gì khác.
 - [ ] Đọc nhãn tiếng Nhật "段ボール箱", "箱で寝る" (chưa ai duyệt).
+
+## Chơi cùng sen M3 — Ném nhặt và mèo tha bóng (11/11, chỉ bản 1.6)
+
+- [ ] Bóng nằm ngoài, mèo thức đứng trên sàn: kéo bóng ném mạnh. Mèo nhìn theo, bóng chạm sàn chậm lại thì chạy tới, ngậm bóng, mang về dưới con trỏ, nhả bóng rồi ngồi chờ. Ném nhẹ, đặt xuống, bấm cho lăn: mèo không đi nhặt.
+- [ ] Nhìn bóng ở miệng khi đi trái, đi phải, ngồi, lúc nhả: bóng ở đúng miệng, không lệch, không chớp; cửa sổ bóng trên sàn biến mất lúc ngậm.
+- [ ] Mèo đang chờ, ném tiếp: mèo nhặt tiếp. Ném liên tiếp 5 lần: lần thứ 6 mèo chỉ nhìn, không chạy, trong khoảng 2 phút.
+- [ ] Mèo đang ngậm: click trái mèo → bóng rơi từ miệng, mèo vẫn kéo được như thường; click phải → bóng rơi, menu mở. Danh sách giỏ ghi "mèo đang ngậm" và mờ.
+- [ ] Mèo đang chạy tới bóng mà cầm bóng lên: chuyến hủy, mèo đứng lại, không cảm xúc gì.
+- [ ] Bật Quiet rồi ném: vẫn nhặt. Mèo vừa thức (trong ~30 giây): vẫn nhặt. Mèo đang ngủ: ném không đánh thức, mèo không nhặt. Pause giữa chuyến: mèo và bóng đứng yên.
+- [ ] Để bóng nằm ngoài, dùng máy bình thường 8–15 phút (không Quiet, không Giờ tập trung): mèo tự đi lấy bóng, mang tới dưới con trỏ, ngồi chờ; không ném trong 20 giây thì mèo đi việc khác. Mèo không tự cất bóng vào giỏ.
+- [ ] Mèo đang ngậm: mở app toàn màn hình hoặc vào trận → bóng rơi rồi ẩn, sau đó hiện lại trên sàn. Cất nhanh → bóng về giỏ, mèo thôi ngậm.
+- [ ] Trò "Chơi bóng" 45 giây vẫn như cũ; trong lúc chơi ném bóng không thành ném nhặt.
+- [ ] Có cả đệm slime/thùng carton: mèo vẫn tự đi ngủ như M2, không bỏ dở chuyến tha bóng giữa chừng để đi ngủ.
+- [ ] DPI 125 %/150 % và màn hình phụ: bóng nhả ra đúng ở miệng, không nhảy chỗ; ném bóng sang màn khác mèo thì mèo không đi nhặt.
+- [ ] Đọc nhãn tiếng Nhật "猫がくわえています" (chưa ai duyệt).

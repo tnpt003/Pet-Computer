@@ -47,6 +47,8 @@ public enum AutoKind
     PortalEvent,    // A portal appearing by itself; the spell the user asks for goes by UserGame.
     Weather,        // The weather shown around the cat; it does not move the cat, so Busy does not matter.
     FarmChore,      // The cat going to water, harvest or chase a bird off the field on its own.
+    ToyFetch,       // Fetching the yarn ball the user threw (allowed in Quiet and the wake cooldown, like the ball game).
+    ToyInvite,      // Bringing the yarn ball to the user on its own, to ask for a game.
 }
 
 public static class PetAutonomy
@@ -76,6 +78,8 @@ public static class PetAutonomy
         AutoKind.PortalEvent => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
         AutoKind.Weather => AutoBlock.AnyQuiet | AutoBlock.AnyBattle,
         AutoKind.FarmChore => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.Away,
+        AutoKind.ToyFetch => AutoBlock.Busy | AutoBlock.Fullscreen | AutoBlock.AnyBattle | AutoBlock.Feature,
+        AutoKind.ToyInvite => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 

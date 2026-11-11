@@ -288,6 +288,7 @@ internal static class ToyChecks
         check(!preferences.ToyBasketShown && preferences.ToysOut == null && pet.X == catX, "...remembered, with the cat still there");
         check(window.ToyBasketMenuLabel == "Toy basket", "The menu offers the basket again");
         RunBox(window, pet, behavior, preferences, check);
+        RunFetch(window, pet, behavior, preferences, check);
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
     }
@@ -434,5 +435,194 @@ internal static class ToyChecks
         Tick(window, 0.5);
         window.ToggleToyBasket();
         check(!window.ToyBasketShown, "Tidied away");
+    }
+
+    // M3: fetch with the yarn ball, and the cat bringing it on its own.
+    private static void RunFetch(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        void Frame() { Tick(window); FeatureStep(); }
+        var renderer = Field<PetRenderer>(window, "renderer");
+        double scale = Field<double>(window, "scale");
+        var bounds = Field<Area>(window, "bounds");
+        double cursorX = bounds.Left + 300;
+        SetField(window, "cursorProbe", new Func<Point>(() => new Point(cursorX * scale, (bounds.Bottom - 200) * scale)));
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        window.FetchStreak.Step(1000); window.FetchStreak.Break();
+        window.ToggleToyBasket();
+        Tick(window);
+        check(window.TakeToyOut(Ball), "The ball comes out");
+        Tick(window);
+        var motion = window.ToyMotionOf(Ball)!;
+        var ballWindow = window.ToyWindowOf(Ball)!;
+        Settle(window, motion);
+        var thing = Thing(window, Ball);
+        var tracker = GetThing<ThrowTracker>(thing, "Tracker");
+        double CatCentre() => pet.X + PetSettings.CenterX;
+        void Throw(double fromX, double speed)
+        {
+            Call(window, "StartToyDrag", thing);
+            tracker.Clear(); tracker.Add(1000, 100, 100); tracker.Add(1000.05, 100 + speed * 0.05, 100);
+            motion.X = fromX; motion.Height = 120;
+            Call(window, "EndToyDrag", thing, true);
+        }
+        bool Until(Func<bool> done, int frames = 900) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; }
+        double start = (bounds.Left + bounds.Right) / 2;
+        pet.X = start - PetSettings.CenterX; Free();
+
+        // A soft let-go is no throw.
+        Throw(start + 100, 200);
+        check(!window.Fetching, "A gentle toss: the cat does not fetch");
+        Settle(window, motion);
+
+        // A throw: watch, run, carry to the cursor, drop, wait.
+        Throw(start + 50, 900);
+        check(window.FetchPhase == "Watch" && pet.Action == PetAction.Looking && pet.Facing == 1, "A hard throw: the cat watches the ball");
+        check((bool)Call(window, "FeatureOwnsMovement")!, "...and nothing else of its own starts meanwhile (emotions and naps wait)");
+        Frame();
+        check(window.FetchPhase == "Watch", "...while it is in the air");
+        check(Until(() => window.FetchPhase == "Run"), "Once it has landed and slowed down, the cat goes for it");
+        Frame();
+        var settings = Field<PetSettings>(window, "settings");
+        check(pet.Action == PetAction.Walking && Math.Abs(pet.VX) > settings.WalkSpeed * 1.2, "...at a run");
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        check(window.CarryingBall && !ballWindow.IsVisible, "At the ball it takes it in its mouth; the ball's window hides");
+        Call(window, "Present", false);
+        check(renderer.CarryBall, "The cat's window draws the ball in its mouth");
+        // Review: the ball in the mouth through the poses (PET_RENDER_REVIEW only).
+        int facingNow = pet.Facing;
+        foreach (var (action, facing) in new[] { (PetAction.Walking, 1), (PetAction.Walking, -1), (PetAction.Sitting, 1), (PetAction.Looking, -1), (PetAction.Idle, 1) })
+        {
+            pet.Action = action; pet.Facing = facing;
+            Snapshot(window, ballWindow, $"fetch-carry-{action.ToString().ToLowerInvariant()}-{(facing > 0 ? "right" : "left")}");
+        }
+        pet.Facing = facingNow; pet.Action = PetAction.Walking;
+        check(window.ToyBasketMenuItems()[0] is { IsEnabled: false } row && ((string)row.Header).Contains("mouth"), "The basket's ball row is greyed: in the cat's mouth");
+        Frame();
+        check(pet.Action == PetAction.Walking && pet.Facing == Math.Sign(cursorX - CatCentre()), "It carries the ball towards the cursor");
+        pet.X = cursorX - PetSettings.CenterX + 2;
+        Frame();
+        check(window.FetchPhase == "Wait" && !window.CarryingBall && pet.Action == PetAction.Sitting, "Under the cursor it drops the ball and sits waiting");
+        Tick(window);
+        check(ballWindow.IsVisible && motion.Height > 20 && Math.Abs(motion.X - (CatCentre() + pet.Facing * PetWindow.FetchMouthAhead)) < 2, "The ball falls from its mouth");
+        Snapshot(window, ballWindow, "fetch-drop");
+        Call(window, "Present", false);
+        check(!renderer.CarryBall, "...and is no longer drawn on the cat");
+        Settle(window, motion);
+        check(preferences.ToysOut!.Single(t => t.Id == Ball) is var saved && Math.Abs(DesktopToyRules.FromFraction(saved.FractionX, 12, GetThing<Area>(thing, "Area")) - motion.X) < 1,
+            "Once still it is saved where it lies");
+        check(window.FetchStreak.InARow == 1, "One fetch counted"); check(window.FetchPhase == "Wait", "...and it still waits");
+
+        // Thrown again while it waits: another round, even in Quiet and the wake cooldown.
+        preferences.Quiet = true; behavior.Quiet = true;
+        pet.Emotions.FinishSleep(30);
+        Throw(start - 200, 900);
+        check(window.FetchPhase == "Watch", "Thrown again while it waits, in Quiet and the wake cooldown: it watches again");
+        check(Until(() => window.FetchPhase == "Run"), "...and goes for it");
+        // Picked up on the way: the trip is off, nothing more.
+        Call(window, "StartToyDrag", thing);
+        Frame();
+        check(!window.Fetching && pet.Action != PetAction.Walking, "The ball picked up while the cat runs: the trip is off");
+        Call(window, "EndToyDrag", thing, false);
+        Settle(window, motion);
+        check(!window.InviteToFetch(), "In Quiet the cat does not bring the ball on its own");
+        preferences.Quiet = false; behavior.Quiet = false;
+        check(!window.InviteToFetch(), "...nor during the wake cooldown");
+        pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+
+        // A click on the cat (left or right) while it carries the ball: it falls from the mouth.
+        Throw(start, 900);
+        check(Until(() => window.FetchPhase == "Run"), "Another throw");
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        check(window.CarryingBall, "In the mouth again");
+        Call(window, "CancelFeatureActivity"); // What a press on the cat or its right-click does first.
+        Tick(window);
+        check(!window.Fetching && ballWindow.IsVisible && motion.Height > 20, "A click on the cat: it lets the ball fall");
+        Settle(window, motion);
+
+        // Five in a row, then two minutes of only watching.
+        window.FetchStreak.Break();
+        for (int i = 0; i < FetchStreak.MaxInARow; i++) window.FetchStreak.TryFetch();
+        Free();
+        Throw(start + 50, 900);
+        check(window.FetchPhase == "Watch", "After five in a row it still watches the throw");
+        bool walked = false;
+        for (int i = 0; i < 900 && window.Fetching; i++) { Frame(); walked |= pet.Action == PetAction.Walking; }
+        check(!walked && !window.Fetching, "...but rests: no run for two minutes");
+        window.FetchStreak.Step(121);
+        Settle(window, motion);
+
+        // Asleep: it sleeps on.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        Throw(start + 50, 900);
+        check(!window.Fetching && pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked, "A throw does not wake the sleeping cat");
+        Settle(window, motion);
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free();
+
+        // Pause holds a trip.
+        Throw(start + 50, 900);
+        Until(() => window.FetchPhase == "Run");
+        window.SetPaused(true);
+        double frozen = pet.X;
+        for (int i = 0; i < 20; i++) Tick(window);
+        check(window.FetchPhase == "Run" && pet.X == frozen, "Pause holds the trip");
+        window.SetPaused(false);
+
+        // A fullscreen app while it carries: dropped where it is, then hidden.
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        check(window.CarryingBall, "Carrying it once more");
+        Context(window, true);
+        Tick(window);
+        check(!window.Fetching && !ballWindow.IsVisible && motion.Height > 0, "A fullscreen app: the ball falls from the mouth and hides");
+        Context(window, false);
+        Tick(window); Settle(window, motion);
+        check(ballWindow.IsVisible && motion.AtRest, "...and is back on the floor afterwards");
+
+        // The cat's own invitation: it walks over, brings it and waits; no throw, it goes off.
+        Free();
+        pet.X = Math.Clamp(motion.X + 250, bounds.Left, bounds.Right - settings.Width) - PetSettings.CenterX;
+        check(window.InviteToFetch() && window.FetchingInvite, "Now and then it goes to bring the ball");
+        Frame();
+        check(pet.Action == PetAction.Walking && Math.Abs(Math.Abs(pet.VX) - settings.WalkSpeed * pet.Emotions.WalkScale) < 1, "...at a walk");
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        check(window.CarryingBall, "It takes it in its mouth");
+        preferences.Quiet = true; behavior.Quiet = true;
+        Frame();
+        check(!window.Fetching && !window.CarryingBall, "Quiet turned on: its own invitation stops, the ball falls");
+        preferences.Quiet = false; behavior.Quiet = false;
+        Tick(window); Settle(window, motion); Free();
+        check(window.InviteToFetch(), "Off again");
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        pet.X = cursorX - PetSettings.CenterX;
+        Frame();
+        check(window.FetchPhase == "Wait" && window.FetchingInvite, "It brings it to the cursor and waits");
+        Settle(window, motion);
+        Until(() => !window.Fetching, 60 * 21);
+        check(!window.Fetching, "No throw in 20 seconds: it goes off");
+
+        // Quick tidy while it carries: the ball goes back to the basket.
+        Free();
+        check(window.InviteToFetch(), "Once more");
+        pet.Facing = motion.X < CatCentre() ? -1 : 1;
+        pet.X = motion.X - PetSettings.CenterX - pet.Facing * PetWindow.FetchMouthAhead;
+        Frame();
+        check(window.CarryingBall, "In the mouth");
+        window.ToggleToyBasket();
+        Frame();
+        Call(window, "Present", false);
+        check(!window.ToyBasketShown && !window.Fetching && !renderer.CarryBall && !window.ToyIsOut(Ball), "Quick tidy: the trip ends, the ball is put away");
+        SetField(window, "cursorProbe", null);
+        window.Reset();
     }
 }

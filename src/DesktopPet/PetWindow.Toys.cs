@@ -31,6 +31,8 @@ public sealed partial class PetWindow
         public double Scale = 1, GrabX, GrabY;
         public double? Glide;
         public bool Press, Held, InGame, Unsaved, Placed;
+        // In the cat's mouth (PetWindow.ToyFetch.cs): its window hidden, its motion still.
+        public bool Carried;
         public Point PressAt;
     }
 
@@ -80,6 +82,7 @@ public sealed partial class PetWindow
         toyGameStowing = true;
         if (toyWindow != null || laserWindow != null) CancelFeatureActivity();
         toyGameStowing = false;
+        StopToyFetch(drop: false); // A ball in the mouth goes back to the basket too.
         foreach (var toy in desktopToys) CloseDesktopThing(toy);
         desktopToys.Clear();
         WriteToyPlaces();
@@ -145,6 +148,7 @@ public sealed partial class PetWindow
 
     private void StowToy(DesktopThing toy)
     {
+        if (toy.Id == DesktopToyRules.Ball) StopToyFetch(drop: false);
         CloseDesktopThing(toy);
         desktopToys.Remove(toy);
         WriteToyPlaces();
@@ -256,8 +260,10 @@ public sealed partial class PetWindow
         bool box = id == DesktopToyRules.Box;
         bool isOut = ToyIsOut(id), playing = id == DesktopToyRules.Ball && toyWindow != null, full = !isOut && !DesktopToyRules.CanTake(desktopToys.Count);
         bool sleeping = box && isOut && BoxOccupied;
+        bool carried = !box && CarryingBall;
         string name = box ? L("Thùng carton", "Cardboard box") : L("Bóng len", "Yarn ball");
-        string? why = playing ? L("đang chơi", "in play") : sleeping ? L("mèo đang ngủ", "the cat is asleep in it") : full ? L("tối đa 3 món", "3 out at most") : null;
+        string? why = playing ? L("đang chơi", "in play") : sleeping ? L("mèo đang ngủ", "the cat is asleep in it") : carried ? L("mèo đang ngậm", "in the cat's mouth")
+            : full ? L("tối đa 3 món", "3 out at most") : null;
         var item = PetUi.MenuItem(box ? PetUi.Box : PetUi.Ball);
         item.Header = why == null ? name : $"{name} ({why})";
         item.IsCheckable = true; item.IsChecked = isOut; item.IsEnabled = why == null;
@@ -282,7 +288,7 @@ public sealed partial class PetWindow
 
     private void PressToy(DesktopThing thing)
     {
-        if (paused || !ToysMayShow || thing.InGame || (thing.Id == DesktopToyRules.Box && BoxOccupied) || thing.Surface == null || !thing.Surface.CaptureMouse()) return;
+        if (paused || !ToysMayShow || thing.InGame || thing.Carried || (thing.Id == DesktopToyRules.Box && BoxOccupied) || thing.Surface == null || !thing.Surface.CaptureMouse()) return;
         thing.Press = true;
         thing.PressAt = ToyCursor(thing);
         thing.Glide = null;
@@ -354,6 +360,7 @@ public sealed partial class PetWindow
         var (vx, vy) = letGo && !paused ? thing.Tracker.Velocity(2200) : (0.0, 0.0);
         thing.Motion.VX = vx;
         thing.Motion.VY = -vy; // Height goes up, the screen goes down.
+        BallThrown(thing, vx, vy); // A hard throw: the cat may fetch it (PetWindow.ToyFetch.cs).
     }
 
     // "Play with ball" with the ball lying out: the game takes over from where it is. On another
@@ -442,12 +449,13 @@ public sealed partial class PetWindow
     {
         if (!toysLoaded) LoadDesktopToys();
         TickBoxNap(dt); // PetWindow.ToyBox.cs: also when the basket has just been tidied away.
+        GuardToyFetch(dt); // PetWindow.ToyFetch.cs: a fullscreen app or a battle drops the ball before it hides.
         if (toyBasket == null) return;
         bool show = ToysMayShow, shown = false;
         foreach (var thing in DesktopThings)
         {
             if (!show || paused) EndToyDrag(thing, false);
-            if (!show || thing.InGame) { if (thing.Window?.IsVisible == true) thing.Window.Hide(); continue; }
+            if (!show || thing.InGame || thing.Carried) { if (thing.Window?.IsVisible == true) thing.Window.Hide(); continue; }
             EnsureToyWindow(thing);
             if (thing.Window!.IsVisible) continue;
             thing.Window.Show();
@@ -461,7 +469,7 @@ public sealed partial class PetWindow
             KeepToysInOrder();
         }
         if (toyBasketArt != null) toyBasketArt.HasBall = !ToyIsOut(DesktopToyRules.Ball) && toyWindow == null;
-        foreach (var thing in DesktopThings) if (!thing.Placed && !thing.InGame) PositionDesktopThing(thing);
+        foreach (var thing in DesktopThings) if (!thing.Placed && !thing.InGame && !thing.Carried) PositionDesktopThing(thing);
         if (paused) return;
         toysAreaTimer += dt;
         bool checkPlaces = toysAreaTimer >= 1;
@@ -474,7 +482,7 @@ public sealed partial class PetWindow
     // True when it has just come to rest somewhere new.
     private bool StepDesktopThing(DesktopThing thing, double dt, bool checkPlaces)
     {
-        if (thing.InGame) return false;
+        if (thing.InGame || thing.Carried) return false;
         var motion = thing.Motion;
         if (thing.Halo != null) thing.Halo.Opacity = Math.Max(motion.Feedback / 0.35, thing.Surface?.IsMouseOver == true ? 0.45 : 0);
         if (thing.Held) { UpdateToyDrag(thing); PositionDesktopThing(thing); return false; }

@@ -536,6 +536,7 @@ public sealed partial class PetWindow : Window
         if (!dragging) y -= napLift + boxLift; // Asleep on the slime cushion: drawn on top of it (PetWindow.KeepsakePlay.cs); the box's hops (PetWindow.ToyBox.cs).
         // In the cardboard box: its front panel over the cat, on the floor the lift has moved the window up from.
         renderer.BoxFrontDrop = BoxFrontShown ? boxLift : -1;
+        renderer.CarryBall = CarryingBall && !dragging; // PetWindow.ToyFetch.cs
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);
         UpdateFocusLabel(x, y);

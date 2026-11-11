@@ -12,6 +12,37 @@ public sealed class SavedToy
     public double FractionX { get; set; } = 0.5;
 }
 
+// Fetch with the yarn ball (docs/TOY-PLAY.md → M3): what counts as a throw, and five fetches in a row
+// before two minutes of only watching. The walking and carrying are in PetWindow.ToyFetch.cs.
+public sealed class FetchStreak
+{
+    public const int MaxInARow = 5;
+    public const double ThrowSpeed = 400, RestSeconds = 120, WaitSeconds = 20, WalkSeconds = 20, InviteMin = 480, InviteMax = 900;
+    private int count;
+    private double rest;
+
+    public static bool IsThrow(double vx, double vy) => double.IsFinite(vx) && double.IsFinite(vy) && Math.Sqrt(vx * vx + vy * vy) > ThrowSpeed;
+    // random in [0, 1): the next invitation, 8–15 minutes away.
+    public static double NextInvite(double random) => InviteMin + Math.Clamp(random, 0, 1) * (InviteMax - InviteMin);
+
+    public int InARow => count;
+    public bool Resting => rest > 0;
+    public double RestLeft => rest;
+
+    // The cat sets off after a throw; false while it rests (it only watches). The fifth in a row starts the rest.
+    public bool TryFetch()
+    {
+        if (rest > 0) return false;
+        if (++count >= MaxInARow) { count = 0; rest = RestSeconds; }
+        return true;
+    }
+
+    // No throw while it waited: the next fetch starts a new streak.
+    public void Break() => count = 0;
+
+    public void Step(double dt) { if (double.IsFinite(dt) && dt > 0) rest = Math.Max(0, rest - dt); }
+}
+
 // The rules of the toys left out on the desktop; the windows are in PetWindow.Toys.cs.
 public static class DesktopToyRules
 {

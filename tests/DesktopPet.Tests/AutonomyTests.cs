@@ -10,7 +10,7 @@ internal static class AutonomyTests
         check(kinds.All(k => PetAutonomy.MayAct(k, AutoBlock.None)), "Nothing blocks any kind when no condition holds");
 
         // What the cat does on its own stops in Quiet and with a fullscreen app (AGENTS.md).
-        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore };
+        var own = new[] { AutoKind.LocalBehavior, AutoKind.RestVisit, AutoKind.Admire, AutoKind.ShoveKeepsake, AutoKind.CushionNap, AutoKind.ClimbLedge, AutoKind.PortalEvent, AutoKind.FarmChore, AutoKind.ToyInvite };
         check(own.All(k => Blocks(k, AutoBlock.Quiet) && Blocks(k, AutoBlock.Fullscreen)), "Autonomous kinds stop in Quiet and with a fullscreen app");
         // The user asked: Quiet does not stop it; a fullscreen app still stops the games.
         var asked = new[] { AutoKind.Treat, AutoKind.UserGame, AutoKind.CallToLook };
@@ -30,7 +30,12 @@ internal static class AutonomyTests
         check(Blocks(AutoKind.AwayNap, AutoBlock.Held) && !Blocks(AutoKind.AwayNap, AutoBlock.Unsettled) && !Blocks(AutoKind.AwayNap, AutoBlock.Paused),
             "Away nap waits for the drag only (it may start while settled or not, as before)");
         check(Blocks(AutoKind.BreakReminder, AutoBlock.Away) && !Blocks(AutoKind.BreakReminder, AutoBlock.Quiet), "Break reminders wait for the user, not for Quiet");
-        check(Blocks(AutoKind.CushionNap, AutoBlock.WakeCooldown) && !Blocks(AutoKind.Admire, AutoBlock.WakeCooldown), "Only the cushion nap waits for the wake cooldown");
+        check(Blocks(AutoKind.CushionNap, AutoBlock.WakeCooldown) && !Blocks(AutoKind.Admire, AutoBlock.WakeCooldown), "The cushion nap waits for the wake cooldown, admiring does not");
+        // M3 fetch (docs/TOY-PLAY.md): a throw the user makes goes on in Quiet and the wake cooldown; the cat's own invitation does not.
+        check(!Blocks(AutoKind.ToyFetch, AutoBlock.Quiet) && !Blocks(AutoKind.ToyFetch, AutoBlock.WakeCooldown) && Blocks(AutoKind.ToyFetch, AutoBlock.Fullscreen)
+            && Blocks(AutoKind.ToyFetch, AutoBlock.Feature) && Blocks(AutoKind.ToyFetch, AutoBlock.Unsettled), "Fetching a throw works in Quiet, not asleep, busy or with a fullscreen app");
+        check(new[] { AutoBlock.Quiet, AutoBlock.Fullscreen, AutoBlock.WakeCooldown, AutoBlock.Away, AutoBlock.Feature, AutoBlock.Battle, AutoBlock.BattleScreens }.All(b => Blocks(AutoKind.ToyInvite, b)),
+            "Bringing the ball on its own waits like the box nap, and for the user");
         check(Blocks(AutoKind.Admire, AutoBlock.Feature) && !Blocks(AutoKind.CallToLook, AutoBlock.Feature), "Admiring on its own waits for other features; a double click does not");
         check(Blocks(AutoKind.Ledges, AutoBlock.Battle) && !Blocks(AutoKind.Ledges, AutoBlock.Quiet), "Ledges are ground in Quiet, not in a battle");
     }

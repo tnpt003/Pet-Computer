@@ -235,6 +235,7 @@ public sealed partial class PetWindow
     private void CancelFeatureActivity()
     {
         StopLaser();
+        StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         toyWindow?.Close();
         returningHome = false;
         admiring = false; admireRemaining = 0;
@@ -253,7 +254,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None);
 
     private void TickFeatures(double dt)
     {
@@ -283,7 +284,7 @@ public sealed partial class PetWindow
         if (TickLaser(dt)) return;
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None) CancelFeatureActivity();
             return;
         }
         if (pet.TreatRemaining > 0)
@@ -344,6 +345,8 @@ public sealed partial class PetWindow
             if (ballHalo != null) ballHalo.Opacity = Math.Max(ball.Feedback / 0.35, toyWindow.IsMouseOver ? 0.45 : 0);
             return;
         }
+        // Fetch with the yarn ball lying out: a throw goes on in Quiet; the cat's own invitation does not (PetWindow.ToyFetch.cs).
+        if (TickToyFetch(dt)) return;
         // Walking to the resting spot or the keepsakes on its own is autonomous; a look the user
         // asked for (double click on the keepsake) still happens in Quiet.
         // Walking to the cushion the user asked for ("Do now") also goes on in Quiet.

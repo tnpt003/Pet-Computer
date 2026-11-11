@@ -65,6 +65,24 @@ internal static class DesktopToyTests
         check(boxPeak < ballPeak * 0.4, "...bounces low");
         check(thrownBox.X - 500 < (thrownBall.X - 500) * 0.6, "...and slides a shorter way than the ball rolls");
 
+        // M3: fetch.
+        check(FetchStreak.IsThrow(450, 0) && FetchStreak.IsThrow(300, -300) && !FetchStreak.IsThrow(390, 0) && !FetchStreak.IsThrow(double.NaN, 900),
+            "A throw is a let-go faster than about 400 DIPs/s");
+        check(FetchStreak.NextInvite(0) == 480 && FetchStreak.NextInvite(0.999) < 900 && FetchStreak.NextInvite(5) == 900, "The cat brings the ball every 8–15 minutes");
+        var streak = new FetchStreak();
+        int fetched = 0;
+        for (int i = 0; i < 5; i++) if (streak.TryFetch()) fetched++;
+        check(fetched == 5 && streak.Resting && streak.RestLeft == 120, "Five fetches in a row, then two minutes of rest");
+        check(!streak.TryFetch() && streak.Resting, "...when it only watches");
+        streak.Step(119);
+        check(!streak.TryFetch(), "...for all two minutes");
+        streak.Step(1.01);
+        check(!streak.Resting && streak.TryFetch() && streak.InARow == 1, "...then it fetches again");
+        streak.Break();
+        check(streak.InARow == 0, "No throw while it waited: a new streak");
+        streak.Step(double.NaN);
+        check(!streak.Resting, "A broken frame changes nothing");
+
         string folder = Path.Combine(Path.GetTempPath(), "pet-toys-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try

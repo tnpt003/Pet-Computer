@@ -196,6 +196,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     public double TeleportPop = 1, TeleportDrop, TeleportPuff = -1;
     // The cardboard box's front panel over the cat: how far below the cat's floor line it stands (negative: none).
     public double BoxFrontDrop = -1;
+    // The yarn ball in the cat's mouth while it fetches.
+    public bool CarryBall;
 
     private Pose ComputePose()
     {
@@ -875,6 +877,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawLine(Outline, new Point(32, 61), new Point(17, 63));
         dc.DrawLine(Outline, new Point(78, 56), new Point(93, 53));
         dc.DrawLine(Outline, new Point(78, 61), new Point(93, 63));
+        // Fetch (PetWindow.ToyFetch.cs): the yarn ball held in the mouth, a little ahead (the facing flip carries it).
+        if (CarryBall && !p.PickedUp) YarnBallArt.Draw(dc, new Point(56 + PetWindow.FetchMouthAhead, 68), 8.5);
         DrawAccessory(dc, AccessoryLayer.Head);
         if (p.Grooming)
         {

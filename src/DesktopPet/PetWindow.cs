@@ -103,6 +103,7 @@ public sealed partial class PetWindow : Window
         behavior = new PetBehavior(settings);
         behavior.DecisionRequested += RequestDecision;
         behavior.SleepElsewhere = SleepOnCushionInstead; // With the slime cushion on display (PetWindow.KeepsakePlay.cs).
+        behavior.ScratchElsewhere = ScratchOnPostInstead; // With the scratching post close by (PetWindow.ToyPost.cs).
         if (Environment.GetEnvironmentVariable("PET_AI_DISABLED") != "1") ai = new PythonDecisionSource();
         renderer = new PetRenderer(pet);
         Content = renderer;

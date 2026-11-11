@@ -1599,3 +1599,14 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Trò "Chơi bóng" 45 giây, ném nhặt, cần câu, chuột vẫn như M3/M4. Cất nhanh giữa chuỗi: dừng, đồ về giỏ.
 - [ ] DPI 125 %/150 % và màn hình phụ: số đếm hiện đúng trên bóng.
 - [ ] Đọc nhãn tiếng Nhật "パス最高記録", "新記録！" (chưa ai duyệt).
+
+## Góc sống M1 — Trụ cào (11/11, chỉ bản 1.6)
+- [ ] Giỏ có đường kẻ rồi hàng "Trụ cào". Lấy đủ 3 đồ chơi: hàng trụ vẫn lấy được; Chuột dây cót mờ "tối đa 3 món". Trụ đứng trên sàn, mèo luôn ở trước trụ; nhìn rõ trên nền sáng và nền tối.
+- [ ] Bấm trụ không kéo: quả bông đung đưa rồi đứng yên, trụ không dịch. Kéo/ném: rơi nảy thấp, không lăn, không xoay; thả vào giỏ là cất. Đồ đè lên vùng đất thì tự trượt sang chỗ trống.
+- [ ] Đợi 6–10 phút (mèo thức, đứng trên sàn cùng màn hình, không Quiet): mèo tự đi tới, quay chân trước vào cột, cào khoảng 2,4 giây (dây thừng rung, vài sợi xơ rơi), rồi vươn vai và đi chơi tiếp. Không có âm thanh mới.
+- [ ] Quiet, Giờ tập trung, mèo ngủ, vừa thức (~30 giây), đang chơi bóng/đồ chơi khác: mèo không tự đi tới trụ.
+- [ ] "Làm ngay → Cào móng" khi mèo cách trụ ≤ 200 DIP: mèo tới trụ cào, cả trong Quiet; xa hơn: cào tại chỗ như cũ. Không có trụ: như cũ.
+- [ ] Giữa lúc đi tới hoặc đang cào: click trái/kéo mèo dừng ngay và kéo như thường; click phải mở menu; nhấc trụ hoặc Cất nhanh thì mèo thôi, đứng lại; Pause đóng băng.
+- [ ] Ném đồ hay trụ trúng mèo: đi xuyên, không Bonk, không Dizzy, không đánh thức mèo ngủ.
+- [ ] Tắt app rồi mở lại: trụ ở chỗ cũ. DPI 125 %/150 % và màn hình phụ: trụ đúng chỗ, mèo đứng sát cột khi cào.
+- [ ] Đọc nhãn tiếng Nhật "爪とぎポール", "コーナー用品は2個まで" (chưa ai duyệt).

@@ -234,6 +234,7 @@ public sealed partial class PetWindow
 
     private void CancelFeatureActivity()
     {
+        StopPostTrip(); // PetWindow.ToyPost.cs
         StopLaser();
         StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         StopToyChase(); // PetWindow.ToyChase.cs
@@ -256,7 +257,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk);
 
     private void TickFeatures(double dt)
     {
@@ -289,7 +290,7 @@ public sealed partial class PetWindow
         if (TickToyPass(dt)) return; // Passing the yarn ball (PetWindow.ToyPass.cs).
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None) CancelFeatureActivity();
             return;
         }
         if (pet.TreatRemaining > 0)
@@ -355,7 +356,8 @@ public sealed partial class PetWindow
         // Walking to the resting spot or the keepsakes on its own is autonomous; a look the user
         // asked for (double click on the keepsake) still happens in Quiet.
         // Walking to the cushion the user asked for ("Do now") also goes on in Quiet.
-        if (EffectiveQuiet) { StopKeepsakeShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); }
+        if (EffectiveQuiet) { StopKeepsakeShove(); if (!Asked(UserAsked.Nap)) StopCushionNap(); if (!Asked(UserAsked.Admire)) StopAdmiring(); if (!Asked(UserAsked.Scratch)) StopPostTrip(); }
+        if (TickPostTrip(dt)) return; // The scratching post (PetWindow.ToyPost.cs); before the nap timers, so no nap starts between the scratch and the stretch.
         if (TickAdmiring(dt)) return; // PetWindow.Keepsake.cs
         if (TickCushionNap(dt)) return; // Napping on the slime cushion (PetWindow.KeepsakePlay.cs).
         if (farmChores.ByUser && TickFarmChore(dt)) return; // Cooking the user asked for also goes on in Quiet.

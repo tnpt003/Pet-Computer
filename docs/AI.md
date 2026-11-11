@@ -229,7 +229,7 @@ through Waking to Idle. Clicking clears the lock before normal Waking or pickup.
 | `SEEK_ATTENTION` | Look and raise a paw for 2.4 seconds; 45-second C# cooldown |
 | `ROLL_OVER` | Roll onto the back for 3.5 s (C# duration); refused in Quiet mode |
 | `CHASE_TAIL` | Spin in place after the tail for 3 s; refused in Quiet mode |
-| `SCRATCH` | Stretch up and scratch for 2.4 s; refused in Quiet mode |
+| `SCRATCH` | Stretch up and scratch for 2.4 s; refused in Quiet mode. With the scratching post out within 400 DIPs (1.6), C# walks the cat there to scratch it, then stretch (docs/LIVING-CORNER.md) |
 
 Duration is a grounded behavior timer, as in the original engine; time in the air
 does not forcibly terminate a jump. Python never sends position, velocity, gravity,

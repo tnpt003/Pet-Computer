@@ -294,6 +294,7 @@ internal static class ToyChecks
         RunMouse(window, pet, behavior, preferences, check);
         RunPass(window, pet, behavior, preferences, check);
         RunReact(window, pet, behavior, preferences, check);
+        RunPost(window, pet, behavior, preferences, check);
         preferences.ToysSniffed = null;
         preferences.ToyBasketMonitor = null; preferences.ToyBasketFractionX = null;
         window.Reset();
@@ -309,7 +310,7 @@ internal static class ToyChecks
         window.ToggleToyBasket();
         Tick(window);
         var rows = window.ToyBasketMenuItems();
-        check(rows.Length == 4 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
+        check(rows.Length == 5 && (string)rows[1].Header == "Cardboard box" && rows[1].IsEnabled && !rows[1].IsChecked, "The basket lists the cardboard box");
         check((string)rows[2].Header == "Feather wand" && (string)rows[3].Header == "Wind-up mouse", "...and the feather wand and the wind-up mouse (M4)");
         check(window.TakeToyOut(Box), "It comes out of the basket");
         Tick(window);
@@ -1118,6 +1119,144 @@ internal static class ToyChecks
         preferences.ToysSniffed = DesktopToyRules.All.ToList();
         window.ToggleToyBasket();
         SetField(window, "cursorProbe", null);
+        window.Reset();
+    }
+
+    // Đợt 2 M1 (docs/LIVING-CORNER.md): the scratching post, its own limit, and the cat scratching it.
+    private static void RunPost(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
+    {
+        const string Post = DesktopToyRules.Post;
+        void FeatureStep(double dt = 1 / 60.0) => Call(window, "TickFeatures", dt);
+        // The cat's own clock too: PetBehavior times the scratch and the stretch, as in the frame loop.
+        void Frame()
+        {
+            Tick(window); FeatureStep();
+            if (!(bool)Call(window, "FeatureOwnsMovement")!) behavior.Step(pet, 1 / 60.0);
+            pet.ActionTime += 1 / 60.0;
+            pet.Motion.Step(pet, 1 / 60.0, Field<PetSettings>(window, "settings").WalkSpeed); // The drawing turns with the facing, as in the frame loop.
+        }
+        bool Until(Func<bool> done, int frames = 600) { for (int i = 0; i < frames && !done(); i++) Frame(); return done(); }
+        void CooldownOver() => typeof(PetBehavior).GetField("selfCareCooldown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(behavior, 0.0);
+        var bounds = Field<Area>(window, "bounds");
+        window.Reset(); pet.Emotions.FinishSleep(0); pet.Emotions.Reset();
+        preferences.Quiet = false; behavior.Quiet = false;
+        preferences.ToysSniffed = DesktopToyRules.All.ToList();
+        void Free() { pet.Action = PetAction.Idle; pet.VX = 0; pet.Grounded = true; }
+
+        // In the basket, under its own line and limit.
+        window.ToggleToyBasket();
+        Tick(window);
+        var rows = window.ToyBasketMenuItems();
+        check(rows.Length == 5 && (string)rows[4].Header == "Scratching post" && rows[4].IsEnabled, "The basket lists the scratching post");
+        check(window.TakeToyOut(Ball) && window.TakeToyOut(Box) && window.TakeToyOut(DesktopToyRules.Wand), "Three toys out");
+        rows = window.ToyBasketMenuItems();
+        check(!rows[3].IsEnabled && rows[4].IsEnabled, "Three toys out: the mouse waits, the post does not (its own limit)");
+        check(window.TakeToyOut(Post) && window.ToyIsOut(Post), "The post comes out with three toys out");
+        Call(window, "FillToyBasketMenu");
+        var basketMenu = Field<ContextMenu?>(window, "toyBasketMenu")!;
+        check(basketMenu.Items.OfType<Separator>().Count() == 1 && basketMenu.Items.IndexOf(basketMenu.Items.OfType<Separator>().Single()) == 4, "A line sets the living-corner things apart");
+        window.StowToy(Ball); window.StowToy(Box); window.StowToy(DesktopToyRules.Wand);
+        Tick(window);
+        var motion = window.ToyMotionOf(Post)!;
+        Settle(window, motion); Tick(window, 1.1); Settle(window, motion);
+        var postWindow = window.ToyWindowOf(Post)!;
+        var thing = Thing(window, Post);
+        var area = GetThing<Area>(thing, "Area");
+        check(postWindow.IsVisible && Math.Abs(postWindow.Top - (area.Bottom - ToyPostArt.ArtHeight)) < 1.5 && Math.Abs(postWindow.Left - (motion.X - ToyPostArt.ArtWidth / 2)) < 1.5,
+            "It stands on the floor");
+        check(preferences.ToysOut!.Any(toy => toy.Id == Post), "...and is saved");
+        check(!window.ToysAboveCat, "The cat stays in front of the post");
+
+        // A click sways the pompom; the post stays.
+        double x = motion.X;
+        SetThing(thing, "Press", true);
+        Call(window, "EndToyDrag", thing, true);
+        Tick(window, 0.05);
+        var art = (ToyPostArt)GetThing<FrameworkElement>(thing, "Art");
+        check(motion.X == x && art.Swing != 0, "A click sways the pompom where the post stands");
+        Tick(window, 0.6);
+        check(motion.Feedback == 0 && art.Swing == 0 && motion.X == x, "...and it hangs still again");
+
+        // The cat's own visit: blocked in Quiet, asleep, in the wake cooldown and the shared self-care cooldown.
+        double middle = (bounds.Left + bounds.Right) / 2;
+        motion.X = middle; Call(window, "RefreshToyPlace", thing); SetThing(thing, "Placed", false); Tick(window, 1.1); Settle(window, motion);
+        void Away(double distance) { pet.X = motion.X - distance - PetSettings.CenterX; Free(); }
+        double Stand() => motion.X - PostScratchRules.StandOff - PetSettings.CenterX;
+        Away(300); CooldownOver();
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(!window.GoScratchPost(), "In Quiet the cat does not go to the post on its own");
+        preferences.Quiet = false; behavior.Quiet = false;
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        check(!window.GoScratchPost(), "Asleep, it sleeps on");
+        behavior.WakeByClick(pet); pet.Emotions.FinishSleep(30); Free();
+        check(!window.GoScratchPost(), "In the wake cooldown it does not go");
+        pet.Emotions.FinishSleep(0); Free();
+        typeof(PetBehavior).GetField("selfCareCooldown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!.SetValue(behavior, 20.0);
+        check(!window.GoScratchPost(), "Nor within the shared self-care cooldown");
+        CooldownOver();
+        check(window.GoScratchPost() && window.PostTripPhase == "Walk", "Otherwise it sets off to the post");
+        FeatureStep();
+        check(pet.Action == PetAction.Walking && pet.Facing == 1, "It walks to the post");
+        SetThing(thing, "Held", true);
+        FeatureStep();
+        check(window.PostTripPhase == "None" && pet.Action != PetAction.Walking, "The post picked up on the way: the trip is off");
+        SetThing(thing, "Held", false);
+
+        // There: it scratches facing the post, then stretches, then is free again.
+        Free(); CooldownOver();
+        check(window.GoScratchPost(), "Off again");
+        pet.X = Stand(); FeatureStep();
+        check(window.PostTripPhase == "Scratch" && pet.Action == PetAction.Scratching && pet.Facing == -1, "At the post it scratches, its scratching paws (the side away from the tail) on the rope");
+        for (int i = 0; i < 60; i++) Frame();
+        check(art.ScratchTime > 0, "The rope shakes while it scratches");
+        Snapshot(window, postWindow, "toy-post-scratch");
+        check(Until(() => window.PostTripPhase != "Scratch") && window.PostTripPhase == "Stretch" && pet.Action == PetAction.Stretching, "After the scratch it stretches");
+        check(Until(() => window.PostTripPhase == "None") && pet.Action == PetAction.Idle && art.ScratchTime < 0, "...and then it is free");
+        check(!behavior.SelfCareReady, "The visit used the shared self-care cooldown");
+
+        // A click (a press that may become a drag) or an emotion cuts the scratch short: no stretch.
+        Free(); CooldownOver();
+        window.GoScratchPost(); pet.X = Stand(); FeatureStep();
+        SetField(window, "pressPending", true);
+        FeatureStep();
+        SetField(window, "pressPending", false);
+        check(window.PostTripPhase == "None" && pet.Action != PetAction.Scratching, "A click ends the scratch at once");
+        Free(); CooldownOver();
+        window.GoScratchPost(); pet.X = Stand(); FeatureStep();
+        check(pet.Emotions.Startle(), "Startled while it scratches");
+        pet.Emotions.Step(pet, 0.1);
+        FeatureStep();
+        check(window.PostTripPhase == "None" && pet.Action != PetAction.Scratching && pet.Action != PetAction.Stretching, "An emotion that owns the cat ends it too");
+        pet.Emotions.Reset(); Free();
+
+        // A scratch it picked anyway (PetBehavior's or Python's SCRATCH) goes to the post when it is close enough.
+        Away(300);
+        check((bool)Call(window, "ScratchOnPostInstead", pet)! && window.PostTripPhase == "Walk", "A scratch the cat picks within 400 DIPs is done on the post");
+        Call(window, "StopPostTrip"); Free();
+        Away(500);
+        check(!(bool)Call(window, "ScratchOnPostInstead", pet)!, "Farther: on the spot, as before");
+
+        // "Do now → Scratch": to the post when it is near, even in Quiet; on the spot when it is not.
+        Away(150);
+        preferences.Quiet = true; behavior.Quiet = true;
+        check(window.PostNear && window.DoNow(PetAction.Scratching) && window.PostTripPhase == "Walk", "Near the post \"Scratch\" goes to it, even in Quiet");
+        FeatureStep();
+        check(window.PostTripPhase == "Walk" && pet.Action == PetAction.Walking, "...and keeps going in Quiet");
+        pet.X = Stand(); FeatureStep();
+        check(window.PostTripPhase == "Scratch" && pet.Action == PetAction.Scratching, "...and scratches it");
+        Call(window, "StopPostTrip");
+        preferences.Quiet = false; behavior.Quiet = false;
+        Away(300);
+        check(!window.PostNear && window.DoNow(PetAction.Scratching) && window.PostTripPhase == "None" && pet.Action == PetAction.Scratching, "Far from it \"Scratch\" scratches on the spot");
+        Free(); behavior.Reset(pet);
+
+        // Quick tidy during a trip: the post goes, the trip ends, the cat stays.
+        CooldownOver(); Away(300);
+        window.GoScratchPost(); FeatureStep();
+        window.ToggleToyBasket();
+        FeatureStep();
+        check(!window.ToyBasketShown && window.PostTripPhase == "None" && pet.Action != PetAction.Walking, "Quick tidy ends the trip");
+        preferences.ToysSniffed = null;
         window.Reset();
     }
 }

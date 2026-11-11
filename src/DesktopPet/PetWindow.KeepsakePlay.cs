@@ -21,7 +21,7 @@ public sealed partial class PetWindow
     private string? keepsakeSwapTo;
     // Keepsake activities the user asked for (double click to look, "Do now" cushion nap): they
     // keep going in Quiet, which only stops the cat's own ideas.
-    [Flags] private enum UserAsked { None = 0, Admire = 1, Nap = 2 }
+    [Flags] private enum UserAsked { None = 0, Admire = 1, Nap = 2, Scratch = 4 }
     private UserAsked userAsked;
     private bool Asked(UserAsked what) => (userAsked & what) != 0;
     // "Do now → Sleep on the cushion" only when the cat is this close to it (centre to centre).

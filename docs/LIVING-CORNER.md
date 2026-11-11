@@ -4,7 +4,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Luật chờ duyệt |
+| M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Chưa viết luật |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Chưa viết luật |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Chưa viết luật |
@@ -16,7 +16,7 @@ Quyết định chung (người dùng đồng ý 11/11):
 - Cấp thân thiết và món yêu thích do Python giữ (memory). Python tắt thì không có các hành vi mở khóa của M3, M4; mèo chạy hành vi local như hiện nay.
 - Để sang đợt khác: lưu bố trí, chế độ xem góc sống, bộ đồ theo chủ đề (Đợt 6); bảng ảnh, ký ức từ trận thắng (Đợt 4). Để sau: dáng đi theo tâm trạng, nghi thức riêng, mèo tự sắp xếp đồ.
 
-## Luật M1 Trụ cào (đề xuất 11/11, chờ duyệt)
+## Luật M1 Trụ cào (duyệt 11/11)
 
 ### Trụ cào là đồ góc sống
 
@@ -52,6 +52,15 @@ Quyết định chung (người dùng đồng ý 11/11):
 - Giới hạn nhóm trong giỏ, cùng dữ liệu `preferences.json` cũ (chưa có trụ) vẫn đọc được.
 - Đo FPS với 3 đồ chơi và trụ nằm yên; soát render trụ, mèo cào trên nền sáng/tối.
 
-### Bổ sung ngoại lệ đề xuất (chờ duyệt, ghi vào docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics khi duyệt)
+### Bổ sung ngoại lệ (đã duyệt 11/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics)
 
 Trụ cào là đồ góc sống có physics như thùng carton (giới hạn riêng 2 món đồ góc sống, đồ chơi vẫn 3). Mèo tự đi tới cào mỗi 6–10 phút, chặn như mèo tự vào hộp; lệnh Cào móng sẵn có của Python/local và "Làm ngay" đi tới trụ khi trụ đủ gần, nếu không thì cào tại chỗ như cũ. Cào 2,4 s rồi vươn vai, chung cooldown tự chăm sóc; click trái/kéo dừng và kéo như thường, click phải dừng và mở menu, cảm xúc ưu tiên cao nhường, Pause đóng băng, không bao giờ khi ngủ/waking. Trụ vẫn không chạm mèo: không Bonk, Dizzy, cảm xúc, không đánh thức. Python không có lệnh mới.
+
+### Cách code M1 (11/11)
+
+- Trụ là món `post` trong giỏ (`DesktopToyRules.Post`, `IsLiving`, `MaxLivingOut` = 2, `CanTake(id, …)` đếm riêng từng nhóm; `Normalize` giữ tối đa 3 đồ chơi và 2 đồ góc sống). Dùng chung khung cầm, ném, lưu, tránh vùng đất của Đợt 1 M1 (`PetWindow.Toys.cs`); physics `ToyBall.StepBox` như hộp. Giỏ có một đường kẻ trước nhóm góc sống; icon menu là glyph Library của Segoe.
+- Hình `ToyPostArt` (84×120 DIP): đế gỗ, cột quấn dây thừng, đĩa trên cùng, quả bông treo. Bấm không kéo gọi `Wobble`, quả bông đung đưa theo `Feedback`; lúc mèo cào, dây thừng rung và vài sợi xơ rơi phía mèo đứng.
+- Chuyến đi ở `PetWindow.ToyPost.cs`: `PostTrip` Walk → Scratch → Stretch. Walk là tính năng sở hữu chuyển động (như đi tới hộp, nằm trong `FeatureOwnsMovement`); Scratch và Stretch là tư thế "Làm ngay" của `PetBehavior.StartManual`, nên click, kéo, cảm xúc ngắt như mọi cử chỉ. Tick nằm trước hẹn giờ đệm/hộp để không có giấc ngủ chen giữa cào và vươn vai.
+- Lệnh Cào móng: `PetBehavior.ScratchElsewhere` (giống `SleepElsewhere`) được gọi khi hành vi local chọn Cào móng hoặc Python gửi `SCRATCH`; `TryStartCommand` gọi `ScratchPostNow` cho "Làm ngay". Giao thức không đổi.
+- Tư thế Cào móng vẽ chân trước ở phía đối diện đuôi, nên mèo quay phía đó vào trụ; tâm mèo cách tâm trụ 34 DIP (`PostScratchRules.StandOff`), chân rơi lên mép dây thừng gần mèo.
+- Đã soát ảnh render ghép cửa sổ mèo lên cửa sổ trụ lúc cào (nền xanh xám). Chưa xem trên desktop thật, chưa xem nền sáng/tối riêng, chưa kéo/ném chuột thật, chưa thử DPI khác, nhiều màn hình, chưa đo FPS; câu tiếng Nhật chưa ai duyệt.

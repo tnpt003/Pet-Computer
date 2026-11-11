@@ -84,7 +84,7 @@ internal static class DesktopToyTests
         check(!streak.Resting, "A broken frame changes nothing");
 
         // M4: the feather wand and the wind-up mouse.
-        check(DesktopToyRules.All.SequenceEqual(new[] { "ball", "box", "wand", "mouse" }) && DesktopToyRules.HalfWidthOf("wand") == 45 && DesktopToyRules.HalfWidthOf("mouse") == 18,
+        check(DesktopToyRules.All.Take(4).SequenceEqual(new[] { "ball", "box", "wand", "mouse" }) && DesktopToyRules.HalfWidthOf("wand") == 45 && DesktopToyRules.HalfWidthOf("mouse") == 18,
             "The basket has four toys: the wand's handle is about 90 DIPs long");
         check(DesktopToyRules.Normalize(new[] { new SavedToy { Id = "wand" }, new SavedToy { Id = "mouse" } }, true)!.Count == 2, "A saved wand and mouse are kept");
         var chase = new ToyChaseStreak();
@@ -134,6 +134,23 @@ internal static class DesktopToyTests
             "Sniffed toys are known ones, each once");
         check(ToyReactRules.NextToSniff(new[] { "ball", "wand" }, new[] { "ball" }) == "wand" && ToyReactRules.NextToSniff(new[] { "ball" }, new[] { "ball" }) == null && ToyReactRules.NextToSniff(new[] { "box" }, null) == "box",
             "The next toy to sniff is the first one out it never met");
+
+        // Đợt 2 M1 (docs/LIVING-CORNER.md): the scratching post, a living-corner thing with its own limit.
+        check(DesktopToyRules.All.Contains(DesktopToyRules.Post) && DesktopToyRules.IsLiving(DesktopToyRules.Post) && !DesktopToyRules.IsLiving(DesktopToyRules.Box),
+            "The scratching post is in the basket, in the living-corner group");
+        check(DesktopToyRules.CanTake(DesktopToyRules.Post, new[] { "ball", "box", "wand" }) && !DesktopToyRules.CanTake(DesktopToyRules.Mouse, new[] { "ball", "box", "wand", "post" }),
+            "Three toys out leave room for the post; the post does not make room for a fourth toy");
+        check(!DesktopToyRules.CanTake(DesktopToyRules.Post, new[] { "ball", "post", "post" }) && DesktopToyRules.CanTake(DesktopToyRules.Post, new[] { "ball", "post" }),
+            "Two living-corner things out: no more of them");
+        var mixed = DesktopToyRules.Normalize(new[] { "ball", "box", "wand", "post", "mouse" }.Select(id => new SavedToy { Id = id }), true)!;
+        check(mixed.Select(t => t.Id).SequenceEqual(new[] { "ball", "box", "wand", "post" }), "A saved list keeps three toys and the post");
+        check(DesktopToyRules.HalfWidthOf(DesktopToyRules.Post) == 30 && DesktopToyRules.HalfHeightOf(DesktopToyRules.Post) == 55, "The post is about 60 DIPs wide, 110 tall");
+        check(PostScratchRules.NextVisit(0) == 360 && PostScratchRules.NextVisit(0.999999) < 600.01 && PostScratchRules.NextVisit(double.NaN) == 360,
+            "The cat's own visits are 6–10 minutes apart");
+        check(PostScratchRules.StandAt(500, 300, 0, 1000) == 500 - PostScratchRules.StandOff && PostScratchRules.StandAt(500, 700, 0, 1000) == 500 + PostScratchRules.StandOff,
+            "The cat scratches from the side it comes from");
+        check(PostScratchRules.StandAt(20, 10, 0, 1000) == 20 + PostScratchRules.StandOff && PostScratchRules.StandAt(20, 10, 100, 110) == null,
+            "No room on that side: the other side; no room at all: nowhere");
 
         var feather = new FeatherString();
         for (int i = 0; i < 600; i++) feather.Step(1 / 60.0, 500, 100, 1000);

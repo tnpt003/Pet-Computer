@@ -19,7 +19,7 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 - Mặc định giỏ chưa hiện. Mục "Giỏ đồ chơi" trong nhóm "Chơi" của menu chuột phải và trên khay lấy giỏ ra; trạng thái hiện/ẩn được nhớ. Giỏ đang hiện thì chính mục đó đổi thành "Cất nhanh". Pause, app toàn màn hình và trong trận thì mục này mờ.
 - Giỏ đứng trên sàn, kéo ngang được, không ném được, không tính vào giới hạn 3 món.
 - Bấm giỏ mở danh sách đồ. M1 chỉ có Bóng len, miễn phí; các món khác thêm ở M2 và M4.
-- Tối đa 3 món trên desktop. Đủ 3 thì món còn lại mờ và ghi lý do.
+- Tối đa 3 món trên desktop. Đủ 3 thì món còn lại mờ và ghi lý do. Đồ góc sống của Đợt 2 (trụ cào) có giới hạn riêng 2 món (docs/LIVING-CORNER.md).
 - Thả đồ vào giỏ là cất.
 
 ### Đồ trên desktop

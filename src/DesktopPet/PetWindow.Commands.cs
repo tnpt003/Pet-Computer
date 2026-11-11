@@ -120,6 +120,7 @@ public sealed partial class PetWindow
     private bool TryStartCommand(PetAction action)
     {
         if (!PetBehavior.CanStartManual(pet, action)) return false;
+        if (action == PetAction.Scratching && ScratchPostNow()) return true; // The post is near: scratched there (PetWindow.ToyPost.cs).
         CancelFeatureActivity();
         return behavior.StartManual(pet, action);
     }

@@ -46,26 +46,35 @@ public sealed class FetchStreak
 // The rules of the toys left out on the desktop; the windows are in PetWindow.Toys.cs.
 public static class DesktopToyRules
 {
-    public const string Ball = "ball", Box = "box", Wand = "wand", Mouse = "mouse";
-    public const int MaxOut = 3;
+    public const string Ball = "ball", Box = "box", Wand = "wand", Mouse = "mouse", Post = "post";
+    // Toys: 3 out at most. Living-corner things (docs/LIVING-CORNER.md: the scratching post) have their own 2.
+    public const int MaxOut = 3, MaxLivingOut = 2;
     public const double BallHalfWidth = 12, BasketHalfWidth = 34, BasketHeight = 46, Gap = 4, GlideSpeed = 220;
     // The cardboard box (M2): about 100 DIPs wide, its body this tall above the floor.
     public const double BoxHalfWidth = 50, BoxHeight = 44;
     // M4: the feather wand's handle (about 90 DIPs) lying on the floor, and the wind-up mouse.
     public const double WandHalfWidth = 45, WandHeight = 10, MouseHalfWidth = 18, MouseHeight = 16;
-    public static readonly IReadOnlyList<string> All = new[] { Ball, Box, Wand, Mouse };
+    // Đợt 2 M1: the scratching post, a wooden base about 60 DIPs wide and 110 tall to the top of its disc.
+    public const double PostHalfWidth = 30, PostHeight = 110;
+    public static readonly IReadOnlyList<string> All = new[] { Ball, Box, Wand, Mouse, Post };
+
+    public static bool IsLiving(string id) => id == Post;
+    public static int LimitOf(string id) => IsLiving(id) ? MaxLivingOut : MaxOut;
 
     public static bool CanTake(int outCount) => outCount < MaxOut;
+    // Room for this one among what is out: each group counts only its own.
+    public static bool CanTake(string id, IEnumerable<string> outIds) => outIds.Count(other => IsLiving(other) == IsLiving(id)) < LimitOf(id);
 
-    public static double HalfWidthOf(string id) => id switch { Box => BoxHalfWidth, Wand => WandHalfWidth, Mouse => MouseHalfWidth, _ => BallHalfWidth };
-    // Half its height: the ball's radius, half the box's body, half the handle, half the mouse.
-    public static double HalfHeightOf(string id) => id switch { Box => BoxHeight / 2, Wand => WandHeight / 2, Mouse => MouseHeight / 2, _ => BallHalfWidth };
+    public static double HalfWidthOf(string id) => id switch { Box => BoxHalfWidth, Wand => WandHalfWidth, Mouse => MouseHalfWidth, Post => PostHalfWidth, _ => BallHalfWidth };
+    // Half its height: the ball's radius, half the box's body, half the handle, half the mouse, half the post.
+    public static double HalfHeightOf(string id) => id switch { Box => BoxHeight / 2, Wand => WandHeight / 2, Mouse => MouseHeight / 2, Post => PostHeight / 2, _ => BallHalfWidth };
 
     // What is left of a saved list: known toys, each once, no more than fit. No basket: nothing is out.
     public static List<SavedToy>? Normalize(IEnumerable<SavedToy>? saved, bool basketShown, IReadOnlyCollection<string>? known = null)
     {
         if (!basketShown || saved == null) return null;
-        var kept = saved.Where(toy => toy != null && (known ?? All).Contains(toy.Id)).GroupBy(toy => toy.Id).Select(same => same.First()).Take(MaxOut).ToList();
+        var unique = saved.Where(toy => toy != null && (known ?? All).Contains(toy.Id)).GroupBy(toy => toy.Id).Select(same => same.First()).ToList();
+        var kept = unique.Where(toy => !IsLiving(toy.Id)).Take(MaxOut).Concat(unique.Where(toy => IsLiving(toy.Id)).Take(MaxLivingOut)).ToList();
         foreach (var toy in kept) toy.FractionX = double.IsFinite(toy.FractionX) ? Math.Clamp(toy.FractionX, 0, 1) : 0.5;
         return kept.Count == 0 ? null : kept;
     }
@@ -86,5 +95,30 @@ public static class DesktopToyRules
         double left = x - halfWidth;
         double spot = FarmLands.FreeSpot(left, 2 * halfWidth, taken, area.Left, Math.Max(area.Left, area.Right - 2 * halfWidth), Gap);
         return Math.Abs(spot - left) > 0.5 ? spot + halfWidth : null;
+    }
+}
+
+// The scratching post (docs/LIVING-CORNER.md → M1): how often the cat goes on its own, how near it
+// must be for a scratch it picked anyway or the user's "Do now", and where it stands to scratch.
+public static class PostScratchRules
+{
+    public const double VisitMin = 360, VisitMax = 600, WalkSeconds = 15, CommandReach = 400, NearDistance = 200;
+    // Cat centre to post centre while scratching: the scratching paws (about 29 DIPs ahead of the cat's
+    // centre in its 112-DIP drawing) land on the near side of the rope.
+    public const double StandOff = 34;
+
+    // random in [0, 1): the next visit of its own, 6–10 minutes away.
+    public static double NextVisit(double random) => VisitMin + Math.Clamp(double.IsFinite(random) ? random : 0, 0, 1) * (VisitMax - VisitMin);
+
+    // Where the cat's centre stands to scratch: on the side it comes from, else the other; null: no room.
+    public static double? StandAt(double postX, double catX, double left, double right)
+    {
+        int side = catX < postX ? -1 : 1;
+        foreach (int s in new[] { side, -side })
+        {
+            double spot = postX + s * StandOff;
+            if (spot >= left && spot <= right) return spot;
+        }
+        return null;
     }
 }

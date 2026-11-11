@@ -221,11 +221,17 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         }
         // A sleep of its own may happen somewhere better (the slime cushion): the window walks it there.
         if (pet.Action == PetAction.Sleeping && SleepElsewhere?.Invoke(pet) == true) { pet.Action = PetAction.Idle; return; }
+        // A scratch of its own with the scratching post close by: the window walks it there to scratch.
+        if (pet.Action == PetAction.Scratching && ScratchElsewhere?.Invoke(pet) == true) { pet.Action = PetAction.Idle; return; }
         if (pet.Action == PetAction.Sleeping) pet.Emotions.EnterSleep();
     }
 
     // Set by the window; returns true when it takes the pet somewhere else to sleep.
     public Func<PetModel, bool>? SleepElsewhere { get; set; }
+    // Set by the window; returns true when it takes the pet to the scratching post (docs/LIVING-CORNER.md → M1).
+    public Func<PetModel, bool>? ScratchElsewhere { get; set; }
+    // The shared self-care and gesture cooldown is over (the post's own visits wait for it too).
+    public bool SelfCareReady => selfCareCooldown <= 0;
 
     public bool TryApply(PetModel pet, AiDecision decision)
     {
@@ -257,6 +263,8 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
         };
         // Gestures own a fixed C# duration; Python's duration only paces ordinary actions.
         if (PetActionRules.IsGesture(pet.Action)) remaining = PetSettings.GestureDuration(pet.Action);
+        // SCRATCH with the scratching post close by: the same command, scratched on the post.
+        if (pet.Action == PetAction.Scratching && ScratchElsewhere?.Invoke(pet) == true) { pet.Action = PetAction.Idle; return true; }
         if (decision.Command is AiCommand.WalkLeft or AiCommand.WalkRight)
         {
             pet.Facing = decision.Command == AiCommand.WalkLeft ? -1 : 1;

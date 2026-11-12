@@ -76,6 +76,8 @@ public partial class App : Application
         menu.Items.Add(settings);
         var reset = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.BringHome());
         menu.Items.Add(reset);
+        var callCat = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.CallCat()); // Living corner M5.
+        menu.Items.Add(callCat);
         var toys = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleToyBasket());
         menu.Items.Add(toys);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
@@ -93,6 +95,7 @@ public partial class App : Application
         customize.Image = PetTrayMenuStyle.Icon(PetUi.Customize);
         settings.Image = PetTrayMenuStyle.Icon(PetUi.Settings);
         reset.Image = PetTrayMenuStyle.Icon(PetUi.Home);
+        callCat.Image = PetTrayMenuStyle.Icon(PetUi.Call);
         toys.Image = PetTrayMenuStyle.Icon(PetUi.Ball);
         checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
         exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
@@ -106,6 +109,8 @@ public partial class App : Application
             customize.Text = pet.L("Tùy chỉnh…", "Customize…");
             settings.Text = pet.L("Cài đặt…", "Settings…");
             reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
+            callCat.Text = pet.L("Gọi mèo", "Call the cat");
+            callCat.Enabled = pet.CallMenuEnabled;
             toys.Text = pet.ToyBasketMenuLabel;
             toys.Enabled = pet.ToyBasketMenuEnabled;
             exit.Text = pet.L("Thoát", "Exit");

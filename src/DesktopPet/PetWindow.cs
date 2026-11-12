@@ -538,6 +538,7 @@ public sealed partial class PetWindow : Window
         // In the cardboard box: its front panel over the cat, on the floor the lift has moved the window up from.
         renderer.BoxFrontDrop = BoxFrontShown ? boxLift : -1;
         renderer.CarryBall = CarryingBall && !dragging; // PetWindow.ToyFetch.cs
+        renderer.TrickSpark = HighFiveMet; // A high five the cursor meets (PetWindow.Tricks.cs).
         renderer.HeartsTime = dragging ? -1 : heartsTime; // A new bond milestone (PetWindow.Bond.cs).
         MoveWindow(x - padding, y - padding);
         UpdateSpeechWindow(x, y);

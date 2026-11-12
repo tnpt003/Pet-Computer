@@ -179,7 +179,7 @@ internal static class Program
         string catName = Field<PetPreferences>(window, "preferences").Name;
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Teach a trick", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
               SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket" &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
@@ -187,7 +187,7 @@ internal static class Program
               topItems.Single(item => (string)item.Header == "Sounds").IsCheckable &&
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: 13 items in 4 groups (play · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
+            "Context menu: 14 items in 4 groups (play · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
         // (The spell's item says why it is off while the ball is out.)
@@ -995,6 +995,7 @@ internal static class Program
         ToyChecks.Run(window, pet, behavior, preferences, Check);
         BondChecks.Run(window, pet, behavior, preferences, Check); // Bond milestones (docs/LIVING-CORNER.md → M3).
         FavoriteToyChecks.Run(window, pet, behavior, preferences, Check); // The favourite toy (docs/LIVING-CORNER.md → M4).
+        TrickChecks.Run(window, pet, behavior, preferences, Check); // Calling the cat and tricks (docs/LIVING-CORNER.md → M5).
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

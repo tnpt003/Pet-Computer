@@ -48,6 +48,7 @@ public static class PetUi
     public const string Plant = ""; // (Segoe) the plant pot.
     public const string Wand = "", WindUpMouse = ""; // Pen (the feather wand), mouse (the wind-up mouse).
     public const string Quiet = "", Sound = ""; // Moon (quiet hours), speaker.
+    public const string Teach = "", Call = ""; // Education (teaching tricks), contact (calling the cat).
     public const string Status = ""; // Heart.
     public const string Focus = ""; // Clock (the focus timer).
     public const string Customize = ""; // Personalize (brush).

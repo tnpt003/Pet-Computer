@@ -1643,3 +1643,13 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Cầm cần câu và lên dây chuột cùng lúc: mèo đuổi món yêu thích.
 - [ ] Đang ghé/rủ: click trái dừng và kéo như thường, click phải mở menu; Quiet, Giờ tập trung, app toàn màn hình, trận, mèo ngủ: không ghé, không rủ.
 - [ ] Đọc câu `favorite_toy` và chữ thẻ Nhật ký tiếng Nhật (chưa ai duyệt).
+
+## Góc sống M5 — Gọi mèo và dạy động tác (12/11, chỉ bản 1.6)
+- [ ] Menu khay → "Gọi mèo", rồi đưa chuột ra giữa màn hình: mèo quay đầu, đi theo con trỏ trên sàn, tới gần thì ngồi ngước nhìn ~3 giây. Bật Quiet vẫn gọi được. Click mèo giữa chừng: dừng, kéo như thường.
+- [ ] Mèo đứng trên mép cửa sổ: gọi thì đi dọc mép, tới đầu mép thì dừng ngồi, không tự nhảy xuống.
+- [ ] Mèo đang ngủ: gọi thì mèo ngủ tiếp (không thức), tự thức trong 30 giây thì mới tới. Pause, trong trận, app toàn màn hình: dòng "Gọi mèo" mờ.
+- [ ] Nhiều màn hình: con trỏ ở màn hình khác thì mèo chỉ quay đầu nhìn về phía đó.
+- [ ] Chuột phải → "Dạy động tác" → Xoay vòng: mèo làm thử vụng, ngồi chờ; vuốt mèo trong 6 giây thì hiện "1/5" trên đầu, tiến độ trong menu thành ●○○○○. Không vuốt: không tính. Lần kế phải chờ ~30 giây; 3 buổi một ngày thì dòng mờ "Mai học tiếp".
+- [ ] Đủ 5 buổi (qua 2 ngày): "Đã thuộc!", một câu nói (nếu bật câu nói), "Làm ngay" có dòng Xoay vòng và mèo làm gọn gàng. Tương tự Ngồi xin, Đập tay; Đập tay để con trỏ gần chân giơ lên thì có tia sáng.
+- [ ] Đóng mở lại mèo: tiến độ và động tác đã thuộc còn nguyên. Mèo không bao giờ tự làm ba động tác này.
+- [ ] Đọc chữ menu và câu "覚えた" tiếng Nhật (chưa ai duyệt).

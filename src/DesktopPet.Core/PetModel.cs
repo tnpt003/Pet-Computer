@@ -3,7 +3,9 @@ using System;
 namespace DesktopPet;
 
 public enum PetAction { Idle, Walking, Jumping, Sitting, Sleeping, Looking, Dragging, Thrown, Waking, SeekingAttention, Grooming, Stretching, PreparingJump,
-    Kneading, RollingOver, ChasingTail, Scratching, Sneezing, Climbing }
+    Kneading, RollingOver, ChasingTail, Scratching, Sneezing, Climbing,
+    // Tricks the user teaches (docs/LIVING-CORNER.md → M5): never chosen by the cat itself.
+    Spinning, Begging, HighFive }
 
 public static class PetActionRules
 {
@@ -18,7 +20,10 @@ public static class PetActionRules
 
     // Short stationary poses that own a fixed duration (PetSettings.GestureDuration).
     public static bool IsGesture(PetAction action) => action is PetAction.Kneading or PetAction.RollingOver or
-        PetAction.ChasingTail or PetAction.Scratching or PetAction.Sneezing;
+        PetAction.ChasingTail or PetAction.Scratching or PetAction.Sneezing || IsTrick(action);
+
+    // The three taught tricks (living corner M5).
+    public static bool IsTrick(PetAction action) => action is PetAction.Spinning or PetAction.Begging or PetAction.HighFive;
 
     // In the air or about to be: a throw, a jump or its crouch.
     public static bool IsInFlight(PetAction action) => action is PetAction.Thrown or PetAction.Jumping or PetAction.PreparingJump;
@@ -65,8 +70,12 @@ public sealed class PetSettings
     public const double TailChaseDuration = 3;
     public const double ScratchingDuration = 2.4;
     public const double SneezeDuration = 1;
+    public const double SpinDuration = 1.4, BegDuration = 2, HighFiveDuration = 1.4;
     public static double GestureDuration(PetAction action) => action switch
     {
+        PetAction.Spinning => SpinDuration,
+        PetAction.Begging => BegDuration,
+        PetAction.HighFive => HighFiveDuration,
         PetAction.Kneading => KneadingDuration,
         PetAction.RollingOver => RollOverDuration,
         PetAction.ChasingTail => TailChaseDuration,
@@ -125,6 +134,8 @@ public sealed class PetModel
     // 0 bronze, 1 silver, 2 gold: what this job's tool is made of.
     public int FarmToolTier;
     public double BatRemaining;
+    // A trick tried during a lesson: drawn as a clumsy attempt (living corner M5); set and cleared by the window.
+    public bool TrickClumsy;
     public double PlayCrouch;
     // M5 reactions (PetWindow.ToyReact.cs): degrees the head leans, presentation only.
     public double ReactTilt, ReactDip;

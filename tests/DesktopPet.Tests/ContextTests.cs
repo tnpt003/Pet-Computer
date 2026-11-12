@@ -95,6 +95,29 @@ internal static class ContextTests
             "favorite_toy is read for the three toys and otherwise dropped, keeping the decision");
         string sent = System.Text.Json.JsonSerializer.Serialize(new PetObservation("Idle", true, 0, 0, "", "", ToyPlays: new ToyPlayReport(2, 5, 1)), AiProtocol.Json);
         check(sent.Contains("\"toy_plays\":{\"ball\":2,\"wand\":5,\"mouse\":1}"), "The observation sends the rounds per toy as toy_plays");
+        // Tricks (docs/LIVING-CORNER.md → M5): 3 lessons a day each, 5 to learn, kept in the preferences.
+        var tricks = new PetPreferences();
+        var day1 = new DateTime(2026, 11, 12, 9, 0, 0);
+        check(!TrickRules.Learned(tricks, TrickRules.Spin) && TrickRules.MayLearnToday(tricks, TrickRules.Spin, day1), "A new cat knows no trick");
+        bool learnedEarly = false;
+        for (int i = 0; i < 3; i++) learnedEarly |= TrickRules.Record(tricks, TrickRules.Spin, day1);
+        check(!learnedEarly && TrickRules.Lessons(tricks, TrickRules.Spin) == 3 && !TrickRules.MayLearnToday(tricks, TrickRules.Spin, day1)
+              && !TrickRules.Record(tricks, TrickRules.Spin, day1.AddHours(10)) && TrickRules.MayLearnToday(tricks, TrickRules.Beg, day1),
+            "Three lessons a day per trick, the others still open");
+        var day2 = day1.AddDays(1);
+        check(TrickRules.Today(tricks, TrickRules.Spin, day2) == 0 && !TrickRules.Record(tricks, TrickRules.Spin, day2) && TrickRules.Record(tricks, TrickRules.Spin, day2)
+              && TrickRules.Learned(tricks, TrickRules.Spin) && !TrickRules.MayLearnToday(tricks, TrickRules.Spin, day2) && !TrickRules.Record(tricks, TrickRules.Spin, day2),
+            "The fifth lesson, the next day, teaches it; no lessons after");
+        string trickFile = Path.Combine(Path.GetTempPath(), "pet-tricks-" + Guid.NewGuid().ToString("N") + ".json");
+        PetPreferences Reload(PetPreferences saved) { saved.Save(trickFile); return PetPreferences.Load(trickFile); }
+        var reread = Reload(tricks);
+        check(TrickRules.Learned(reread, TrickRules.Spin) && reread.TrickDay == "2026-11-13", "Learned tricks survive a restart");
+        var odd = Reload(new PetPreferences { TrickLessons = new() { ["spin"] = 99, ["fly"] = 2, ["beg"] = -1 }, TrickDay = "x", TrickToday = new() { ["spin"] = 2 } });
+        File.Delete(trickFile);
+        check(odd.TrickLessons is { Count: 1 } l && l["spin"] == 5 && odd.TrickDay == null && odd.TrickToday == null, "Odd lesson counts are cleaned on load");
+        check(TrickRules.All.All(id => TrickRules.IdOf(TrickRules.ActionOf(id)) == id && PetActionRules.IsTrick(TrickRules.ActionOf(id)) && PetActionRules.IsGesture(TrickRules.ActionOf(id))
+              && PetSettings.GestureDuration(TrickRules.ActionOf(id)) > 0) && TrickRules.IdOf(PetAction.SeekingAttention) == null,
+            "Each trick is a gesture with its own length");
         check(FavoriteToyRules.IsPlayToy(DesktopToyRules.Mouse) && !FavoriteToyRules.IsPlayToy(DesktopToyRules.Box) && !FavoriteToyRules.IsPlayToy(null)
               && FavoriteToyRules.NextVisit(0) == 600 && FavoriteToyRules.NextVisit(1) == 900, "Only the three play toys count; a visit every 10–15 minutes");
         check(PetBondRules.Name(1, "vi") == "Mới quen" && PetBondRules.Name(5, "en") == "Soulmates" && PetBondRules.Name(3, "en") == "Good friends"

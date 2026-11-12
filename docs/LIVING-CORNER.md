@@ -8,7 +8,7 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Đã có code, còn test tay |
 | M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Đã có code, còn test tay |
-| M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; dạy Xoay vòng, Ngồi xin, Đập tay qua vuốt ve rồi gọi từ "Làm ngay" | Luật duyệt 12/11, chưa code |
+| M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; dạy Xoay vòng, Ngồi xin, Đập tay qua vuốt ve rồi gọi từ "Làm ngay" | Đã có code, còn test tay |
 
 Quyết định chung (người dùng đồng ý 11/11):
 
@@ -294,3 +294,11 @@ Người dùng chốt 12/11: dạy 3 động tác mới; lưu ở C#, Python t�
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Gọi mèo và dạy động tác: "Gọi mèo" trong menu khay đưa mèo đi về phía con trỏ hiện tại trên sàn/mép cửa sổ của nó (tối đa ~10 giây, cùng màn hình; khác màn hình chỉ quay đầu) rồi ngồi ngước nhìn; "Dạy động tác" cho Xoay vòng, Ngồi xin, Đập tay: mèo làm thử vụng, người dùng vuốt ve trong 6 giây thì tính một buổi (tối đa 3 buổi/ngày mỗi động tác, 5 buổi là thuộc), thuộc rồi gọi từ "Làm ngay". Cả hai là lệnh người dùng như "Làm ngay": chạy cả Quiet và wake cooldown, không cắt kéo/bay/sleep lock/waking, mèo ngủ thì chờ tự thức (gọi tối đa 30 giây); không khi Pause, trận, fullscreen; click/kéo/cảm xúc ngắt như thường. Lưu ở C#, Python không tham gia; mèo không tự làm động tác đã học; không âm thanh mới.
+
+### Cách code M5 (12/11)
+
+- Core: `PetAction.Spinning`, `Begging`, `HighFive` (cuối enum) là cử chỉ (`PetActionRules.IsTrick`, `IsGesture`; dài 1,4 / 2 / 1,4 giây), có trong `PetBehavior.ManualActions` nhưng không bao giờ trong lựa chọn tự động; `PetModel.TrickClumsy` cho bản vụng. Luật số và lưu buổi học ở `TrickRules` (`PetTricks.cs`): `PetPreferences.TrickLessons`, `TrickDay`, `TrickToday`, được làm sạch khi đọc. Python chỉ thêm ba trạng thái vào `BUSY_STATES`.
+- Vẽ (`PetRenderer.PoseTrick`, `DrawTrickPaws`): Xoay vòng lật hướng mặt qua cạnh như Đuổi đuôi, một vòng trên cú nhún (vụng: nửa vòng rồi quay lại, lắc khi ngồi xuống); Ngồi xin kéo dài thân, hai chân co trước ngực (vụng: nhổm nửa, nghiêng); Đập tay giơ một chân cạnh đầu, đệm chân hướng ra, tia sáng (`SpellStar`) khi con trỏ gần chân (`HighFiveMet`, chỉ bản thuộc).
+- Hành vi ở `PetWindow.Tricks.cs`. Gọi mèo: menu khay `CallCat()`; mèo bận/ngủ thì chờ (`Call.Wait`, tối đa 30 giây) ở `TickTrickClock` trước kiểm tra CanPlay; `TickCall` chạy ngay sau khối `!CanPlay` của `TickFeatures`, trước mọi tính năng khác; khác màn hình (so `FarmMonitorAt` con trỏ với màn hình mèo) chỉ nhìn. Dạy: `TeachTrick(id)` từ submenu "Dạy động tác" (menu chuột phải, ngay dưới "Làm ngay"); mèo bận thì chờ như hàng đợi "Làm ngay" (3 giây); buổi học sở hữu chuyển động nên tự đếm thời lượng cử chỉ; vuốt được nhận qua `pet.Interactions.Petted` tăng trong 6 giây. Nhãn "n/5" là cửa sổ phủ nhỏ trên đầu mèo, đặt như nhãn Giờ tập trung; thuộc rồi có câu `trick_learned` qua `ShowSpeech` (im khi tắt câu nói hoặc Quiet). "Làm ngay" chỉ nhận động tác đã thuộc (`TrickAllowed`).
+- Test cấu trúc menu chuột phải nay có 14 mục (thêm "Dạy động tác"). Tên tiếng Anh "Spin around" vì khóa dịch "Spin" đã dùng chỗ khác.
+- Đã soát ảnh render ba động tác (bản thuộc và bản vụng, tia sáng Đập tay). Chưa xem trên desktop thật, chưa bấm menu khay thật, chưa thử mép cửa sổ thật, DPI khác, nhiều màn hình; câu và tên tiếng Nhật chưa ai duyệt.

@@ -49,6 +49,25 @@ public sealed partial class PetWindow
             // Right under "Sleep": sleep on the slime cushion, when it is on display and close by.
             if (action == PetAction.Sleeping) { root.Items.Add(cushionSleep); root.Items.Add(boxSleep); }
         }
+        // Learned tricks join the gestures (living corner M5); hidden until learned.
+        var learnedTricks = new MenuItem[TrickRules.All.Length];
+        for (int i = 0; i < learnedTricks.Length; i++)
+        {
+            var action = TrickRules.ActionOf(TrickRules.All[i]);
+            learnedTricks[i] = new MenuItem();
+            learnedTricks[i].Click += (_, _) => DoNow(action);
+            root.Items.Add(learnedTricks[i]);
+        }
+        // Teaching tricks: one row per trick with its progress (PetWindow.Tricks.cs).
+        var teach = PetUi.MenuItem(PetUi.Teach);
+        var lessons = new MenuItem[TrickRules.All.Length];
+        for (int i = 0; i < lessons.Length; i++)
+        {
+            string id = TrickRules.All[i];
+            lessons[i] = new MenuItem();
+            lessons[i].Click += (_, _) => TeachTrick(id);
+            teach.Items.Add(lessons[i]);
+        }
         // Emotions have their own submenu: the manual-control switch, then the emotions it unlocks.
         var feelings = PetUi.MenuItem(PetUi.Emotions);
         var manual = new MenuItem { IsCheckable = true };
@@ -64,6 +83,7 @@ public sealed partial class PetWindow
             feelings.Items.Add(emotions[i]);
         }
         menu.Items.Add(root);
+        menu.Items.Add(teach);
         menu.Items.Add(feelings);
         menu.Opened += (_, _) =>
         {
@@ -72,6 +92,25 @@ public sealed partial class PetWindow
             feelings.Header = L("Cảm xúc", "Emotions");
             feelings.IsEnabled = !paused && !BattleOwnsPet;
             for (int i = 0; i < actions.Length; i++) actions[i].Header = L(CommandItems[i].Vi, CommandItems[i].En);
+            var now = DateTime.Now;
+            bool waitGap = clock.Elapsed.TotalSeconds < lessonReadyAt;
+            for (int i = 0; i < TrickRules.All.Length; i++)
+            {
+                string id = TrickRules.All[i];
+                bool learned = TrickRules.Learned(preferences, id);
+                learnedTricks[i].Header = TrickName(id);
+                learnedTricks[i].Visibility = learned ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+                int done = TrickRules.Lessons(preferences, id);
+                string dots = new string('●', done) + new string('○', TrickRules.LessonsToLearn - done);
+                bool today = TrickRules.MayLearnToday(preferences, id, now);
+                lessons[i].Header = learned ? TrickName(id) + " ✓ " + L("Đã thuộc", "Learned") : TrickName(id) + "  " + dots;
+                lessons[i].IsEnabled = !learned && today && !waitGap && CallMenuEnabled;
+                lessons[i].ToolTip = learned ? L("Gọi từ Làm ngay", "Ask for it in Do now") : !today ? L("Mai học tiếp", "More tomorrow")
+                    : waitGap ? L("Cho mèo nghỉ chút đã", "Let the cat rest a moment") : null;
+                ToolTipService.SetShowOnDisabled(lessons[i], true);
+            }
+            teach.Header = L("Dạy động tác", "Teach a trick");
+            teach.IsEnabled = !paused && !BattleOwnsPet;
             // Shown only with the cushion on display; greyed out (with the reason) when the cat is far from it.
             bool cushion = TrophiesVisible && DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion;
             cushionSleep.Visibility = cushion ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
@@ -98,7 +137,7 @@ public sealed partial class PetWindow
 
     public bool DoNow(PetAction action)
     {
-        if (paused || closed || dragging || BattleOwnsPet || Array.IndexOf(PetBehavior.ManualActions, action) < 0) return false;
+        if (paused || closed || dragging || BattleOwnsPet || Array.IndexOf(PetBehavior.ManualActions, action) < 0 || !TrickAllowed(action)) return false;
         revision++; // Drop AI replies that were chosen before this request; not an interaction for needs or learning.
         if (TryStartCommand(action)) { queuedCommand = null; return true; }
         queuedCommand = action; // Newest request wins.
@@ -122,6 +161,7 @@ public sealed partial class PetWindow
         if (!PetBehavior.CanStartManual(pet, action)) return false;
         if (action == PetAction.Scratching && ScratchPostNow()) return true; // The post is near: scratched there (PetWindow.ToyPost.cs).
         CancelFeatureActivity();
+        pet.TrickClumsy = false; // A learned trick is done properly (PetWindow.Tricks.cs).
         return behavior.StartManual(pet, action);
     }
 

@@ -63,7 +63,8 @@ static class ToolingTests
 
         check(Enum.GetValues<PetAction>().Where(PetActionRules.IsCancellableLocal)
                 .SequenceEqual(new[] { PetAction.Grooming, PetAction.Stretching, PetAction.PreparingJump,
-                    PetAction.Kneading, PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing }),
+                    PetAction.Kneading, PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing,
+                    PetAction.Spinning, PetAction.Begging, PetAction.HighFive }),
             "Only local self-care, gestures and jump preparation are cancelled straight to Idle");
     }
 }

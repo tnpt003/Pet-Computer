@@ -88,6 +88,10 @@ public sealed class PetPreferences
     // Living corner M2 (docs/LIVING-CORNER.md): the plant pot's points (it grows, never wilts) and when the last one came.
     public int PlantPoints { get; set; }
     public DateTime? PlantPointAt { get; set; }
+    // Living corner M5: lessons per trick (5: learned), and the local day of today's lessons with their count per trick.
+    public Dictionary<string, int>? TrickLessons { get; set; }
+    public string? TrickDay { get; set; }
+    public Dictionary<string, int>? TrickToday { get; set; }
     // Where the user dragged the battle HUD, per monitor (device name): its left and top as fractions
     // of the room left in that monitor's work area. A monitor not listed: centred at the top.
     public Dictionary<string, double[]>? BattleHudSpots { get; set; }
@@ -143,6 +147,7 @@ public sealed class PetPreferences
         p.ToyPassBest = Math.Clamp(p.ToyPassBest, 0, 9999);
         p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
         p.PlantPoints = Math.Clamp(p.PlantPoints, 0, PlantRules.MaxPoints);
+        TrickRules.Normalize(p);
         if (!p.RestX.HasValue || !p.RestY.HasValue || !double.IsFinite(p.RestX.Value) || !double.IsFinite(p.RestY.Value)) p.RestX = p.RestY = null;
         return p;
     }

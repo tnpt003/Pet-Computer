@@ -15,7 +15,8 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     private PetAction? manualAction;
     public static readonly PetAction[] ManualActions = { PetAction.Sitting, PetAction.Looking, PetAction.PreparingJump,
         PetAction.Sleeping, PetAction.SeekingAttention, PetAction.Grooming, PetAction.Stretching, PetAction.Kneading,
-        PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing };
+        PetAction.RollingOver, PetAction.ChasingTail, PetAction.Scratching, PetAction.Sneezing,
+        PetAction.Spinning, PetAction.Begging, PetAction.HighFive }; // Tricks: the window allows them once learned or in a lesson.
     public const double ManualPoseDuration = 4;
     private readonly System.Collections.Generic.Queue<PetAction> recentLocal = new();
 

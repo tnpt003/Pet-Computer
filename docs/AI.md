@@ -480,6 +480,12 @@ once when it is first chosen. `diary.favorite_toy` and `diary.toy_plays` (recent
 diary card. C# drops anything but the three ids without rejecting the decision; with Python off or not
 answering it has no favourite and the cat behaves as before.
 
+## Calling the cat and tricks (1.6, docs/LIVING-CORNER.md → M5)
+
+C# only: the call, the lessons and the learned tricks live in the C# preferences; there is no new protocol
+field. The three tricks are new `state` values (`Spinning`, `Begging`, `HighFive`) that reject decisions like
+the other gestures, so they are listed in `BUSY_STATES`. A stroke during a lesson is an ordinary `petted`.
+
 ## Gestures, pending lines and the diary (2026-10-13)
 
 **Gestures.** Five short, stationary poses: Kneading, RollingOver, ChasingTail, Scratching

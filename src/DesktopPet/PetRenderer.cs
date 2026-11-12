@@ -107,6 +107,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         // Gestures: the active one, its time and a 0..1 envelope; Roll is the eased roll-over amount.
         public PetAction Gesture;
         public double GestureTime, GestureBlend, Roll, AngryBlend, SneezeTilt, SneezeLift;
+        // Taught tricks (living corner M5): how far up on its hind legs (begging) and how high the paw is raised.
+        public double TrickLift, TrickPaw;
         // The portal spell: 0..1 envelope and the seconds since it began.
         public double CastBlend, CastTime;
         public double WaterBlend, WaterTime, StirBlend, StirTime, FishBlend, FishTime, FishBiteAt;
@@ -225,6 +227,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     public double BoxFrontDrop = -1;
     // The yarn ball in the cat's mouth while it fetches.
     public bool CarryBall;
+    // A high five with the cursor by the raised paw: a little spark (living corner M5).
+    public bool TrickSpark;
 
     private Pose ComputePose()
     {
@@ -365,8 +369,73 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             double since = PetModel.BonkDuration - pet.Bonk, bonk = since < 0.7 ? Math.Exp(-since * 5) * Math.Cos(since * 20) : 0;
             p.ScaleY *= 1 - 0.2 * bonk; p.ScaleX *= 1 + 0.1 * bonk;
         }
+        if (PetActionRules.IsTrick(p.Gesture)) PoseTrick(ref p);
         if (pet.SwordOut) PoseSword(ref p);
         return p;
+    }
+
+    // The taught tricks (docs/LIVING-CORNER.md → M5); a lesson's try is a clumsy half of each.
+    private void PoseTrick(ref Pose p)
+    {
+        double t = p.GestureTime, d = PetSettings.GestureDuration(p.Gesture), b = p.GestureBlend;
+        bool clumsy = pet.TrickClumsy;
+        double arc = Math.Sin(Math.PI * Math.Clamp(t / d, 0, 1));
+        switch (p.Gesture)
+        {
+            case PetAction.Spinning:
+            {
+                // A crouch, then one whole turn on a little hop (the flip passes edge-on, as the tail chase turns).
+                // Clumsy: half way round and back, then it plops down with a wobble.
+                double k = Math.Clamp((t - 0.2) / (d - 0.4), 0, 1);
+                k = k * k * (3 - 2 * k);
+                double turn = clumsy ? 0.42 * Math.Sin(Math.PI * k) : k;
+                p.FacingScale *= Math.Cos(2 * Math.PI * turn);
+                p.Bob = p.Bob * (1 - b) - (clumsy ? 4 : 9) * Math.Sin(Math.PI * k) * b;
+                p.ScaleY *= 1 - 0.06 * b * (1 - Math.Sin(Math.PI * k));
+                if (clumsy && t > d - 0.55) p.ImpactTilt += 7 * Math.Sin((t - (d - 0.55)) * 22) * Math.Max(0, (d - t) / 0.55);
+                break;
+            }
+            case PetAction.Begging:
+            {
+                // Up on its hind legs, front paws curled at its chest. Clumsy: half way up, a wobble, back down.
+                double lift = clumsy ? 0.55 * arc : b;
+                p.TrickLift = p.TrickPaw = lift;
+                p.ScaleY *= 1 + 0.17 * lift; p.ScaleX *= 1 - 0.07 * lift;
+                p.Bob *= 1 - lift;
+                p.Stride = 0;
+                if (clumsy) p.ImpactTilt += 5 * Math.Sin(t * 11) * lift;
+                break;
+            }
+            case PetAction.HighFive:
+                // One front paw raised high toward the user and held. Clumsy: a low paw, pulled back.
+                p.TrickPaw = clumsy ? 0.4 * arc : b;
+                break;
+        }
+    }
+
+    // The begging paws at the chest, or the high-five paw raised in front (pads out), with its spark.
+    private void DrawTrickPaws(DrawingContext dc, in Pose p)
+    {
+        if (p.Gesture == PetAction.Begging)
+        {
+            dc.PushOpacity(Math.Min(1, p.TrickPaw * 2));
+            double y = 86 - 6 * p.TrickLift;
+            Oval(dc, Fur, 61, y + 2, 6, 6.5);
+            Oval(dc, Fur, 70, y, 6, 6.5);
+            dc.Pop();
+            return;
+        }
+        double r = p.TrickPaw, py = 94 - 52 * r; // Up beside the head, clear of the tail's curl.
+        Oval(dc, Fur, 84, py, 6.5, 9.5);
+        Oval(dc, palette.Paw, 86.5, py - 3, 3.2, 2.6);
+        if (TrickSpark && r > 0.8)
+        {
+            double pulse = 0.8 + 0.25 * Math.Sin(p.GestureTime * 18);
+            dc.PushTransform(new TranslateTransform(96, py - 11));
+            dc.PushTransform(new ScaleTransform(pulse, pulse));
+            DrawOutlinedEffect(dc, SpellStar, PetUi.Game.Gold);
+            dc.Pop(); dc.Pop();
+        }
     }
 
     // Swing keyframes (progress, angle), timed so the weapon reaches its target at the hit moment
@@ -744,6 +813,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         bool swordBehind = p.Sword && (p.SwordAngle < 15 || pet.WeaponStyle == "yarn" && Math.Cos(p.YarnAngle * Math.PI / 180) > 0.2);
         if (swordBehind) DrawSword(dc, p);
         DrawHead(dc, p);
+        if (p.TrickPaw > 0) DrawTrickPaws(dc, p); // Begging or a high five (living corner M5).
         if (p.Sword && !swordBehind) DrawSword(dc, p);
         if (p.Climbing) { DrawClimbingPaws(dc, p); dc.Pop(); }
         dc.Pop();
@@ -882,6 +952,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         if (p.Grooming) glanceY = 3 * p.GroomingBlend;
         glanceX += p.PettingLean * 3;
         if (p.Gesture == PetAction.ChasingTail) { glanceX -= 4 * p.GestureBlend; glanceY += 2 * p.GestureBlend; } // Eyes on the tail.
+        if (p.Gesture is PetAction.Begging or PetAction.HighFive) { glanceX += 2 * p.TrickPaw; glanceY -= 3 * p.TrickPaw; } // Looking up at the user.
         if (p.Climbing) { glanceX = 2; glanceY = -3; } // Eyes on the top edge.
         double headY = 49 + 10 * p.RestBlend + (p.Emotion == PetEmotion.Sad ? 2 * p.EmotionStrength : 0) + p.SneezeLift + (p.PickedUp || p.Sleeping ? 0 : pet.ReactDip);
         dc.PushTransform(new TranslateTransform(glanceX * (p.Eating ? 1.4 : 0.45), headY - 49 + glanceY * 0.6 +

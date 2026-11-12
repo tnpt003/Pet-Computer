@@ -6,7 +6,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 |---|---|---|
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
-| M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
+| M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Luật đã duyệt, chưa code |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
 
@@ -125,3 +125,43 @@ Trốn tìm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo đư�
 - `PetWindow.HideSeek.cs`: Đếm 3 giây (nhãn tại chỗ cũ của mèo), mèo biến bằng hiệu ứng khói của "Gọi mèo về màn hình chính" (`TeleportPop`/`TeleportPuff`) rồi đặt thẳng sau chỗ nấp trên sàn. Mèo nấp: `PetRenderer.HideSink` hạ mèo, cắt ở sàn và theo bề ngang chỗ nấp (`HideHalf`, nên đuôi/ria không lộ), `HideCover` vẽ bụi cây hoặc mặt trước hộp đè lên mèo ngay trong cửa sổ mèo: click vào đó là click mèo = đoán đúng (`HideSeekPressCat` trong `BeginDrag`, cú nhấn vẫn đi tiếp, kéo quá ~6 DIP thì trò kết thúc và nhấc mèo như thường; `SeekRidesPress` giữ trò trong lúc nhấn chưa thành kéo). Bụi cây khác là cửa sổ riêng (`PetBushArt.cs`) giữ dưới mèo; click hộp gọi `HideSeekClickThing` trong `EndToyDrag`, nhấc hộp (`StartToyDrag`) kết thúc trò. Câu nói và bong bóng suy nghĩ bị chặn khi mèo đang nấp (`CatHiding`).
 - Với 3 chỗ và chỗ sai mờ đi, lượt đoán thứ 3 luôn trúng; "hết 3 lượt" chỉ là giới hạn trên. Muốn khó hơn có thể giảm còn 2 lượt (chưa đổi).
 - Test: `HideSeekTests` (Core), `HideSeekChecks` (UiChecks: đếm, khói, nấp, ló tai, đoán sai/đúng, nhấn mèo, 60 giây, Esc, click ngoài/trên chỗ nấp, ngủ, Pause, sàn hẹp). Đã soát ảnh render bụi cây, mèo nấp (không lộ gì), tai ló lên trên nền sáng/tối, mèo bật ra; **chưa soát ảnh mèo nấp trong thùng carton**, chưa xem desktop thật, chưa bấm chuột thật, chưa thử DPI khác, nhiều màn hình, FPS; tiếng Nhật chưa ai duyệt.
+
+## Luật M3 Bắt đom đóm (duyệt 12/11)
+
+Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng mèo", lệnh người dùng như "Làm ngay", không đánh thức mèo ngủ, chờ tối đa 30 giây, chặn hành vi/cảm xúc tự động khi chơi, Pause đóng băng, Esc/click ra ngoài/chọn lại dòng menu/click hoặc kéo mèo thoát, toàn màn hình/trận/rút màn hình/đổi DPI kết thúc không tính ván, `toy_started` một lần mỗi ván, trạng thái `MiniGame` cho Python). Dưới đây chỉ ghi phần riêng.
+
+### Vùng chơi
+
+- Vùng khoảng 360×220 DIP quanh mèo, phía trên sàn hoặc mép cửa sổ mèo đang đứng, cùng màn hình; không đè vùng đất nông trại, xe hàng, đồ chơi. Không đủ chỗ thì mèo đi ra chỗ rộng trước (tối đa 5 giây); vẫn không đủ thì báo "Không đủ chỗ" và không bắt đầu.
+- Đom đóm vẽ trong cửa sổ riêng, đặt dưới cửa sổ mèo. Chỉ đốm sáng nhận click (vùng bấm khoảng 28 DIP cho dễ trúng), chỗ trống click xuyên qua. Đom đóm không bay vào khung thân mèo, nên click mèo và click đom đóm không lẫn nhau.
+- Hình đom đóm dựa trên đom đóm của overlay thời tiết nhưng to và ấm màu hơn để phân biệt; vector theo docs/DESIGN-SYSTEM.md, rõ trên nền sáng/tối.
+
+### Một ván
+
+1. Nhãn "Bắt đom đóm nào!", đếm 3… 2… 1 (khoảng 2 giây) rồi đom đóm bay ra.
+2. Ván dài **30 giây**, đồng hồ hiện trên nhãn. Luôn có 3–5 đốm bay lượn chậm theo đường cong; mỗi đốm sống 4–6 giây, nhấp nháy rồi tự tắt nếu không ai bắt. Từ giây 15 đốm bay nhanh hơn một chút.
+3. **Người dùng click trúng:** đốm tan thành hạt sáng, nhãn "+1".
+4. **Mèo cũng bắt:** khoảng mỗi 6–8 giây mèo nhắm một đốm bay thấp gần mình và vồ một cú ngắn tại chỗ (nhảy lên không quá ~60 DIP, đáp lại đúng sàn cũ); tối đa 4 đốm mỗi ván, có thể vồ hụt. Điểm là **điểm chung** "Cùng bắt được n đốm": đốm mèo bắt cũng tính.
+5. Hết 30 giây: đốm còn lại bay đi, mèo ngồi nhìn theo; nhãn tổng kết số người dùng bắt, số mèo bắt, và "Kỷ lục mới!" nếu vượt kỷ lục.
+- Không có đốm vàng hay đốm đặc biệt (người dùng chọn 12/11).
+
+### Click, kéo và các luật bất biến
+
+- Click hoặc kéo mèo: trò kết thúc; kéo quá ~6 DIP vẫn nhấc mèo như thường (pickup mượt, dangling, ném có velocity). Click phải: trò kết thúc, mở menu.
+- Cú vồ là hoạt cảnh của trò, không phải hành vi tự động; không Dizzy, Bonk hay cảm xúc. Vồ trên mép cửa sổ không rơi khỏi mép.
+- Đom đóm không physics, không chạm mèo, không lưu, hết ván là mất.
+
+### Lưu và Python
+
+- `preferences.json` thêm kỷ lục Bắt đom đóm (tổng số đốm cao nhất một ván) và số ván đã chơi; file cũ đọc được. Thẻ "Mini-game" trong Nhật ký thêm một dòng; dòng menu hiện "Bắt đom đóm · kỷ lục n".
+- Python như M1: `toy_started` một lần, trạng thái `MiniGame`, không câu nói mới. Không âm thanh mới (dùng lại cue có sẵn, có cooldown).
+
+### Khi code cần kiểm tra
+
+- Luật thuần có unit test: sinh đốm (3–5 đốm, tránh khung mèo), tuổi đốm, tốc độ sau giây 15, nhịp mèo vồ và tối đa 4, kỷ lục.
+- UiChecks: 30 giây, click trúng/trượt, Esc, click ra ngoài, click/kéo mèo, ngủ, Pause, Quiet, sàn hẹp; sleep lock, wake, drag, throw, emotion priority, local fallback.
+- Soát render đốm, hạt tan, mèo vồ hai hướng mặt, trên sàn và trên mép cửa sổ, nền sáng/tối; chữ vi/en/ja; đo FPS khi có 5 đốm và hạt tan.
+
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
+
+Bắt đom đóm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo được vồ ngắn tại chỗ theo đom đóm (không quá ~60 DIP, đáp lại đúng sàn cũ, tối đa 4 đốm); app được vẽ tạm đom đóm không physics, không chạm mèo, chỉ có trong lúc chơi.

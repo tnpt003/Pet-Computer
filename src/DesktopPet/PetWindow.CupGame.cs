@@ -26,7 +26,7 @@ public sealed partial class PetWindow
     private CupGameArt? cupArt;
     private double cupTime, cupGameTime, cupRowLeft, cupGround, cupSpot, cupScale;
     private int cupRounds, cupSide = 1, cupChosen = -1;
-    private bool cupBestRaised, cupSuspended, cupKeysDown;
+    private bool cupBestRaised, cupSuspended;
     private string? cupMonitor;
     // Replaceable for UI checks: whether a key (virtual-key code) is down now.
     private Func<int, bool>? keyProbe = null;
@@ -39,23 +39,19 @@ public sealed partial class PetWindow
     public int CupGameSwaps => cupShuffle.SwapCount;
     public int CupGameSlotOf(int cup) => cupShuffle.SlotOf(cup);
 
-    // Pause, a battle or its screens, a fullscreen app: no game (the row is greyed out).
-    private bool CupGameBlocked => closed || Blocking(AutoBlock.Paused | AutoBlock.Fullscreen | AutoBlock.AnyBattle) != AutoBlock.None;
-    public bool CupGameMenuEnabled => CupGameActive || !CupGameBlocked;
+    private bool CupGameBlocked => MiniGameBlocked;
+    // One mini-game at a time: the row is greyed out while another runs.
+    public bool CupGameMenuEnabled => CupGameActive || (!MiniGameBlocked && !HideSeekActive);
     public string CupGameMenuLabel => preferences.CupGameBest > 0
         ? LF($"Úp cốc tìm cá · kỷ lục {preferences.CupGameBest}", $"Find the fish · best {preferences.CupGameBest}")
         : L("Úp cốc tìm cá", "Find the fish");
-    public string CupGameMenuNote => CupGameBlocked && !CupGameActive
-        ? paused ? L("Mèo đang tạm dừng.", "The pet is paused.")
-        : context.Fullscreen ? L("Đang có ứng dụng toàn màn hình.", "A fullscreen app is open.")
-        : L("Đang ở Battle Mode.", "Battle Mode is open.")
-        : "";
+    public string CupGameMenuNote => CupGameActive ? "" : MiniGameMenuNote;
 
     // The menu row: a game now (or once the cat is free); the same row again ends it. False when it may not.
     public bool ToggleCupGame()
     {
         if (CupGameActive) { StopCupGame(count: true); return true; }
-        if (CupGameBlocked) return false;
+        if (CupGameBlocked || HideSeekActive) return false;
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         StopCall(); StopLesson();
         cupStep = CupStep.Wait; cupTime = 0;
@@ -90,7 +86,7 @@ public sealed partial class PetWindow
         cupGameTime = 0; cupTime = 0;
         cupMonitor = CurrentMonitor().DeviceName; cupScale = scale;
         cupGround = pet.Y + settings.Height;
-        cupKeysDown = AnyCupKeyDown(); // The click that chose the menu row does not end it.
+        ResetMiniGameKeys(); // The click that chose the menu row does not end it.
         cupShuffle.Reset();
         cupStep = CupStep.Room;
         pet.Emotions.SetSuspended(true); cupSuspended = true; // No automatic emotion while playing.
@@ -113,18 +109,10 @@ public sealed partial class PetWindow
         if (CurrentMonitor().DeviceName != cupMonitor || Math.Abs(scale - cupScale) > 0.001 ||
             (pet.Grounded && !dragging && Math.Abs(pet.Y + settings.Height - cupGround) > 3)) { StopCupGame(count: false); return; }
         if ((cupGameTime += dt) > CupGameRules.GameSeconds) { StopCupGame(count: true); return; }
-        bool down = AnyCupKeyDown();
-        if (down && !cupKeysDown)
-        {
-            if (CupKeyDown(0x1B)) { StopCupGame(count: true); return; } // Esc.
-            if ((CupKeyDown(0x01) || CupKeyDown(0x02)) && !OverCups(CursorPosition())) { StopCupGame(count: true); return; } // A click elsewhere.
-        }
-        cupKeysDown = down;
+        var (esc, click) = MiniGameKeyPresses();
+        if (esc || (click && !OverCups(CursorPosition()))) { StopCupGame(count: true); return; } // Esc, or a click elsewhere.
         PlaceCups();
     }
-
-    private bool CupKeyDown(int key) => keyProbe?.Invoke(key) ?? (GetAsyncKeyState(key) & 0x8000) != 0;
-    private bool AnyCupKeyDown() => CupKeyDown(0x1B) || CupKeyDown(0x01) || CupKeyDown(0x02);
 
     private bool OverCups(Point p)
     {

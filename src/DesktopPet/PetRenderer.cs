@@ -158,7 +158,17 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         {
             dc.PushTransform(new RotateTransform(pet.Pickup.Angle, PickupAnimation.AnchorX, PickupAnimation.AnchorY));
         }
+        bool sunk = HideSink > 0 && !p.PickedUp;
+        if (sunk)
+        {
+            // Only what is over the cover can show (the ear tips): nothing below the floor, no tail or whisker past its sides.
+            dc.PushClip(new RectangleGeometry(new Rect(56 - HideHalf, -PickupAnimation.Padding, 2 * HideHalf, 112 + PickupAnimation.Padding)));
+            dc.PushTransform(new TranslateTransform(0, HideSink));
+        }
         DrawCat(dc, p);
+        if (sunk) { dc.Pop(); dc.Pop(); }
+        if (!p.PickedUp && HideCover == 1) BushArt.Draw(dc, 56, 112, HideRustle);
+        else if (!p.PickedUp && HideCover == 2) ToyBoxArt.DrawFront(dc, 56, 112);
         // The landing's dust stays where the feet touched down while the cat bounces on.
         if (pet.Motion.Ready) LandingDust.Draw(dc, pet.Motion.Landing, 56 + pet.Motion.Landing.X - pet.X, 107 + pet.Motion.Landing.Y - pet.Y, 26, LandingDustScale);
         if (p.PickedUp)
@@ -229,6 +239,10 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     public bool CarryBall;
     // The cup game (PetWindow.CupGame.cs): the little dried fish held in the mouth.
     public bool CarryFish;
+    // Hide-and-seek (PetWindow.HideSeek.cs): how far the cat is sunk behind its cover (cut at the floor), the
+    // cover drawn over it (1: a bush, 2: the box's front), and a rustle of that bush (seconds; negative: still).
+    public double HideSink, HideRustle = -1, HideHalf = 38;
+    public int HideCover;
     // A high five with the cursor by the raised paw: a little spark (living corner M5).
     public bool TrickSpark;
 

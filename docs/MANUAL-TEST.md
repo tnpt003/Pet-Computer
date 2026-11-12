@@ -1663,3 +1663,12 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Đang chơi mở app toàn màn hình hoặc kéo mèo sang màn hình khác/đổi DPI: trò dừng, không tính ván. Pause giữa chừng: cốc đứng yên, bỏ Pause chơi tiếp.
 - [ ] Trong lúc chơi mèo không tự đi, không ngủ, không đổi cảm xúc; xong trò mèo về bình thường. Mở lại app: kỷ lục còn trên dòng menu và trong Nhật ký (thẻ "Mini-game", cả khi tắt AI).
 - [ ] Mèo đứng trên mép cửa sổ: cốc bày trên mép đó; mép quá hẹp hoặc kẹt giữa vùng đất nông trại/đồ chơi: mèo đi ra chỗ rộng, không có thì báo "Không đủ chỗ bày cốc". Thử nền sáng/tối, DPI 125–150%, đo FPS lúc tráo nhanh nhất.
+
+## Mini-game M2 — Trốn tìm (12/11, chỉ bản 1.6)
+- [ ] "Chơi cùng mèo" → "Trốn tìm" (menu chuột phải và khay): nhãn "Nhắm mắt nhé! 3… 2… 1…" ở chỗ mèo, bụi cây mọc lên, mèo biến trong làn khói. Dòng "Úp cốc tìm cá" mờ trong lúc chơi.
+- [ ] Mèo nấp: nhìn không thấy tai, đuôi, ria; vài giây một lần chóp tai ló lên rồi thụt xuống; bụi cây khác thỉnh thoảng rung để đánh lừa. Không có câu nói hay bong bóng nào trên chỗ mèo nấp.
+- [ ] Bày thùng carton trên sàn rồi chơi vài ván: hộp là một chỗ nấp, mèo nấp trong hộp chỉ ló chóp tai; click hộp là một lượt đoán; nhấc hộp lên thì trò kết thúc, mèo hiện lại.
+- [ ] Click sai chỗ: "Không có ở đây", chỗ đó mờ đi. Click đúng chỗ (hoặc vào tai đang ló): mèo bật ra, "Tìm thấy rồi!" (lượt đầu thêm "Ngay lượt đầu!"), nhún nhảy rồi bụi cây tàn. Để 60 giây không tìm: "Ở đây nè!".
+- [ ] Nhấn giữ rồi kéo mèo đang nấp: mèo được nhấc mượt, dangling, ném như thường; trò kết thúc. Click phải mèo: trò kết thúc, mở menu.
+- [ ] Esc, click ra ngoài, chọn lại dòng menu: dừng. Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức; Pause đóng băng; app toàn màn hình, đổi màn hình/DPI: dừng. Mèo đang trên mép cửa sổ: vẫn nấp trên sàn.
+- [ ] Nhật ký → thẻ "Mini-game" có dòng Trốn tìm; dòng menu ghi số lần tìm thấy. Nền sáng/tối, DPI 125–150%, đo FPS.

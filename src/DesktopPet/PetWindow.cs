@@ -315,7 +315,8 @@ public sealed partial class PetWindow : Window
         if (!BattleFreezesPet && battle?.ClickMotherWrap(pet.X + scarfPoint.X, battleArea.Bottom - 2 - (pet.Y + scarfPoint.Y)) == true) { RequestBattleRedraw(); e.Handled = true; return; }
         if (!BattleFreezesPet && battle?.ClickZipLock() == true) { PlayBattleSound(); ShowBattleBanners(); battle.ClearEvents(); e.Handled = true; return; }
         if (BattleFreezesPet || CatTeleporting || BattleStunHolds) { e.Handled = true; return; }
-        CancelFeatureActivity();
+        // Hide-and-seek: a press on the hidden cat is the right guess and the game goes on (PetWindow.HideSeek.cs).
+        if (!HideSeekPressCat()) CancelFeatureActivity();
         behavior.WakeByClick(pet);
         pet.Emotions.Attention(click: true);
         if (!CaptureMouse()) { Interact("left_clicked"); return; }
@@ -647,7 +648,7 @@ public sealed partial class PetWindow : Window
         double requestedAt = clock.Elapsed.TotalSeconds;
         string requestedLanguage = preferences.Language;
         // A mini-game owns the cat: Python sees it as busy (BUSY_STATES), not as sitting about.
-        var observation = new PetObservation(CupOwnsMovement ? "MiniGame" : pet.Action.ToString(), pet.Grounded,
+        var observation = new PetObservation(MiniGameOwnsMovement ? "MiniGame" : pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Reported.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),
@@ -679,7 +680,7 @@ public sealed partial class PetWindow : Window
             {
                 aiEnergy = decision.Energy;
                 pet.Emotions.ApplyAiHint(decision.Emotion);
-                if (!pet.Speech.Visible && MayAct(AutoKind.Thought) && pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet)) NoteThought(pet.Thought.Kind);
+                if (!pet.Speech.Visible && !CatHiding && MayAct(AutoKind.Thought) && pet.Thought.TryShow(PetThought.Parse(decision.Thought), pet)) NoteThought(pet.Thought.Kind);
                 if (!FeatureOwnsMovement()) behavior.TryApply(pet, decision);
             }
         }

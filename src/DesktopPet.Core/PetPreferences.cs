@@ -88,6 +88,9 @@ public sealed class PetPreferences
     // Mini-games (docs/MINI-GAMES.md → M1): the longest run of right cups in the cup game, and how many games were played.
     public int CupGameBest { get; set; }
     public int CupGamePlays { get; set; }
+    // Hide-and-seek (docs/MINI-GAMES.md → M2): games where the user found the cat, and how many of them with the first guess.
+    public int HideSeekFound { get; set; }
+    public int HideSeekFirstTry { get; set; }
     // Living corner M2 (docs/LIVING-CORNER.md): the plant pot's points (it grows, never wilts) and when the last one came.
     public int PlantPoints { get; set; }
     public DateTime? PlantPointAt { get; set; }
@@ -150,6 +153,8 @@ public sealed class PetPreferences
         p.ToyPassBest = Math.Clamp(p.ToyPassBest, 0, 9999);
         p.CupGameBest = Math.Clamp(p.CupGameBest, 0, CupGameRules.MaxRounds);
         p.CupGamePlays = Math.Clamp(p.CupGamePlays, 0, 999999);
+        p.HideSeekFound = Math.Clamp(p.HideSeekFound, 0, 999999);
+        p.HideSeekFirstTry = Math.Clamp(p.HideSeekFirstTry, 0, p.HideSeekFound);
         p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
         p.PlantPoints = Math.Clamp(p.PlantPoints, 0, PlantRules.MaxPoints);
         TrickRules.Normalize(p);

@@ -96,10 +96,12 @@ public sealed partial class PetWindow
     // Mini-games (docs/MINI-GAMES.md): kept by C#, so shown with the AI off too; nothing until a first game.
     private void AddMiniGameCard()
     {
-        if (preferences.CupGamePlays <= 0 && preferences.CupGameBest <= 0) return;
+        if (preferences.CupGamePlays <= 0 && preferences.CupGameBest <= 0 && preferences.HideSeekFound <= 0) return;
         var card = AddCard(L("Mini-game", "Mini-games"), PetMotif.Fish);
         card.Children.Add(TextLine(LF($"Úp cốc tìm cá: kỷ lục {preferences.CupGameBest} vòng · đã chơi {preferences.CupGamePlays} ván",
             $"Find the fish: best {preferences.CupGameBest} in a row · {preferences.CupGamePlays} game{(preferences.CupGamePlays == 1 ? "" : "s")}")));
+        card.Children.Add(TextLine(LF($"Trốn tìm: tìm thấy {preferences.HideSeekFound} ván · {preferences.HideSeekFirstTry} lần ngay lượt đầu",
+            $"Hide and seek: found {preferences.HideSeekFound} times · {preferences.HideSeekFirstTry} on the first guess")));
     }
 
     // What C# itself knows about the farm, so it does not need the AI.

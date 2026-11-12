@@ -301,7 +301,7 @@ public sealed partial class PetWindow
         if (dragging || pressPending || pet.Action == PetAction.Dragging) return L("Mèo đang bị kéo.", "The pet is being dragged.");
         if (!pet.Grounded || PetActionRules.IsInFlight(pet.Action) || pet.Action == PetAction.Climbing) return L("Mèo đang bay hoặc đang leo.", "The pet is in the air or climbing.");
         if (pet.LedgeId != 0) return L("Mèo đang đứng trên cửa sổ, hãy đưa mèo xuống sàn.", "The pet is on a window; put it on the floor first.");
-        if (toyWindow != null || laserWindow != null || CupGameActive || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0)
+        if (toyWindow != null || laserWindow != null || MiniGameActive || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0)
             return L("Mèo đang chơi hoặc đang ăn.", "The pet is playing or eating.");
         if (pet.Emotions.BlocksAutonomy) return L("Mèo đang phản ứng, thử lại sau giây lát.", "The pet is reacting; try again in a moment.");
         return null;

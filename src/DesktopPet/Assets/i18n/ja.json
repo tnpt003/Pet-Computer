@@ -1730,5 +1730,17 @@
   "{0} in a row · New best!": "{0}連続 · 新記録！",
   "{0} in a row": "{0}連続",
   "Mini-games": "ミニゲーム",
-  "Find the fish: best {0} in a row · {1} game{2}": "お魚さがし：最高 {0}連続 · {1}回プレイ"
+  "Find the fish: best {0} in a row · {1} game{2}": "お魚さがし：最高 {0}連続 · {1}回プレイ",
+  "Stop Hide and seek": "かくれんぼをやめる",
+  "Hide and seek: found {0} times · {1} on the first guess": "かくれんぼ：{0}回見つけた · 一発で{1}回",
+  "Hide and seek · found {0}": "かくれんぼ · {0}回発見",
+  "Hide and seek": "かくれんぼ",
+  "No room to hide": "かくれる場所がない",
+  "Close your eyes! 3…": "目をつぶって！3…",
+  "Close your eyes! {0}…": "目をつぶって！{0}…",
+  "Where is the cat hiding?": "ねこはどこにかくれた？",
+  "Not here": "ここじゃない",
+  "Found! First try!": "見つけた！一発で！",
+  "Found!": "見つけた！",
+  "Here I am!": "ここだよ！"
 }

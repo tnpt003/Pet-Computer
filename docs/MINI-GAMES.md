@@ -5,7 +5,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
-| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Luật đã duyệt 12/11, đang code |
+| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
@@ -116,3 +116,12 @@ Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng m
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Trốn tìm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo được "biến mất trong làn khói" rồi hiện ở chỗ nấp (một lần dịch chuyển trong cùng sàn màn hình); app được vẽ tạm bụi cây không physics chỉ trong lúc chơi; cửa sổ hộp, chậu, trụ được nâng lên trên mèo trong lúc nấp. Click vào mèo đang nấp là lượt đoán đúng; kéo quá ~6 DIP vẫn nhấc mèo như thường.
+
+### Cách code M2 (12/11)
+
+- **Người dùng chọn 12/11 khi bắt đầu code:** chỗ nấp chỉ là thùng carton (khi đang bày trên sàn màn hình đó) và bụi cây; chậu cây (rộng 50 DIP) và trụ cào (cột ~24 DIP) hẹp hơn đầu mèo (~64 DIP) nên không dùng.
+- Core `PetHideSeek.cs`: `HideSeekRules` (số liệu, `Place` chọn 3 chỗ cách nhau ≥150 DIP trong tầm 700 DIP quanh mèo, tránh vùng đất/xe hàng/đồ chơi khác, hộp là một chỗ khi có; `Sink` độ hạ mèo theo chiều cao chỗ nấp; `RecordFound`). `preferences.json` thêm `HideSeekFound`, `HideSeekFirstTry`.
+- Phần dùng chung `PetWindow.MiniGames.cs`: một mini-game một lúc (dòng kia mờ), `MiniGameBlocked`, Esc/click ngoài (`MiniGameKeyPresses`, Úp cốc cũng dùng), nhãn đặt tự do `ShowMiniLabel` (không đặt trên đầu mèo đang nấp).
+- `PetWindow.HideSeek.cs`: Đếm 3 giây (nhãn tại chỗ cũ của mèo), mèo biến bằng hiệu ứng khói của "Gọi mèo về màn hình chính" (`TeleportPop`/`TeleportPuff`) rồi đặt thẳng sau chỗ nấp trên sàn. Mèo nấp: `PetRenderer.HideSink` hạ mèo, cắt ở sàn và theo bề ngang chỗ nấp (`HideHalf`, nên đuôi/ria không lộ), `HideCover` vẽ bụi cây hoặc mặt trước hộp đè lên mèo ngay trong cửa sổ mèo: click vào đó là click mèo = đoán đúng (`HideSeekPressCat` trong `BeginDrag`, cú nhấn vẫn đi tiếp, kéo quá ~6 DIP thì trò kết thúc và nhấc mèo như thường; `SeekRidesPress` giữ trò trong lúc nhấn chưa thành kéo). Bụi cây khác là cửa sổ riêng (`PetBushArt.cs`) giữ dưới mèo; click hộp gọi `HideSeekClickThing` trong `EndToyDrag`, nhấc hộp (`StartToyDrag`) kết thúc trò. Câu nói và bong bóng suy nghĩ bị chặn khi mèo đang nấp (`CatHiding`).
+- Với 3 chỗ và chỗ sai mờ đi, lượt đoán thứ 3 luôn trúng; "hết 3 lượt" chỉ là giới hạn trên. Muốn khó hơn có thể giảm còn 2 lượt (chưa đổi).
+- Test: `HideSeekTests` (Core), `HideSeekChecks` (UiChecks: đếm, khói, nấp, ló tai, đoán sai/đúng, nhấn mèo, 60 giây, Esc, click ngoài/trên chỗ nấp, ngủ, Pause, sàn hẹp). Đã soát ảnh render bụi cây, mèo nấp (không lộ gì), tai ló lên trên nền sáng/tối, mèo bật ra; **chưa soát ảnh mèo nấp trong thùng carton**, chưa xem desktop thật, chưa bấm chuột thật, chưa thử DPI khác, nhiều màn hình, FPS; tiếng Nhật chưa ai duyệt.

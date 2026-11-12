@@ -362,6 +362,7 @@ public sealed partial class PetWindow
 
     private void StartToyDrag(DesktopThing thing)
     {
+        HideSeekThingPicked(thing); // Picking up the box ends hide-and-seek.
         thing.Press = false;
         thing.Held = true;
         thing.Glide = null;
@@ -400,6 +401,7 @@ public sealed partial class PetWindow
             thing.Press = false;
             thing.Surface?.ReleaseMouseCapture();
             if (!letGo || paused) return;
+            if (HideSeekClickThing(thing)) { thing.Motion.Wobble(); return; } // A guess in hide-and-seek (PetWindow.HideSeek.cs).
             // A click. Nothing here reaches the cat: not awake, not asleep.
             if (thing == toyBasket) OpenToyBasketMenu();
             else if (thing.Id is DesktopToyRules.Box or DesktopToyRules.Wand or DesktopToyRules.Post or DesktopToyRules.Plant) { thing.Motion.Wobble(); PlayPetSound("ball_tap"); }

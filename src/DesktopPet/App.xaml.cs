@@ -84,6 +84,8 @@ public partial class App : Application
         var games = new Forms.ToolStripMenuItem();
         var cups = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleCupGame());
         games.DropDownItems.Add(cups);
+        var seek = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleHideSeek());
+        games.DropDownItems.Add(seek);
         menu.Items.Add(games);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
@@ -104,6 +106,7 @@ public partial class App : Application
         toys.Image = PetTrayMenuStyle.Icon(PetUi.Ball);
         games.Image = PetTrayMenuStyle.Icon(PetUi.Play);
         cups.Image = PetTrayMenuStyle.Icon(PetUi.Treat);
+        seek.Image = PetTrayMenuStyle.Icon(PetUi.Plant);
         checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
         exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
         PetTrayMenuStyle.Apply(menu);
@@ -122,8 +125,12 @@ public partial class App : Application
             toys.Enabled = pet.ToyBasketMenuEnabled;
             games.Text = pet.L("Chơi cùng mèo", "Play with the cat");
             cups.Text = pet.CupGameActive ? pet.L("Dừng Úp cốc tìm cá", "Stop Find the fish") : pet.CupGameMenuLabel;
-            cups.Enabled = games.Enabled = pet.CupGameMenuEnabled;
+            cups.Enabled = pet.CupGameMenuEnabled;
             cups.ToolTipText = pet.CupGameMenuNote;
+            seek.Text = pet.HideSeekActive ? pet.L("Dừng Trốn tìm", "Stop Hide and seek") : pet.HideSeekMenuLabel;
+            seek.Enabled = pet.HideSeekMenuEnabled;
+            seek.ToolTipText = pet.HideSeekMenuNote;
+            games.Enabled = cups.Enabled || seek.Enabled;
             exit.Text = pet.L("Thoát", "Exit");
             checkUpdates.Text = pet.L("Kiểm tra cập nhật", "Check for updates");
             applyUpdate.Text = pet.LF($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");

@@ -21,7 +21,8 @@ public sealed partial class PetWindow
     private PetLearned? aiLearned;
 
     // Break reminders were enabled on their own, so they speak even with chatter off.
-    private bool SpeechAllowed(string id) => !closed && MayAct(AutoKind.Speech) &&
+    // A hidden cat (hide-and-seek) says nothing: a bubble would give it away.
+    private bool SpeechAllowed(string id) => !closed && !CatHiding && MayAct(AutoKind.Speech) &&
         (PetBreaks.IsBreakLine(id) ? breaks.Due : PetFocus.IsFocusLine(id) || (preferences.Speech && !focus.Focusing));
 
     private void ShowSpeech(PetLine line)

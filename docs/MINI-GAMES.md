@@ -4,7 +4,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Bản nháp luật, chờ duyệt |
+| M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Luật đã duyệt 12/11, đang code |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Chưa viết luật |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
@@ -19,7 +19,7 @@ Quyết định chung (người dùng đồng ý 12/11):
 - Không vật phẩm hay chiến lợi phẩm trong đợt này (để Đợt 4).
 - Để sau: đường bóng, đường đua, dẫn đường bằng cần câu, dọn đồ cùng nhau, chọn đúng món, bật nhảy bắt đồ, chơi theo nhịp, mèo thám tử, vali, đường hầm, giao bưu kiện, tìm bạn trốn. Đã có ở đợt trước: ném nhặt, chuyền bóng (Đợt 1), đập tay (Đợt 2 M5), vồ đồ từ hộp (Đợt 2 M2).
 
-## Luật M1 Nền mini-game và Úp cốc tìm cá (bản nháp 12/11, chờ duyệt)
+## Luật M1 Nền mini-game và Úp cốc tìm cá (duyệt 12/11)
 
 ### Mở và thoát trò chơi
 
@@ -59,6 +59,6 @@ Quyết định chung (người dùng đồng ý 12/11):
 - Tráo giữ đúng vị trí cá (luật thuần có unit test), tốc độ đúng từng vòng, tối đa 10 vòng; kỷ lục lưu qua lần mở lại.
 - Soát render cốc, cá, mèo ngửi/hất cốc/ngậm cá, hai hướng mặt, nền sáng/tối; chữ menu, nhãn vi/en/ja. Đo FPS khi tráo nhanh nhất.
 
-### Bổ sung ngoại lệ (chờ duyệt cùng luật)
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Mini-game do người dùng mở từ "Chơi cùng mèo" (menu chuột phải và khay) là lệnh người dùng như "Làm ngay": chạy cả Quiet, Giờ tập trung và wake cooldown; không đánh thức mèo ngủ (chờ tự thức tối đa 30 s); trong lúc chơi chặn hành vi tự động, lệnh Python và cảm xúc tự động; phản ứng thắng/thua là hoạt cảnh, không phải cảm xúc; đồ trò chơi vẽ trong cửa sổ riêng, vùng trống click xuyên qua, không chạm mèo; Pause đóng băng, fullscreen/trận/kéo mèo kết thúc.

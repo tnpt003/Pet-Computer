@@ -8,7 +8,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Đã có code, còn test tay |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Đã có code, còn test tay |
-| M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
+| M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Đã duyệt luật, chưa code |
 
 Quyết định chung (người dùng đồng ý 12/11):
 
@@ -226,3 +226,59 @@ App được tự hiện khách (bướm giấy, slime hiền) không physics, k
 - **Quyết định khi code (chờ người dùng xem):** luật ghi slime "nhún chào rồi bò tiếp… ra mép bên kia", nhưng khi mèo đứng dưới sàn thì bò tiếp sẽ xuyên qua thân mèo, trái luật "không chạm mèo". Code cho slime quay lại đi ra mép nó đến khi mèo ở sàn; mèo ở trên mép cửa sổ thì slime bò tiếp sang mép bên kia. Mèo bị thả/ném chắn đường thì slime dừng chào hoặc quay đi, không bao giờ bò vào mèo.
 - Vẽ `PetGuestArt.cs`: bướm giấy nhìn chính diện (cánh trên Rose nhạt, cánh dưới Lilac nhạt, nếp gấp giấy, thân và râu ArtInk), slime vòm bạc hà có mầm lá, má hồng, mắt cười khi chào; nét ArtInk 1,8. Mỗi khách một cửa sổ nhỏ di chuyển theo, giữ dưới cửa sổ mèo; chỉ đĩa gần trong suốt quanh khách nhận click.
 - Test: `GuestTests` (Core), `GuestChecks` (UiChecks: hẹn giờ và thử lại khi ngủ, một lượt bướm có đi theo và vồ, một lượt slime không đi theo, click khách, kéo mèo, cảm xúc, ngủ, Pause, Quiet, Giờ tập trung, toàn màn hình, mini-game, công tắc, mép cửa sổ); `AutonomyTests` thêm `GuestVisit`.
+
+## Luật M5 Săn kho báu (duyệt 12/11)
+
+Hai phần: **mèo tìm thấy bản đồ** là sự kiện tự xảy ra (như M4); **đi săn** là lệnh người dùng (như mini-game M1–M3). Mèo không bao giờ tự bắt đầu một ván. Người dùng chọn 12/11: hẹn giờ riêng 60–120 phút, tối đa 3 bản đồ/ngày; ván không thua; mẩu chuyện viết lúc code rồi người dùng duyệt sau.
+
+### Mèo tìm thấy bản đồ (tự động)
+
+- Hẹn giờ riêng 60–120 phút, chỉ trong RAM, lần đầu tính từ lúc mở app; tối đa 3 bản đồ mỗi ngày (theo ngày giờ máy, đếm lưu ở C#). Bị chặn thì 2 phút sau thử lại.
+- Chặn như khách M4: mèo ngủ (kể cả away nap) hoặc waking, Quiet, Giờ tập trung, app toàn màn hình, trận hoặc bảng chiến đấu, Pause, người dùng vắng, đang chơi mini-game, khách đang ghé, mèo bận (bị kéo, bay, phản ứng), cảm xúc ưu tiên cao, tính năng khác đang giữ mèo, wake cooldown.
+- Mèo ngồi xuống, ngậm một mẩu giấy cuộn có dấu X, ngước nhìn khoảng 2 giây (hoạt cảnh, không phải cảm xúc), rồi làm việc như thường; trên đầu mèo có biểu tượng bản đồ nhỏ.
+- Bản đồ giữ 10 phút (Pause đóng băng thời gian này); bỏ qua thì mờ dần rồi mất, không mất gì. Thoát app thì bản đồ mất (không lưu).
+- Công tắc "Săn kho báu" trong Cài đặt → Thói quen, mặc định bật; tắt thì bản đồ đang có mất ngay.
+
+### Bắt đầu và thoát (lệnh người dùng)
+
+- Bắt đầu bằng click biểu tượng bản đồ, hoặc dòng "Săn kho báu" trong "Chơi cùng mèo" (menu chuột phải và menu khay). Chưa có bản đồ thì dòng mờ kèm "chưa có bản đồ"; các lý do mờ khác như M1. Click biểu tượng không tính là click mèo.
+- Luật mở/thoát chung của M1: chạy cả Quiet, Giờ tập trung, wake cooldown; không đánh thức mèo (chờ tự thức tối đa 30 giây); Esc, chọn lại dòng menu, click trái/kéo mèo thoát; fullscreen, vào trận, rút màn hình, đổi DPI kết thúc ngay. Click ra chỗ trống không thoát (vùng chơi rộng, dễ bấm nhầm).
+- Một ván tối đa khoảng 3 phút. Thoát giữa chừng thì bản đồ còn tới hết 10 phút; săn lại thì dấu chân đặt lại từ đầu.
+- Trong ván, hành vi tự động, lệnh Python, cảm xúc tự động và khách M4 không chen vào. Mỗi ván gửi `toy_started` sẵn có một lần.
+
+### Ba dấu chân ẩn
+
+- Ba dấu chân mèo đặt ngẫu nhiên cùng màn hình với mèo, trong khoảng ±400 DIP ngang quanh mèo, từ sàn lên tối đa 300 DIP, cách nhau ≥ 80 DIP, trong vùng làm việc; không đè lên mèo, vùng đất nông trại, xe hàng, đồ chơi, đồ góc sống.
+- Dấu chân rất mờ (khoảng 20 % độ đậm); con trỏ tới gần khoảng 50 DIP thì sáng dần. Click trúng thì dấu sáng hẳn, nhãn "1/3", "2/3" trên đầu mèo; mèo đi tới dưới dấu đó (trên đúng sàn/mép đang đứng, không nhảy khỏi mép) và đánh hơi khoảng 1 giây. Tìm theo thứ tự bất kỳ.
+- Gợi ý: 20 giây chưa tìm thêm dấu nào thì mèo quay đầu về dấu gần nhất; 40 giây thì mèo đi tới gần dấu đó và dấu sáng nhẹ hơn mức thường.
+- **Không thua**: hết 3 phút mà chưa đủ thì các dấu còn lại tự sáng lên, mèo dẫn tới rương như đã tìm đủ.
+- Dấu chân vẽ trong cửa sổ trong suốt riêng không chiếm focus; chỉ hình dấu chân (và rương) nhận click, chỗ trống click xuyên qua như M3/M4.
+
+### Mở rương
+
+- Đủ 3 dấu: rương nhỏ hiện kèm khói nhẹ trên sàn/mép mèo đang đứng, gần dấu cuối; mèo đi tới đứng cạnh (không chạm rương).
+- Click rương: mèo vỗ nắp một cái, nắp bật mở kèm hạt sáng, một tờ giấy bay lên hiện **một mẩu chuyện** 1–2 câu (vi/en/ja) trong nhãn PetUi khoảng 8 giây; click tờ giấy thì tắt sớm. Không click rương trong 30 giây thì mèo tự vỗ mở.
+- Khoảng 12 mẩu chuyện viết sẵn về những chuyến phiêu lưu nhỏ của mèo trên bàn làm việc, không lặp tới khi đã mở hết, hết thì xoay vòng lại. Mẩu chuyện viết lúc code, người dùng duyệt sau.
+- Không vật phẩm, xu, thưởng (để Đợt 4); không âm thanh mới. Phản ứng của mèo là hoạt cảnh, không phải cảm xúc.
+
+### Click, kéo và các luật bất biến
+
+- Dấu chân, rương, tờ giấy không physics, không chạm mèo, không đánh thức mèo, chỉ có trong ván, không lưu trên desktop.
+- Click/kéo mèo kết thúc ván; kéo quá ~6 DIP vẫn nhấc mèo như thường. Click phải mở menu như thường.
+- Pause đóng băng cả ván (đồng hồ 3 phút, gợi ý, rương). Mèo ngủ không thể xảy ra trong ván (hành vi tự động bị chặn); fullscreen, trận, đổi DPI, rút màn hình kết thúc không tính rương.
+
+### Lưu và Python
+
+- `preferences.json` thêm công tắc, số rương đã mở, danh sách id mẩu chuyện đã mở, số bản đồ hôm nay (kèm ngày); file cũ đọc được.
+- Nhật ký thêm thẻ "Kho báu": số rương đã mở và các mẩu chuyện đã mở, đọc lại được.
+- Python không biết về bản đồ, không giao thức mới; Python tắt thì vẫn có bản đồ và săn được.
+
+### Khi code cần kiểm tra
+
+- Luật thuần có unit test: hẹn giờ 60–120 phút, thử lại 2 phút, giới hạn 3/ngày và qua ngày, 10 phút giữ bản đồ (Pause đóng băng), điều kiện chặn, đặt 3 dấu (khoảng cách, vùng làm việc, tránh đồ/nông trại), mốc gợi ý 20/40 giây, hết 3 phút tự hoàn thành, chọn truyện không lặp, đọc file cũ.
+- UiChecks: tìm bản đồ và bị chặn khi ngủ/Quiet/fullscreen; bắt đầu từ biểu tượng và menu; một ván đủ, ván hết giờ; click/kéo mèo giữa ván; Esc; Pause; fullscreen; công tắc tắt; mép cửa sổ; rương tự mở; sleep lock, wake, drag, throw, emotion priority, local fallback.
+- Soát render mèo ngậm bản đồ, biểu tượng, dấu chân mờ/sáng, rương đóng/mở, tờ giấy, thẻ Nhật ký; nền sáng/tối; chữ vi/en/ja; đo FPS trong ván.
+
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
+
+Mèo được tự "tìm thấy bản đồ" (hoạt cảnh ngồi ngậm giấy ~2 s, biểu tượng trên đầu 10 phút), là hành vi tự động có công tắc; đi săn là lệnh người dùng theo ngoại lệ mini-game M1, dấu chân và rương vẽ trong cửa sổ riêng click xuyên qua, mèo đi tới dấu đã tìm và vỗ mở rương.

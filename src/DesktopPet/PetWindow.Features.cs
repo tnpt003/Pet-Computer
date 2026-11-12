@@ -286,7 +286,7 @@ public sealed partial class PetWindow
     }
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
-    private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
+    private bool FeatureOwnsMovement() => IntroOwnsMovement || CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
         laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement || TreasureFindOwnsMovement);
 
     // Nothing of the window's runs the cat: a fast cursor may startle it (PetEmotions.FreeToStartle).
@@ -499,5 +499,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); passWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { afterIntro = null; FinishIntro(); ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); passWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

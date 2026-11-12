@@ -45,6 +45,7 @@ public sealed partial class PetWindow
     public string? OpenBattleHub()
     {
         if (BattlePrepRefusal() is string reason) return reason;
+        SkipIntro(); // The startup show ends at once (PetWindow.Intro.cs).
         ReloadBattleData();
         if (battlePreparing) { CloseBattlePrep(); CloseBattleTutorial(); }
         CloseAdventureMap(); CloseExpeditionMap(); CloseBattleSummary(); CloseBattleNotice();

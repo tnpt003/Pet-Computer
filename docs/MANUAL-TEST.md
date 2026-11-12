@@ -1718,3 +1718,11 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Trưng bày đệm slime, chuột phải lên đệm: dòng đầu "Ngủ trên đệm" rồi đường kẻ, danh sách kỷ vật như cũ; trưng bày cúp thì không có dòng này. Làm ngay không còn "Ngủ trên đệm"/"Ngủ trong hộp".
 - [ ] Chơi bóng 45 giây: chuột phải lên quả bóng → "Cất bóng" cất được, mèo không bị chạm. Mở menu đồ vật không làm mèo quay nhìn, không tính vuốt/click.
 - [ ] Phiếu Chào mừng (xóa preferences trên máy thử, không phải máy thật) có dòng "Chuột phải vào đồ vật…", vi/en/ja không tràn. Câu tiếng Nhật mới chưa ai duyệt.
+
+## M2a Màn mở đầu (12/11, chỉ bản 1.6)
+- [ ] Thoát rồi mở lại mèo: cổng phép mở ở chỗ mèo được lưu, mèo bị quăng ra, đáp và nảy như thả thường; KHÔNG Angry/Dizzy/Surprised, không câu nói. Lưu mèo trên mép cửa sổ: cổng ở sàn cùng cột.
+- [ ] Biển nông trại trồi từ đất lên có rung, đất vụn, lấp lánh; ruộng/bếp/hồ/chuồng gà hiện như cũ. Kỷ vật, giỏ, đồ chơi hiện lần lượt có khói và lấp lánh; cả màn ~3 giây rồi không còn cửa sổ thừa.
+- [ ] Click mèo đang bay: hiện hết ngay và vẫn bắt/kéo được; click cổng: hiện hết ngay, KHÔNG mở Sảnh; chuột phải mèo: hiện hết và mở menu.
+- [ ] Mở app khi đang có app toàn màn hình: không có màn mở đầu. Mở EXE lần hai: không có. Khởi động cùng Windows và sau cập nhật: có.
+- [ ] Âm thanh: cue lấp lánh và tiếng đáp, tắt Âm thanh thì im. Người dùng mới (máy thử): phiếu Chào mừng hiện sau màn mở đầu.
+- [ ] Nhìn trên nền sáng/tối, DPI khác, đồ vật ở màn hình khác: khói/đất vụn đúng chỗ.

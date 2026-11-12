@@ -120,7 +120,7 @@ public sealed partial class PetWindow : Window
         };
         MouseLeftButtonDown += BeginDrag;
         MouseMove += (_, _) => CheckDragThreshold();
-        MouseRightButtonDown += (_, _) => { CancelFeatureActivity(); behavior.WakeByClick(pet); pet.Emotions.Attention(click: true); Interact("right_clicked"); };
+        MouseRightButtonDown += (_, _) => { SkipIntro(); CancelFeatureActivity(); behavior.WakeByClick(pet); pet.Emotions.Attention(click: true); Interact("right_clicked"); };
         MouseLeftButtonUp += (_, _) => EndDrag(true);
         LostMouseCapture += (_, _) => EndDrag(false);
         timer.Tick += Tick;
@@ -315,6 +315,7 @@ public sealed partial class PetWindow : Window
         if (!BattleFreezesPet && battle?.ClickMotherWrap(pet.X + scarfPoint.X, battleArea.Bottom - 2 - (pet.Y + scarfPoint.Y)) == true) { RequestBattleRedraw(); e.Handled = true; return; }
         if (!BattleFreezesPet && battle?.ClickZipLock() == true) { PlayBattleSound(); ShowBattleBanners(); battle.ClearEvents(); e.Handled = true; return; }
         if (BattleFreezesPet || CatTeleporting || BattleStunHolds) { e.Handled = true; return; }
+        SkipIntro(); // A click on the cat shows everything at once; the press goes on as usual (PetWindow.Intro.cs).
         // Hide-and-seek: a press on the hidden cat is the right guess and the game goes on (PetWindow.HideSeek.cs).
         if (!HideSeekPressCat()) CancelFeatureActivity();
         behavior.WakeByClick(pet);
@@ -443,6 +444,7 @@ public sealed partial class PetWindow : Window
         TickKeepsake(dt); // The keepsake's physics and its meetings with the cat (PetWindow.Keepsake.cs).
         TickDesktopToys(dt); // The toy basket and the toys left out (PetWindow.Toys.cs).
         TickFarm(paused ? 0 : dt); // The little field above the taskbar (PetWindow.Farm.cs).
+        TickIntro(dt); // The startup show, after the things above are first shown (PetWindow.Intro.cs).
         TickFocus(paused ? 0 : elapsed); // Real time, not the capped step (PetWindow.Focus.cs).
         TickGuests(paused ? 0 : dt); // Visitors: the timer and the guest's way; still in Pause (PetWindow.Guests.cs).
         TickTreasure(paused ? 0 : dt); // Treasure maps: the timer, the map's 10 minutes, its icon (PetWindow.Treasure.cs).

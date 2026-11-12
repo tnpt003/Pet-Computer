@@ -185,8 +185,9 @@ public partial class App : Application
             tray.ShowBalloonTip(8000, "Desktop Pet", pet.L("Chưa kiểm tra được cập nhật (lỗi mạng hoặc GitHub). Thử lại sau ít phút.",
                 "Could not check for updates (network or GitHub error). Try again in a few minutes."), Forms.ToolTipIcon.Warning);
         };
+        pet.BeginIntro(); // Every start: the portal tosses the cat out (PetWindow.Intro.cs).
         pet.Show();
-        if (firstRun) Dispatcher.BeginInvoke(new Action(() => PetWelcome.Show(pet, newUser, new StartupRegistration())));
+        if (firstRun) pet.WhenIntroDone(() => PetWelcome.Show(pet, newUser, new StartupRegistration())); // After the intro.
         // What's new: the installed version changed since the last start (or Velopack restarted it after updating).
         if (updates.CurrentVersion is string current)
         {

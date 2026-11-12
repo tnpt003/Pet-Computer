@@ -1007,6 +1007,7 @@ internal static class Program
         await BattleRulesChecks.Run(window, pet, Check);
         await TutorialChecks.Run(window, pet, Check);
         PortalChecks.Run(window, pet, behavior, preferences, Check);
+        IntroChecks.Run(window, pet, behavior, preferences, Check); // The startup intro (M2a).
         WeatherChecks.Run(window, pet, preferences, Check);
         FarmChecks.Run(window, pet, preferences, Check);
         FarmChoreChecks.Run(window, pet, behavior, preferences, Check);

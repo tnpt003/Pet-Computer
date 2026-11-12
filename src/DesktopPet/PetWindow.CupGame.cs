@@ -41,7 +41,7 @@ public sealed partial class PetWindow
 
     private bool CupGameBlocked => MiniGameBlocked;
     // One mini-game at a time: the row is greyed out while another runs.
-    public bool CupGameMenuEnabled => CupGameActive || (!MiniGameBlocked && !HideSeekActive);
+    public bool CupGameMenuEnabled => CupGameActive || (!MiniGameBlocked && !MiniGameActive);
     public string CupGameMenuLabel => preferences.CupGameBest > 0
         ? LF($"Úp cốc tìm cá · kỷ lục {preferences.CupGameBest}", $"Find the fish · best {preferences.CupGameBest}")
         : L("Úp cốc tìm cá", "Find the fish");
@@ -51,7 +51,7 @@ public sealed partial class PetWindow
     public bool ToggleCupGame()
     {
         if (CupGameActive) { StopCupGame(count: true); return true; }
-        if (CupGameBlocked || HideSeekActive) return false;
+        if (CupGameBlocked || MiniGameActive) return false;
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         StopCall(); StopLesson();
         cupStep = CupStep.Wait; cupTime = 0;

@@ -15,8 +15,8 @@ public sealed partial class PetWindow
     private TextBlock? miniLabelText;
     private double miniLabelLeft, miniLabelX, miniLabelBottom;
 
-    public bool MiniGameActive => CupGameActive || HideSeekActive;
-    private bool MiniGameOwnsMovement => CupOwnsMovement || SeekOwnsMovement;
+    public bool MiniGameActive => CupGameActive || HideSeekActive || FirefliesActive;
+    private bool MiniGameOwnsMovement => CupOwnsMovement || SeekOwnsMovement || FlyOwnsMovement;
     // Pause, a battle or its screens, a fullscreen app: no mini-game (the rows are greyed out).
     private bool MiniGameBlocked => closed || Blocking(AutoBlock.Paused | AutoBlock.Fullscreen | AutoBlock.AnyBattle) != AutoBlock.None;
     public string MiniGameMenuNote => MiniGameBlocked

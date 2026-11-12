@@ -43,7 +43,7 @@ public sealed partial class PetWindow
     public bool HideSeekFound => seekFound;
     public double HideSeekSink => renderer.HideSink;
 
-    public bool HideSeekMenuEnabled => HideSeekActive || (!MiniGameBlocked && !CupGameActive);
+    public bool HideSeekMenuEnabled => HideSeekActive || (!MiniGameBlocked && !MiniGameActive);
     public string HideSeekMenuLabel => preferences.HideSeekFound > 0
         ? LF($"Trốn tìm · tìm thấy {preferences.HideSeekFound}", $"Hide and seek · found {preferences.HideSeekFound}")
         : L("Trốn tìm", "Hide and seek");
@@ -57,7 +57,7 @@ public sealed partial class PetWindow
     public bool ToggleHideSeek()
     {
         if (HideSeekActive) { StopHideSeek(); return true; }
-        if (MiniGameBlocked || CupGameActive) return false;
+        if (MiniGameBlocked || MiniGameActive) return false;
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         StopCall(); StopLesson();
         seekStep = SeekStep.Wait; seekTime = 0;

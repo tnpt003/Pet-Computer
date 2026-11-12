@@ -45,6 +45,7 @@ public static class PetUi
     public const string Battle = ""; // Game controller.
     public const string Box = ""; // Package (the cardboard box).
     public const string Post = ""; // Library (the scratching post's upright).
+    public const string Firefly = ""; // (Segoe) lightbulb, the firefly's glow.
     public const string Plant = ""; // (Segoe) the plant pot.
     public const string Wand = "", WindUpMouse = ""; // Pen (the feather wand), mouse (the wind-up mouse).
     public const string Quiet = "", Sound = ""; // Moon (quiet hours), speaker.

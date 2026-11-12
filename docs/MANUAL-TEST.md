@@ -1672,3 +1672,12 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Nhấn giữ rồi kéo mèo đang nấp: mèo được nhấc mượt, dangling, ném như thường; trò kết thúc. Click phải mèo: trò kết thúc, mở menu.
 - [ ] Esc, click ra ngoài, chọn lại dòng menu: dừng. Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức; Pause đóng băng; app toàn màn hình, đổi màn hình/DPI: dừng. Mèo đang trên mép cửa sổ: vẫn nấp trên sàn.
 - [ ] Nhật ký → thẻ "Mini-game" có dòng Trốn tìm; dòng menu ghi số lần tìm thấy. Nền sáng/tối, DPI 125–150%, đo FPS.
+
+## Mini-game M3 — Bắt đom đóm (12/11, chỉ bản 1.6)
+- [ ] "Chơi cùng mèo" → "Bắt đom đóm" (menu chuột phải và khay): nhãn "Bắt đom đóm nào! 3… 2… 1…", rồi 3–5 đom đóm bay quanh mèo, nhãn hiện số giây còn lại và số đốm. Hai dòng mini-game kia mờ trong lúc chơi.
+- [ ] Đom đóm rõ trên nền sáng và tối, to và ấm màu hơn đom đóm thời tiết; không bao giờ bay vào thân mèo; mỗi con nhấp nháy rồi tự tắt sau vài giây, luôn còn 3–5 con; từ giây 15 bay nhanh hơn một chút.
+- [ ] Click trúng đom đóm (dễ trúng, vùng ~28 DIP): tan thành hạt sáng, "+1". Click trượt chỗ trống trong vùng chơi: click xuyên xuống cửa sổ bên dưới, trò không dừng. Click đom đóm không bao giờ tính là click mèo.
+- [ ] Mèo tự vồ khoảng mỗi 6–8 giây: cúi người, nhảy lên một chút tại chỗ, vung chân; có lúc hụt, tối đa 4 đốm một ván. Mèo đứng trên mép cửa sổ vồ vẫn đáp lại đúng mép, không rơi; không Dizzy, không đổi cảm xúc.
+- [ ] Hết 30 giây: đốm còn lại bay đi, mèo ngồi nhìn theo; nhãn "Cùng bắt được n đốm (bạn a · mèo b)", lần vượt kỷ lục thêm "Kỷ lục mới!". Dòng menu ghi "Bắt đom đóm · kỷ lục n"; Nhật ký → thẻ "Mini-game" có dòng Bắt đom đóm.
+- [ ] Esc, click ra ngoài vùng chơi, chọn lại dòng menu, click hoặc kéo mèo: dừng, đom đóm biến mất; kéo mèo vẫn nhấc mượt, dangling, ném như thường. Click phải mèo: dừng, mở menu.
+- [ ] Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức (không đánh thức); Pause đóng băng đom đóm và đồng hồ; app toàn màn hình, đổi màn hình/DPI: dừng, không tính ván. Màn hình hẹp hoặc kẹt giữa vùng đất/đồ chơi: mèo đi ra chỗ rộng, không có thì "Không đủ chỗ". DPI 125–150%, đo FPS khi có 5 đốm và hạt tan.

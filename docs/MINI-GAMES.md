@@ -6,7 +6,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 |---|---|---|
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
-| M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Luật đã duyệt, chưa code |
+| M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Đã có code, còn test tay |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
 
@@ -165,3 +165,10 @@ Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng m
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Bắt đom đóm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo được vồ ngắn tại chỗ theo đom đóm (không quá ~60 DIP, đáp lại đúng sàn cũ, tối đa 4 đốm); app được vẽ tạm đom đóm không physics, không chạm mèo, chỉ có trong lúc chơi.
+
+### Cách code M3 (12/11)
+
+- Core `PetFireflies.cs`: `FireflyRules` (số liệu, `Place` chọn chỗ mèo đứng để vùng 360×220 nằm trong màn hình và tránh vùng đất/xe hàng/đồ chơi, trong tầm đi 5 giây; `Height` thu vùng thấp lại khi mép cửa sổ gần đỉnh màn hình, dưới 160 DIP thì không chơi; `RaiseBest`, `CountPlay`), `FireflySwarm` (đốm bay theo đường cong, quay về giữa khi chạm mép hoặc khung thân mèo, sống 4–6 s, luôn 3–5 đốm, nhanh ×1,35 từ giây 15, `At` vùng bấm 14 DIP, `PounceTarget` đốm thấp gần mèo) và `FireflyCat` (vồ lần đầu sau 3–6 s rồi mỗi 6–8 s, hụt 30 %, tối đa 4). `preferences.json` thêm `FireflyBest`, `FireflyPlays`.
+- `PetWindow.Fireflies.cs`: bước Room (đi ra chỗ rộng như Úp cốc), Count 2 s, Play 30 s, Away 1,4 s (đốm bay lên rồi mất). Cú vồ của mèo chỉ là hình: cúi đầu (`ReactDip`), nhấc hình mèo lên tối đa 34 DIP bằng `renderer.TeleportDrop` và vung chân (`BatRemaining`); `pet.Y` không đổi nên mèo luôn đáp đúng sàn hoặc mép cũ, không physics, không Dizzy. Kết thúc, Esc, click ngoài, mèo ngủ chờ 30 s, Pause dùng chung phần nền của M1/M2; click trong vùng chơi (cả click trượt) không kết thúc.
+- Vẽ `PetFireflyArt.cs`: thân mực, cánh vỗ, đuôi và quầng sáng hổ phách, nhấp nhanh trước khi tắt; mỗi đốm có đĩa gần trong suốt bán kính 14 DIP để nhận click, chỗ khác click xuyên qua. Cửa sổ đom đóm giữ dưới cửa sổ mèo (kiểm lại mỗi 0,5 s). Đốm tan thành hạt sáng, "+1" khi người dùng bắt. Nhãn đồng hồ và tổng kết dùng `ShowMiniLabel` trên vùng chơi.
+- Test: `FireflyTests` (Core), `FireflyChecks` (UiChecks: đếm, 3–5 đốm, vùng chơi, bấm trúng/trượt, mèo vồ tại chỗ, tối đa 4, 30 giây, tổng kết, kỷ lục, Esc, click ngoài/trong vùng, chọn lại dòng menu, nhấc mèo, Quiet, ngủ, Pause, màn hình hẹp); menu "Chơi cùng mèo" nay 3 dòng.

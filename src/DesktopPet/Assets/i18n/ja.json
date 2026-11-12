@@ -1742,5 +1742,14 @@
   "Not here": "ここじゃない",
   "Found! First try!": "見つけた！一発で！",
   "Found!": "見つけた！",
-  "Here I am!": "ここだよ！"
+  "Here I am!": "ここだよ！",
+  "Catch fireflies": "ホタルつかまえ",
+  "Catch fireflies · best {0}": "ホタルつかまえ · 最高 {0}",
+  "Stop Catch fireflies": "ホタルつかまえをやめる",
+  "No room": "場所がない",
+  "Catch the fireflies! {0}…": "ホタルをつかまえよう！{0}…",
+  "Catch fireflies · {0}s left · {1} caught": "ホタルつかまえ · 残り{0}秒 · {1}匹",
+  "Caught {0} together (you {1} · cat {2})": "いっしょに{0}匹 (あなた {1} · ねこ {2})",
+  "Caught {0} together (you {1} · cat {2}) · New best!": "いっしょに{0}匹 (あなた {1} · ねこ {2}) · 新記録！",
+  "Catch fireflies: best {0} · {1} game{2}": "ホタルつかまえ：最高 {0}匹 · {1}回プレイ"
 }

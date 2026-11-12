@@ -86,6 +86,8 @@ public partial class App : Application
         games.DropDownItems.Add(cups);
         var seek = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleHideSeek());
         games.DropDownItems.Add(seek);
+        var flies = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleFireflies());
+        games.DropDownItems.Add(flies);
         menu.Items.Add(games);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
@@ -107,6 +109,7 @@ public partial class App : Application
         games.Image = PetTrayMenuStyle.Icon(PetUi.Play);
         cups.Image = PetTrayMenuStyle.Icon(PetUi.Treat);
         seek.Image = PetTrayMenuStyle.Icon(PetUi.Plant);
+        flies.Image = PetTrayMenuStyle.Icon(PetUi.Firefly);
         checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
         exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
         PetTrayMenuStyle.Apply(menu);
@@ -130,7 +133,10 @@ public partial class App : Application
             seek.Text = pet.HideSeekActive ? pet.L("Dừng Trốn tìm", "Stop Hide and seek") : pet.HideSeekMenuLabel;
             seek.Enabled = pet.HideSeekMenuEnabled;
             seek.ToolTipText = pet.HideSeekMenuNote;
-            games.Enabled = cups.Enabled || seek.Enabled;
+            flies.Text = pet.FirefliesActive ? pet.L("Dừng Bắt đom đóm", "Stop Catch fireflies") : pet.FirefliesMenuLabel;
+            flies.Enabled = pet.FirefliesMenuEnabled;
+            flies.ToolTipText = pet.FirefliesMenuNote;
+            games.Enabled = cups.Enabled || seek.Enabled || flies.Enabled;
             exit.Text = pet.L("Thoát", "Exit");
             checkUpdates.Text = pet.L("Kiểm tra cập nhật", "Check for updates");
             applyUpdate.Text = pet.LF($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");

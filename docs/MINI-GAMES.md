@@ -7,7 +7,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Đã có code, còn test tay |
-| M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
+| M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Luật đã duyệt 12/11, chưa code |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
 
 Quyết định chung (người dùng đồng ý 12/11):
@@ -172,3 +172,49 @@ Bắt đom đóm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo 
 - `PetWindow.Fireflies.cs`: bước Room (đi ra chỗ rộng như Úp cốc), Count 2 s, Play 30 s, Away 1,4 s (đốm bay lên rồi mất). Cú vồ của mèo chỉ là hình: cúi đầu (`ReactDip`), nhấc hình mèo lên tối đa 34 DIP bằng `renderer.TeleportDrop` và vung chân (`BatRemaining`); `pet.Y` không đổi nên mèo luôn đáp đúng sàn hoặc mép cũ, không physics, không Dizzy. Kết thúc, Esc, click ngoài, mèo ngủ chờ 30 s, Pause dùng chung phần nền của M1/M2; click trong vùng chơi (cả click trượt) không kết thúc.
 - Vẽ `PetFireflyArt.cs`: thân mực, cánh vỗ, đuôi và quầng sáng hổ phách, nhấp nhanh trước khi tắt; mỗi đốm có đĩa gần trong suốt bán kính 14 DIP để nhận click, chỗ khác click xuyên qua. Cửa sổ đom đóm giữ dưới cửa sổ mèo (kiểm lại mỗi 0,5 s). Đốm tan thành hạt sáng, "+1" khi người dùng bắt. Nhãn đồng hồ và tổng kết dùng `ShowMiniLabel` trên vùng chơi.
 - Test: `FireflyTests` (Core), `FireflyChecks` (UiChecks: đếm, 3–5 đốm, vùng chơi, bấm trúng/trượt, mèo vồ tại chỗ, tối đa 4, 30 giây, tổng kết, kỷ lục, Esc, click ngoài/trong vùng, chọn lại dòng menu, nhấc mèo, Quiet, ngủ, Pause, màn hình hẹp); menu "Chơi cùng mèo" nay 3 dòng.
+
+## Luật M4 Khách ghé thăm (duyệt 12/11)
+
+Sự kiện tự xảy ra, không phải mini-game: không mở từ "Chơi cùng mèo", không có ván, không `toy_started`. Người dùng chọn 12/11: hai khách, click khách có phản ứng nhỏ, không có dòng menu gọi khách (chỉ hook cho UiChecks).
+
+### Khách
+
+- **Bướm giấy:** bay lượn từ một mép màn hình sang mép kia, đi ngang gần mèo.
+- **Slime hiền:** slime nhỏ màu pastel bò trên sàn màn hình (không lên mép cửa sổ), dừng cách mèo khoảng 80 DIP, nhún "chào" khoảng 1,5 giây rồi bò tiếp. Không máu, không đòn, không liên quan Battle Mode; hình khác slime trong trận.
+- Vẽ vector theo docs/DESIGN-SYSTEM.md, rõ trên nền sáng/tối; app chưa có hình bướm nên vẽ mới.
+
+### Khi nào đến
+
+- Khoảng 40–90 phút một lần, mỗi lần chọn ngẫu nhiên một khách; lần đầu tính từ lúc mở app, hẹn giờ chỉ trong RAM. Bị chặn thì 2 phút sau thử lại.
+- Là hành vi tự động: chặn khi mèo ngủ (kể cả away nap) hoặc waking, Quiet, Giờ tập trung, app toàn màn hình, trận hoặc bảng chiến đấu, Pause, người dùng vắng, đang chơi mini-game, mèo bận (bị kéo, bay, phản ứng), cảm xúc ưu tiên cao, tính năng khác đang giữ mèo, wake cooldown.
+- Công tắc "Khách ghé thăm" trong Cài đặt → Thói quen, mặc định bật.
+
+### Một lượt (khoảng 8–15 giây)
+
+1. Khách hiện từ mép màn hình, cùng màn hình với mèo.
+2. Mèo quay đầu nhìn theo. Khoảng 50 % số lần mèo đuổi một đoạn: đi tối đa ~150 DIP hoặc 3 giây trên đúng sàn/mép cửa sổ đang đứng, không nhảy khỏi mép; với bướm thì vồ một cú tại chỗ như M3 (chỉ là hình, `pet.Y` không đổi).
+3. Khách đi ra mép bên kia rồi mất. Không lưu lại gì trên desktop.
+
+### Click và các luật bất biến
+
+- Khách vẽ trong cửa sổ riêng, không chiếm focus; chỉ hình khách nhận click, chỗ trống click xuyên qua. Click bướm: bướm bay vụt đi kèm vài hạt sáng. Click slime: slime nhún một cái rồi đi tiếp.
+- Khách không physics, không chạm mèo, không bay vào khung thân mèo, không đánh thức mèo.
+- Phản ứng của mèo là hoạt cảnh, không phải cảm xúc: không Startle/Surprised, không Dizzy, Bonk.
+- Click hoặc kéo mèo: mèo thôi theo dõi, khách vẫn đi tiếp; kéo quá ~6 DIP vẫn nhấc mèo như thường. Click phải mở menu như thường.
+- Mèo ngủ, app toàn màn hình, vào trận, đổi DPI, rút màn hình: khách mờ rồi mất ngay. Pause đóng băng khách.
+- Không thưởng, bỏ lỡ không mất gì. Không âm thanh mới.
+
+### Lưu và Python
+
+- `preferences.json` thêm công tắc và số lần khách đã ghé; file cũ đọc được. Thẻ Nhật ký thêm dòng "Khách đã ghé: n".
+- Python không biết về khách, không giao thức mới; trong lúc mèo theo dõi, lệnh Python bị chặn như hành vi tự động khác. Python tắt thì khách vẫn đến.
+
+### Khi code cần kiểm tra
+
+- Luật thuần có unit test: hẹn giờ 40–90 phút và thử lại 2 phút, điều kiện chặn, đường bay/bò, chỗ slime dừng, nhịp đuổi tối đa 150 DIP/3 giây, đếm số lần.
+- UiChecks: một lượt mỗi khách, click khách, click/kéo mèo giữa lượt, ngủ, Pause, Quiet, Giờ tập trung, fullscreen, công tắc tắt, mép cửa sổ; sleep lock, wake, drag, throw, emotion priority, local fallback.
+- Soát render bướm, slime, hạt sáng, mèo nhìn theo/vồ hai hướng, nền sáng/tối; chữ vi/en/ja; đo FPS khi khách bay.
+
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
+
+App được tự hiện khách (bướm giấy, slime hiền) không physics, không chạm mèo, cửa sổ riêng click xuyên qua; mèo được tự quay nhìn, đuổi ngắn và vồ tại chỗ. Sự kiện là hành vi tự động, có công tắc tắt.

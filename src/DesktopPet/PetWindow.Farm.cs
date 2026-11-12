@@ -206,7 +206,7 @@ public sealed partial class PetWindow
             farmGainLeft = Math.Max(0, farmGainLeft - dt);
             double k = 1 - farmGainLeft / farmGainTotal;
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
-            ((TranslateTransform)farmGain.RenderTransform).Y = -18 * k;
+            ((TranslateTransform)farmGain.RenderTransform).Y = -FarmGainRise * k;
         }
         // An achievement waits for the label on show (a level up comes with some of them).
         else if (farmGain != null && farmAchievementLabels.TryDequeue(out var achievement))
@@ -563,13 +563,17 @@ public sealed partial class PetWindow
     }
 
     // Above what stands on the tile, kept inside the window at the two ends of the plot.
-    private void PlaceFarmLabel(Grid row, int index, double rise)
+    // How far a gain label floats up while it fades, and the least room it needs above it so the
+    // whole rise stays inside its window (a label starting near the top was cut off as it rose, #77).
+    public const double FarmGainRise = 18, FarmGainTop = FarmGainRise + 2;
+
+    private void PlaceFarmLabel(Grid row, int index, double rise, double minTop = 0)
     {
         if (farmArt == null) return;
         const double overhang = 10; // The window is wider than the plot for flying dirt: the label stays near the plot.
         double inset = PetFarmArt.Side - overhang;
         double left = Math.Clamp(PetFarmArt.TileCenter(index) - FarmChipWidth / 2, inset, PetFarmArt.ArtWidth - FarmChipWidth - inset);
-        row.Margin = new Thickness(left, Math.Max(0, farmArt.TopOfTile(index) - rise), 0, 0);
+        row.Margin = new Thickness(left, Math.Max(minTop, farmArt.TopOfTile(index) - rise), 0, 0);
     }
 
     private void PressFarm(int tile)
@@ -699,7 +703,7 @@ public sealed partial class PetWindow
         farmGainText.Text = text;
         farmGain.Opacity = 1;
         ((TranslateTransform)farmGain.RenderTransform).Y = 0;
-        PlaceFarmLabel(row, tile, 30);
+        PlaceFarmLabel(row, tile, 30, FarmGainTop);
         farmGainLeft = farmGainTotal = seconds;
     }
 

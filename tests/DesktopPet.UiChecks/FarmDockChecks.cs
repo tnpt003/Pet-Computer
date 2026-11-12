@@ -58,7 +58,13 @@ internal static class FarmDockChecks
         dock.Gain!.Opacity = 0;
         Call(window, "ShowFarmLabel", 0, "+1", 1.0);
         check(dock.Gain.Opacity == 1, "What the folded field has to say is on the sign");
-        frames(1.1);
+        Call(window, "ShowFarmLabel", 0, "Level 5! Watermelon unlocked, 50 coins", 1.0); // Two lines on the narrow sign.
+        frames(0.95);
+        dock.Gain.UpdateLayout();
+        var gainTop = dock.Gain.TranslatePoint(new Point(0, 0), dock.Window!.Content as UIElement ?? dock.Gain);
+        check(dock.Gain.Margin.Top >= PetWindow.FarmGainRise && gainTop.Y >= 0,
+            $"The sign's label stays inside its window all the way up (top {gainTop.Y:F1} DIPs near the end; it was cut off, #77)");
+        frames(0.2);
         window.FarmDockClick(0);
         Put();
 

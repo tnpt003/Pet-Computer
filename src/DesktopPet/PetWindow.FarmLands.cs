@@ -122,7 +122,8 @@ public sealed partial class PetWindow
             var text = new TextBlock { Foreground = PetUi.Game.Gold, FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize, FontWeight = FontWeights.SemiBold, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, MaxWidth = patch.ArtWidth - 32 };
             var gain = FarmLabel(text);
             gain.RenderTransform = new TranslateTransform();
-            gain.Margin = new Thickness(0, patch.Kind == FarmPatchKind.Dock ? 8 : PetFarmArt.SoilTop - 40, 0, 0);
+            // Room above for the whole rise (on the sign it once started 8 DIPs from the top and was cut off, #77).
+            gain.Margin = new Thickness(0, Math.Max(FarmGainTop, patch.Kind == FarmPatchKind.Dock ? 8 : PetFarmArt.SoilTop - 40), 0, 0);
             gain.IsHitTestVisible = false;
             surface.Children.Add(gain);
             patch.Gain = gain;
@@ -282,7 +283,7 @@ public sealed partial class PetWindow
                 patch.GainLeft = Math.Max(0, patch.GainLeft - dt);
                 double k = 1 - patch.GainLeft / patch.GainTotal;
                 patch.Gain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
-                ((TranslateTransform)patch.Gain.RenderTransform).Y = -18 * k;
+                ((TranslateTransform)patch.Gain.RenderTransform).Y = -FarmGainRise * k;
             }
         }
     }

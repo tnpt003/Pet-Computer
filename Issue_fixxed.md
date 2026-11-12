@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #77 — Nhãn trên biển nông trại bị cắt chữ khi bay lên gần cuối (12/11)
+- **Triệu chứng:** nhãn của vùng đang gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển nông trại, bay lên rồi bị cắt mất phần trên gần cuối.
+- **Nguyên nhân:** nhãn trên biển bắt đầu cách mép trên cửa sổ biển 8 DIP rồi bay lên 18 DIP, nên khoảng 10 DIP cuối vượt ra ngoài cửa sổ. Nhãn ruộng đặt theo ngọn cây cũng chỉ chặn ở 0, nên cây cao sát mép có thể bị y như vậy.
+- **Sửa (người dùng chọn sửa chung):** mọi nhãn nổi của nông trại (ruộng, bếp, hồ, chuồng, biển) bắt đầu thấp nhất ở `FarmGainTop` = 20 DIP, bằng quãng bay `FarmGainRise` 18 DIP cộng 2, nên cả đoạn bay nằm trong cửa sổ (`PetWindow.Farm.cs`, `PetWindow.FarmLands.cs`).
+- **Commit:** điền sau khi publish.
+- **Kiểm chứng:** script đầy đủ một lần: Python 67 + i18n 5, C# 4914 (104 suite), WPF 3148 đều đạt. Check mới trong FarmDockChecks: nhãn hai dòng trên biển lúc gần hết vẫn trong cửa sổ (đỉnh 2,9 DIP; trước khi sửa khoảng −9).
+- **Cần xem tay:** gập ruộng, thu hoạch hoặc lên cấp để nhãn hiện trên biển, xem chữ không bị cắt khi bay lên; ruộng có cây cao cũng vậy.
+
 ## #76 — Giật mình (Surprised) hay ngắt việc mèo đang làm (12/11)
 - **Triệu chứng:** mèo đang đi, cào trụ, ghé cây, làm động tác... thì giật mình và bỏ dở việc.
 - **Nguyên nhân:** con trỏ lướt nhanh (≥1.600 DIP/s trong 140 DIP) gây Surprised bất kể mèo đang làm gì; Surprised nằm trong `BlocksAutonomy` nên PetBehavior ép mèo về Idle và các chuyến (trụ cào, chậu cây, tha bóng...) tự hủy.

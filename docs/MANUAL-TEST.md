@@ -1708,6 +1708,9 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Vẩy chuột thật nhanh sát mèo khi mèo đang đi, đang cào trụ, ghé chậu cây, tha bóng, làm động tác được dạy hoặc lệnh "Làm ngay": mèo không giật mình, việc không bị ngắt.
 - [ ] Vẩy chuột nhanh sát mèo khi mèo đứng/ngồi yên: vẫn giật mình (mắt tròn, dấu "!", tiếng) ~1 giây, cách nhau ít nhất 6 giây. Cổng phép hiện ra, kỷ vật rơi mạnh sát bên: vẫn giật mình như cũ. Mèo ngủ: không giật mình.
 
+## Nhãn nông trại không bị cắt (Issue #77, 12/11)
+- [ ] Gập ruộng rồi thu hoạch hoặc lên cấp: nhãn hiện trên biển bay lên và mờ dần, chữ không bị cắt phần trên (cả nhãn hai dòng). Ruộng đang mở có cây cao: nhãn thu hoạch cũng không bị cắt.
+
 ## Sắp xếp menu, đồ vật có menu riêng (12/11, chỉ bản 1.6)
 - [ ] Chuột phải mèo: 9 dòng (Niệm phép cổng có icon lấp lánh, Chơi, Động tác | Giờ tập trung, Âm thanh | tên mèo, Vị trí, Cài đặt | Thoát). Icon lấp lánh hiện đúng (máy Windows 10 không có Segoe Fluent Icons thì có thể ra ô vuông: báo lại). Rê chuột lên Giờ tập trung thấy câu "Mèo ngồi đếm ngược cùng bạn…". Chơi › có 3 dòng đồ chơi, một đường kẻ, rồi 4 mini-game; Động tác kết thúc bằng đường kẻ và "Dạy động tác ›". Tên mèo ›: Cho {tên} ăn, Cảm xúc ›, Chế độ yên lặng (tick), kẻ, Trạng thái, Nhật ký, kẻ, Tùy chỉnh…. Cài đặt → Chung cuối trang có thẻ "Giới thiệu Desktop Pet" (phiên bản, thư mục dữ liệu chọn/copy được, trạng thái AI, nút "Xem debug hành vi" mở/đóng cửa sổ debug). Menu khay vẫn có "Chơi cùng mèo". Xem cả tiếng Việt, Anh, Nhật không tràn.
 - [ ] Chuột phải lên hộp: "Ngủ trong hộp", đường kẻ, "Cất vào giỏ". Gần thì mèo đi vào ngủ (cả khi Quiet); xa thì mờ, rê thấy "Mèo ở xa hộp quá"; mèo đang ngủ chỗ khác thì mờ "Mèo đang ngủ hoặc đang bận" và mèo KHÔNG thức. Mèo đang trong hộp, hộp đang làm chỗ nấp Trốn tìm, đang cầm hộp, Pause: không có menu.

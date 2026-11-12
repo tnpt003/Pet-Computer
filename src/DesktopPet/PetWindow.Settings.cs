@@ -24,7 +24,7 @@ public sealed class PetSettingsForm
     public Border KeepsakeSection = null!;
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Guests = null!, Treasure = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
-    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
+    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!, DebugView = null!;
     public PetRenderer PetPreview = null!;
     public PetModel PreviewPet = null!;
     public System.Windows.Threading.DispatcherTimer PreviewTimer = null!;
@@ -331,6 +331,11 @@ public sealed partial class PetWindow
             else PetDialog.Show(settingsWindow, "Desktop Pet", L("Không mở được trình gỡ cài đặt. Hãy gỡ trong Cài đặt Windows → Ứng dụng.",
                 "The uninstaller could not start. Uninstall from Windows Settings → Apps instead."), "OK", glyph: PetDialog.WarningGlyph);
         };
+        // About (it was "More" on the cat's menu): where the data and logs are, the AI's state, and the debug view.
+        form.DebugView = PetUi.SecondaryButton(L("Xem debug hành vi", "Behavior debug view"));
+        form.DebugView.HorizontalAlignment = HorizontalAlignment.Left;
+        form.DebugView.Click += (_, _) => ToggleDebug();
+        var dataFolder = new TextBox { Text = PetPreferences.DataDirectory, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap };
         var generalTab = Page(
             Section(L("Ứng dụng", "App"), PetMotif.Gear,
                 Row("Language / Ngôn ngữ", form.Language),
@@ -349,7 +354,12 @@ public sealed partial class PetWindow
                 form.BreakReminders,
                 Row(L("Nhắc", "Remind"), form.BreakInterval),
                 PetUi.Hint(L("Chỉ tính thời gian bạn dùng máy. Không nhắc khi đang mở app toàn màn hình.",
-                             "Counts only time you use the computer. Not shown during fullscreen apps."))));
+                             "Counts only time you use the computer. Not shown during fullscreen apps."))),
+            Section(L("Giới thiệu Desktop Pet", "About Desktop Pet"), PetMotif.Cat,
+                Row(L("Phiên bản", "Version"), new TextBlock { Text = PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }),
+                Row(L("Dữ liệu và log", "Data and logs"), dataFolder),
+                PetUi.Hint(AiStatusText),
+                form.DebugView));
 
         foreach (var pair in new[] { (speechTab, PetSceneKind.Speech), (soundsTab, PetSceneKind.Sound), (generalTab, PetSceneKind.Settings) })
             if (pair.Item1.Content is StackPanel page) page.Children.Insert(0, new PetScene(pair.Item2, 100));

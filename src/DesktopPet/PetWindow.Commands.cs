@@ -30,7 +30,8 @@ public sealed partial class PetWindow
         (PetEmotion.Angry, "Giận", "Angry"), (PetEmotion.Sad, "Buồn", "Sad"), (PetEmotion.Surprised, "Giật mình", "Surprised"),
     };
 
-    private void InitializeCommands(ContextMenu menu)
+    // Adds "Actions" (the old "Do now") to the menu; returns "Emotions", which goes under the cat's name.
+    private MenuItem InitializeCommands(ContextMenu menu)
     {
         var root = PetUi.MenuItem(PetUi.Play);
         var actions = new MenuItem[CommandItems.Length];
@@ -82,10 +83,9 @@ public sealed partial class PetWindow
             feelings.Items.Add(emotions[i]);
         }
         menu.Items.Add(root);
-        menu.Items.Add(feelings);
         menu.Opened += (_, _) =>
         {
-            root.Header = L("Làm ngay", "Do now");
+            root.Header = L("Động tác", "Actions");
             root.IsEnabled = !paused && !BattleOwnsPet;
             feelings.Header = L("Cảm xúc", "Emotions");
             feelings.IsEnabled = !paused && !BattleOwnsPet;
@@ -103,7 +103,7 @@ public sealed partial class PetWindow
                 bool today = TrickRules.MayLearnToday(preferences, id, now);
                 lessons[i].Header = learned ? TrickName(id) + " ✓ " + L("Đã thuộc", "Learned") : TrickName(id) + "  " + dots;
                 lessons[i].IsEnabled = !learned && today && !waitGap && CallMenuEnabled;
-                lessons[i].ToolTip = learned ? L("Gọi từ Làm ngay", "Ask for it in Do now") : !today ? L("Mai học tiếp", "More tomorrow")
+                lessons[i].ToolTip = learned ? L("Gọi từ Động tác", "Ask for it in Actions") : !today ? L("Mai học tiếp", "More tomorrow")
                     : waitGap ? L("Cho mèo nghỉ chút đã", "Let the cat rest a moment") : null;
                 ToolTipService.SetShowOnDisabled(lessons[i], true);
             }
@@ -118,6 +118,7 @@ public sealed partial class PetWindow
                 emotions[i].IsChecked = pet.Emotions.ManualMode && pet.Emotions.ManualEmotion == EmotionItems[i].Emotion;
             }
         };
+        return feelings;
     }
 
     public bool DoNow(PetAction action)

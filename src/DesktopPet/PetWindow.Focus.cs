@@ -49,6 +49,7 @@ public sealed partial class PetWindow
         void Refresh()
         {
             root.Header = L("Giờ tập trung", "Focus time");
+            root.ToolTip = L("Mèo ngồi đếm ngược cùng bạn và nhắc khi hết giờ.", "The pet counts down with you and tells you when time is up.");
             start25.Header = LF($"Bắt đầu {PetFocus.ShortMinutes} phút", $"Start {PetFocus.ShortMinutes} minutes");
             start50.Header = LF($"Bắt đầu {PetFocus.LongMinutes} phút", $"Start {PetFocus.LongMinutes} minutes");
             int left = (int)Math.Ceiling(focus.Remaining / 60);

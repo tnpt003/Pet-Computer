@@ -45,13 +45,13 @@ public static class PetWelcome
             Func<string, string, string> L = (vi, en) => PetText.Pick(Chosen(choose), vi, en);
             message.Text = L("Chào mừng! Mèo đã ở trên màn hình của bạn.\n" +
                              "• Kéo mèo để bế lên, thả hoặc vung để ném.\n" +
-                             "• Chuột phải vào mèo: chơi, cho ăn, cảm xúc, Làm ngay.\n" +
+                             "• Chuột phải vào mèo: chơi, động tác; cho ăn và cảm xúc ở mục tên mèo.\n" +
                              "• Chuột phải vào đồ vật (hộp, trụ cào, đệm, vùng đất) để dùng nó.\n" +
                              "• Chuột phải rồi chọn Giờ tập trung: mèo ngồi cùng bạn làm việc, hết giờ sẽ báo.\n" +
                              "• Biểu tượng mèo ở khay (góc phải dưới): Cài đặt, Tạm dừng, Kiểm tra cập nhật.",
                              "Welcome! The pet is on your screen.\n" +
                              "• Drag the pet to pick it up; let go or swing to throw.\n" +
-                             "• Right-click the pet: play, feed, emotions, Do now.\n" +
+                             "• Right-click the pet: play, actions; feeding and emotions are under the pet's name.\n" +
                              "• Right-click a thing (box, scratching post, cushion, a farm plot) to use it.\n" +
                              "• Right-click and pick Focus time: the pet keeps you company and tells you when time is up.\n" +
                              "• The pet's tray icon (bottom right): Settings, Pause, Check for updates.");

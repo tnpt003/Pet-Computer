@@ -508,23 +508,27 @@ follows the personality like ball play.
 ## Menu and settings layout (2026-10-15)
 
 The cat's right-click menu is grouped, with Windows' own icon font (no new assets). Since
-2026-10-23 every group holds one kind of thing, so a submenu has everything related to its name
-(12 rows, 3 separators):
+2026-11-12 (user's layout) it has **9 rows, 3 separators**:
 
-1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer, Toy basket / Quick tidy, a
-   line, then the mini-games: Find the fish, Hide and seek, Catch fireflies, Treasure hunt), Cast
-   portal spell / Battle Mode, Do now › (the actions, learned tricks, a line, Teach a trick ›),
-   Emotions ›**: playing with the cat and telling it what to do. Play is dimmed when nothing in it
-   can start.
-2. **Focus time ›, Quiet mode** (tooltip), **Sounds**: the quick switches. Sounds is also the master switch
-   in Settings → Sounds.
-3. **{name} ›** ({name}'s status, {name}'s diary, **Customize…**): who the cat is.
+1. **Cast portal spell** (sparkles icon; Battle Mode › in a fight), **Play ›** (Play with ball /
+   Put ball away, Laser pointer, Toy basket / Quick tidy, a line, then the mini-games: Find the
+   fish, Hide and seek, Catch fireflies, Treasure hunt), **Actions ›** (the old "Do now": the
+   actions, learned tricks, a line, Teach a trick ›). Play is dimmed when nothing in it can start.
+2. **Focus time ›** (hover: the pet counts down with you and tells you when time is up),
+   **Sounds** (switch; also the master switch in Settings → Sounds).
+3. **{name} ›**: what you ask of the cat (**Feed {name}**, **Emotions ›**, **Quiet mode** switch
+   with its tooltip), a line, who it is ({name}'s status, {name}'s diary), a line, **Customize…**.
    **Location ›** (Go to resting spot, Remember this spot, Forget resting spot, then Bring the pet
-   to the main screen): where the cat is. **Settings…**: the app. **More ›** (Behavior debug view,
-   About).
+   to the main screen). **Settings…**: the app; the old **More ›** is now the **About Desktop Pet**
+   card at the end of Settings → General (version with commit, data and logs folder, AI state,
+   **Behavior debug view** button).
 4. **Exit**.
 
-Since 2026-11-12 (13 rows) what belongs to a thing is on that thing's own right-click menu, not the
+Feeding stays on the menu (under the name): cooking in the farm pot needs harvested crops and the
+farm can be turned off, so it cannot be the only way to feed. Older text that says "Do now" means
+**Actions**; "Give treat" means **Feed {name}**.
+
+Since 2026-11-12 what belongs to a thing is on that thing's own right-click menu, not the
 cat's: the cardboard box has **Sleep in the box**, the scratching post **Scratch here**, the slime
 cushion (keepsake menu, at the top) **Sleep on the cushion**; every toy and corner thing ends with
 **Put back in the basket** (the yarn ball: **Put ball away**), and the ball of the 45-second ball
@@ -550,7 +554,8 @@ keepsake card) is the cat's own window, one scrolling page of cards:
 **Settings…** (also in the tray menu) is the app, in three tabs:
 - **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
 - **Sounds:** master switch, three kinds, volume, preview picker + Play.
-- **General:** Language / Ngôn ngữ, Start with Windows, updates, uninstall, break reminders.
+- **General:** Language / Ngôn ngữ, Start with Windows, updates, uninstall, break reminders,
+  About Desktop Pet (version, data and logs folder, AI state, Behavior debug view).
 
 In both windows nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the
 old values. Each saves only its own fields, so both can be open at once. Save and Cancel stay at

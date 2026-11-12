@@ -156,7 +156,7 @@ public sealed partial class PetWindow
 
     private void InitializeBattle(ContextMenu menu)
     {
-        var root = PetUi.MenuItem(PetUi.Battle);
+        var root = PetUi.MenuItem(PetUi.Magic, PetUi.Mystery); // Sparkles: the spell (the game controller stays on battle panels).
         // No battle: one item, the cat's portal spell (PetWindow.Portal.cs); the portal leads to the
         // hub (PetWindow.BattleHub.cs), where the modes are chosen. A battle panel already open: back
         // to the hub. During a battle: a submenu with Pause and End only.

@@ -180,19 +180,22 @@ internal static class Program
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
         var playMenu = topItems.Single(item => (string)item.Header == "Play");
-        var doNowMenu = topItems.Single(item => (string)item.Header == "Do now");
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
+        var doNowMenu = topItems.Single(item => (string)item.Header == "Actions");
+        var catRows = catMenu.Items.Cast<object>().Select(item => item is System.Windows.Controls.MenuItem row ? row.Header as string : "—").ToList();
+        Check(headers.SequenceEqual(new[] { "Cast portal spell", "Play", "Actions", "Focus time", "Sounds", catName, "Location", "Settings…", "Exit" }) &&
+              catRows.SequenceEqual(new[] { $"Feed {catName}", "Emotions", "Quiet mode", "—", $"{catName}'s status", $"{catName}'s diary", "—", "Customize…" }) &&
+              catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Single(item => (string)item.Header == "Quiet mode").IsCheckable &&
+              topItems.Single(item => (string)item.Header == "Focus time").ToolTip is string focusTip && focusTip.Contains("counts down") &&
+              topItems[0].Icon is System.Windows.Controls.Border { Child: System.Windows.Controls.TextBlock { Text: PetUi.Magic } } &&
               SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket|Find the fish|Hide and seek|Catch fireflies|Treasure hunt · no map yet" &&
               playMenu.Items.IndexOf(playMenu.Items.OfType<System.Windows.Controls.Separator>().Single()) == 3 &&
               doNowMenu.Items[doNowMenu.Items.Count - 1] is System.Windows.Controls.MenuItem { Header: "Teach a trick" } &&
               doNowMenu.Items[doNowMenu.Items.Count - 2] is System.Windows.Controls.Separator &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
-              SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
-              catHeaders.Count == 3 && catHeaders[2] == "Customize…" &&
               topItems.Single(item => (string)item.Header == "Sounds").IsCheckable &&
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: 13 items in 4 groups (play with the mini-games under a line, Do now ending with Teach a trick · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
+            "Context menu: 9 items in 4 groups (the spell with sparkles, Play with the mini-games under a line, Actions ending with Teach a trick · Focus time with its hint, Sounds · the cat (feed, emotions, quiet, status, diary, customize), where it is, settings · Exit)");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
         // (The spell's item says why it is off while the ball is out.)
@@ -216,11 +219,11 @@ internal static class Program
         var statusRoot = statusCard?.Content as FrameworkElement;
         statusRoot?.UpdateLayout();
         var statusTexts = statusRoot == null ? new List<string>() : Descendants<System.Windows.Controls.TextBlock>(statusRoot).Where(t => t.IsVisible).Select(t => t.Text).ToList();
-        Check(statusIndex == 0 && catHeaders[statusIndex + 1]?.EndsWith("'s diary", StringComparison.Ordinal) == true && statusCard != null &&
+        Check(statusIndex == 3 && catHeaders[statusIndex + 1]?.EndsWith("'s diary", StringComparison.Ordinal) == true && statusCard != null &&
               statusTexts.Any(t => t.StartsWith("Doing: ", StringComparison.Ordinal)) && statusTexts.Any(t => t.StartsWith("Feeling: ", StringComparison.Ordinal)) &&
               statusTexts.Any(t => t.Contains("Smart pet (AI)")) && !statusTexts.Any(t => t.EndsWith("/100", StringComparison.Ordinal)) &&
               pet.Action == actionBeforeStatus && Field<long>(window, "interactionCount") == interactionsBeforeStatus,
-            "Status card sits first in the cat's submenu, before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
+            "Status card sits first in the cat's \"who it is\" group (after feed, emotions, quiet), before the diary, shows doing/feeling, hides need bars without the AI, and does not touch the pet");
         // The card sits right above the cat, centered, in screen pixels of the pet's monitor scale
         // (also at a pretend 150%), not where WPF's own Left/Top would put a new window.
         bool CardNextToCat(double testScale)
@@ -388,10 +391,11 @@ internal static class Program
             var vietnamese = Labels();
             options.Language = original;
             Labels();
-            Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Do now") && english.Contains("Exit") && english.Contains("Customize…"),
+            Check(english.All(t => t.Length > 0 && !HasVietnamese(t)) && english.Contains("Actions") && english.Contains("Exit") && english.Contains("Customize…"),
                 "English UI: every context-menu label (submenus included) is English");
-            Check(vietnamese.Contains("Làm ngay") && vietnamese.Contains("Thoát") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Tùy chỉnh…") && vietnamese.Contains("Vị trí") && vietnamese.Contains("Cảm xúc") &&
-                  !vietnamese.Intersect(new[] { "Do now", "Emotions", "Exit", "Give treat", "Quiet mode", "Sounds", "Settings…", "Customize…", "Location", "More", "About Desktop Pet", "Behavior debug view" }).Any(),
+            Check(vietnamese.Contains("Động tác") && vietnamese.Contains("Thoát") && vietnamese.Contains("Cài đặt…") && vietnamese.Contains("Tùy chỉnh…") && vietnamese.Contains("Vị trí") && vietnamese.Contains("Cảm xúc") &&
+                  vietnamese.Contains("Chế độ yên lặng") && vietnamese.Any(t => t.StartsWith("Cho ", StringComparison.Ordinal) && t.EndsWith(" ăn", StringComparison.Ordinal)) &&
+                  !vietnamese.Intersect(new[] { "Actions", "Emotions", "Exit", "Quiet mode", "Sounds", "Settings…", "Customize…", "Location" }).Any(),
                 "Vietnamese UI: no English menu label is left behind");
             Check(PetWindow.LocalizeAiStatus("Python AI: connected (playful)", "vi") == "Python AI: đã kết nối (ham chơi)" &&
                   PetWindow.LocalizeAiStatus("Local behavior: timeout (retry after 4s)", "vi") == "Hành vi local: hết thời gian chờ (thử lại sau 4s)" &&
@@ -845,10 +849,15 @@ internal static class Program
         Check(form.LanguageIds.Last() == "ja" && (string)form.Language.SelectedItem == "日本語" && form.Language.Items.Count == 3,
             "Settings offers Japanese and shows it as the current choice");
         window.ContextMenu!.IsOpen = true;
-        var japaneseMenu = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(i => i.Header as string).ToArray();
+        var japaneseMenu = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().SelectMany(i => i.Items.OfType<System.Windows.Controls.MenuItem>().Prepend(i)).Select(i => i.Header as string).ToArray();
         window.ContextMenu.IsOpen = false;
-        Check(japaneseMenu.Contains("今すぐ") && japaneseMenu.Contains("気持ち") && (string)form.Save.Content == "保存",
+        Check(japaneseMenu.Contains("動作") && japaneseMenu.Contains("気持ち") && (string)form.Save.Content == "保存",
             "Japanese uses the translation table (menu, Settings)");
+        var generalPage = ((System.Windows.Controls.TabItem)form.Tabs.Items[2]).Content as FrameworkElement;
+        generalPage?.UpdateLayout();
+        var generalTexts = generalPage == null ? new List<string>() : Descendants<System.Windows.Controls.TextBlock>(generalPage).Select(t => t.Text).ToList();
+        Check(generalTexts.Contains("Desktop Pet について") && generalTexts.Contains("データとログ") && (string)form.DebugView.Content == "行動デバッグ表示",
+            "Settings → General ends with About (version, data folder, AI state) and the debug view button (they left the cat's menu)");
         window.ShowCustomize();
         var japaneseCat = Field<PetSettingsForm>(window, "customizeForm");
         Check(japaneseCat.Coat.Items.OfType<CoatChoice>().Any(c => c.Label == "三毛") && japaneseCat.Accessory.Items.OfType<string>().Contains("リボン") &&
@@ -1035,13 +1044,14 @@ internal static class Program
         Check(Field<Window?>(window, "toyWindow")?.IsVisible == true, "Quiet mode still lets the user play with the ball");
         window.ToggleToy();
 
-        // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
-        var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
-        var feelings = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Cảm xúc" or "Emotions");
+        // "Actions" menu (the old "Do now"): immediate actions (even in Quiet), queued after waking; manual emotions under the cat's name.
+        var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Động tác" or "Actions");
+        var feelings = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().SelectMany(item => item.Items.OfType<System.Windows.Controls.MenuItem>())
+            .FirstOrDefault(item => item.Header is "Cảm xúc" or "Emotions");
         Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count(item => item.Visibility == Visibility.Visible) == 13 &&
               !doNow.Items.OfType<System.Windows.Controls.MenuItem>().Any(item => item.Header is "Sleep on the cushion" or "Sleep in the box") &&
               feelings != null && feelings.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 6,
-            "Context menu offers Do now with 12 actions and Teach a trick (no cushion or box rows: those are on the things) and Emotions with the manual switch and 5 emotions");
+            "Context menu offers Actions with 12 actions and Teach a trick (no cushion or box rows: those are on the things), and under the cat's name Emotions with the manual switch and 5 emotions");
         window.Reset();
         Check(window.DoNow(PetAction.ChasingTail) && pet.Action == PetAction.ChasingTail, "Do now starts a gesture at once, even in Quiet mode");
         behavior.Step(pet, 0.5);

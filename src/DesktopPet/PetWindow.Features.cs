@@ -95,24 +95,25 @@ public sealed partial class PetWindow
         var diary = PetUi.MenuItem(PetUi.Diary);
         diary.Click += (_, _) => ShowDiary();
         var cat = PetUi.MenuItem(PetUi.Status, PetUi.Accent);
-        cat.Items.Add(status); cat.Items.Add(diary); cat.Items.Add(customize);
-        // Rarely used: the debug view, About.
-        var more = PetUi.MenuItem(PetUi.More);
-        var debug = PetUi.MenuItem(PetUi.Debug);
-        debug.Click += (_, _) => ToggleDebug();
-        var about = PetUi.MenuItem(PetUi.About);
-        about.Click += (_, _) => ShowAbout();
-        more.Items.Add(debug); more.Items.Add(about);
+        // The debug view and About live in Settings → General (PetWindow.Settings.cs).
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(treat); menu.Items.Add(play);
+        // Nine rows: the spell, Play, Actions · Focus time, Sounds · {name} (feed, emotions, quiet, status,
+        // diary, customize), Location, Settings · Exit.
         InitializeBattle(menu); // "Cast portal spell", or "Battle Mode" in a fight (PetWindow.Battle.cs).
-        InitializeCommands(menu); // "Do now" and "Emotions".
+        menu.Items.Add(play);
+        var feelings = InitializeCommands(menu); // "Actions" here; "Emotions" goes under the cat's name.
         menu.Items.Add(new Separator());
         InitializeFocusMenu(menu); // "Focus time" (PetWindow.Focus.cs).
-        menu.Items.Add(quiet); menu.Items.Add(sounds);
+        menu.Items.Add(sounds);
         menu.Items.Add(new Separator());
-        menu.Items.Add(cat); menu.Items.Add(place); menu.Items.Add(settingsItem); menu.Items.Add(more);
+        // The cat's own submenu: what you ask of the cat, then who it is.
+        cat.Items.Add(treat); cat.Items.Add(feelings); cat.Items.Add(quiet);
+        cat.Items.Add(new Separator());
+        cat.Items.Add(status); cat.Items.Add(diary);
+        cat.Items.Add(new Separator());
+        cat.Items.Add(customize);
+        menu.Items.Add(cat); menu.Items.Add(place); menu.Items.Add(settingsItem);
         menu.Items.Add(new Separator());
         menu.Items.Add(exit);
         void Localize()
@@ -121,11 +122,9 @@ public sealed partial class PetWindow
             customize.Header = L("Tùy chỉnh…", "Customize…");
             status.Header = LF($"Trạng thái của {preferences.Name}", $"{preferences.Name}'s status");
             diary.Header = LF($"Nhật ký của {preferences.Name}", $"{preferences.Name}'s diary");
-            more.Header = L("Khác", "More");
             reset.Header = L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
-            debug.Header = L("Xem debug hành vi", "Behavior debug view");
             exit.Header = L("Thoát", "Exit");
-            treat.Header = L("Cho ăn", "Give treat");
+            treat.Header = LF($"Cho {preferences.Name} ăn", $"Feed {preferences.Name}");
             play.Header = L("Chơi", "Play");
             toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
             cat.Header = preferences.Name;
@@ -146,7 +145,6 @@ public sealed partial class PetWindow
             quiet.Header = L("Chế độ yên lặng", "Quiet mode");
             quiet.ToolTip = L("Mèo không tự đi lại hay tự làm gì; bạn vẫn cho ăn và chơi được.", "The pet stays put and does nothing on its own; you can still feed it and play.");
             sounds.Header = L("Âm thanh", "Sounds");
-            about.Header = L("Giới thiệu Desktop Pet", "About Desktop Pet");
         }
         Localize();
         menu.Opened += (_, _) =>
@@ -174,10 +172,6 @@ public sealed partial class PetWindow
 
     public static string VersionText => PetLog.BuildVersion.Split('+')[0];
 
-    // The About box also names the commit the published build came from (scripts/publish.ps1).
-    private void ShowAbout() => PetDialog.Show(null, L("Giới thiệu Desktop Pet", "About Desktop Pet"),
-        $"Desktop Pet {PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language)}\n\n{L("Dữ liệu và log", "Data and logs")}: {PetPreferences.DataDirectory}\n{AiStatusText}",
-        L("Đóng", "Close"));
 
     private void SavePreferences()
     {

@@ -5,7 +5,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
-| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Chưa viết luật |
+| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Bản nháp luật, chờ duyệt |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
@@ -68,6 +68,51 @@ Mini-game do người dùng mở từ "Chơi cùng mèo" (menu chuột phải v�
 - Core `PetCupGame.cs`: `CupGameRules` (số liệu, `Place` chọn chỗ đứng của mèo và bên bày cốc theo vùng đất/xe hàng/đồ chơi, `SlotAt`, `RaiseBest`/`CountPlay`/`TellBest`) và `CupShuffle` (cốc giữ id, cá đi theo cốc, mỗi lần tráo một cốc nhảy vòng cung phía trước, cốc kia trượt phía sau). `preferences.json` thêm `CupGameBest`, `CupGamePlays` (kẹp khi đọc).
 - Cửa sổ `PetWindow.CupGame.cs`: `ToggleCupGame()` từ submenu "Chơi cùng mèo" (menu chuột phải, ngay sau "Chơi"/"Cất bóng"; menu khay dưới "Giỏ đồ chơi"). Bị chặn (`CupGameBlocked`) khi Pause, app toàn màn hình, trận và màn hình trận; mèo bận/ngủ thì chờ (`Wait`, tối đa 30 s) như Gọi mèo. `TickCupClock` chạy mỗi khung trước CanPlay: kết thúc không tính khi bị chặn, đổi màn hình, đổi DPI hoặc mặt đất dịch đi; quá 2 phút; Esc và click ra ngoài đọc bằng `GetAsyncKeyState` (chỉ phím Esc, nút chuột; nhấn lúc chọn menu không tính). `TickCupGame` sở hữu chuyển động sau `TickLesson`; `CupOwnsMovement` nằm trong `FeatureOwnsMovement` nên hành vi tự động, lệnh Python, việc khác bị chặn; cảm xúc tự động tắt bằng `Emotions.SetSuspended` (trả lại khi xong, không đụng khi trận đang giữ).
 - Vẽ `PetCupGameArt.cs` (cửa sổ riêng, chỉ hình cốc nhận click, chỗ trong suốt click xuyên qua), cá dùng `PetFarmArt.DrawFish`; mèo ngậm cá qua `PetRenderer.CarryFish`. Nhãn "Cá ở cốc nào?", "+1", "n vòng" dùng nhãn trên đầu mèo của M5 (`ShowTrickLabel`).
-- **Lệch nhỏ so với luật đã duyệt:** cốc cao 36 DIP, rộng 40 (luật ghi khoảng 44) vì mèo vẽ mặt trước, đứng sau hàng cốc 44 DIP bị che mặt; cốc được hất thì trượt sang bên và nghiêng thay vì nhấc thẳng lên, để lộ cá mà không che mặt mèo. Khoảng cách 70 DIP giữ nguyên.
+- **Lệch so với luật, người dùng duyệt 12/11:** cốc cao 36 DIP, rộng 40 (luật ghi khoảng 44) vì mèo vẽ mặt trước, đứng sau hàng cốc 44 DIP bị che mặt; cốc được hất thì trượt sang bên và nghiêng thay vì nhấc thẳng lên, để lộ cá mà không che mặt mèo. Khoảng cách 70 DIP giữ nguyên.
 - Python: trạng thái `MiniGame` gửi thay tên hành động khi trò sở hữu mèo, nằm trong `BUSY_STATES` (tách khỏi tập hành động C# để test đồng bộ `RejectsDecisions` vẫn đúng). Mỗi ván gửi `toy_started` một lần.
 - Test: `CupGameTests` (Core), `CupGameChecks` (UiChecks: thắng, thua, kỷ lục, Quiet, ngủ, Esc, click ngoài/trên cốc, click mèo, Pause, 2 phút); menu chuột phải nay 15 mục. Đã soát ảnh render (bày cốc, tráo, chọn, hất, ngậm cá, lật cốc có cá) nền sáng/tối; chưa xem trên desktop thật, chưa bấm chuột thật, chưa thử mép cửa sổ, DPI khác, nhiều màn hình, chưa đo FPS; tiếng Nhật chưa ai duyệt.
+
+## Luật M2 Trốn tìm (bản nháp 12/11, chờ duyệt)
+
+Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng mèo", lệnh người dùng như "Làm ngay", không đánh thức mèo ngủ, chặn hành vi/cảm xúc tự động khi chơi, Pause đóng băng, Esc/click ra ngoài/chọn lại dòng menu/hết giờ thoát, toàn màn hình/trận/rút màn hình/đổi DPI kết thúc không tính ván, `toy_started` một lần mỗi ván, trạng thái `MiniGame` cho Python). Dưới đây chỉ ghi phần riêng.
+
+### Chỗ nấp
+
+- Luôn có **3 chỗ nấp** trên sàn màn hình của mèo, cách nhau ít nhất khoảng 150 DIP, không đè vùng đất nông trại, xe hàng.
+- Ưu tiên đồ đang bày trên sàn màn hình đó: **thùng carton** (mèo ngồi trong hộp, chỉ thò chóp tai), **chậu cây** và **trụ cào** (mèo nằm thấp phía sau, lộ chóp đuôi hoặc tai). Thiếu chỗ thì app vẽ thêm **bụi cây tròn** (khoảng 70 DIP rộng, 56 DIP cao, vector theo docs/DESIGN-SYSTEM.md); bụi cây chỉ có trong lúc chơi, không lưu, không physics, không vào giỏ.
+- Đồ chơi khác (bóng, cần câu, chuột) không phải chỗ nấp. Mèo đứng trên mép cửa sổ: trò bày trên sàn, mèo nhảy xuống như một cú nhảy thường lúc bắt đầu trốn.
+- Không đọc nội dung cửa sổ, icon hay file thật của người dùng.
+
+### Một ván
+
+1. **Đếm:** nhãn trên đầu mèo "Nhắm mắt nhé! 3… 2… 1…" (khoảng 3 giây). Trong lúc đếm, bụi cây (nếu cần) mọc lên, mèo biến mất trong một làn khói nhỏ rồi xuất hiện sẵn sau chỗ nấp đã chọn ngẫu nhiên, nên không lộ đường chạy.
+2. **Tìm:** nhãn "Mèo trốn ở đâu?" ở giữa ba chỗ. Mỗi 3–5 giây, chỗ có mèo lộ một dấu hiệu nhỏ khoảng 0,6 giây (tai giật, chóp đuôi vẫy, lá bụi cây rung). Hai chỗ kia thỉnh thoảng cũng rung lá/lay nhẹ để đánh lừa, nhưng ít hơn.
+3. **Đoán:** người dùng click vào chỗ nấp (hoặc vào chóp tai/đuôi đang lộ). Tối đa **3 lượt**:
+   - **Đúng:** mèo bật ra khỏi chỗ nấp bằng cú nhảy nhỏ, nhãn "Tìm thấy rồi!" (lượt 1 thêm "Ngay lượt đầu!"), bụi cây tàn đi.
+   - **Sai:** chỗ đó lắc nhẹ, nhãn "Không có ở đây" khoảng 1 giây; chỗ sai đó mờ đi, không bấm lại được.
+   - Hết 3 lượt hoặc quá **60 giây**: mèo tự bật ra, nhãn "Ở đây nè!".
+4. Mèo ra rồi đứng chơi nhún nhảy khoảng 1,5 giây, ván kết thúc. Muốn chơi lại thì chọn menu lần nữa.
+
+### Click, kéo và các luật bất biến
+
+- Click chuột vào mèo đang nấp (phần tai/đuôi lộ ra) tính là **tìm đúng**. Kéo quá ~6 DIP thì như mọi lúc: trò kết thúc, mèo được nhấc và kéo bình thường (pickup mượt, dangling, ném có velocity).
+- Click phải vào mèo: trò kết thúc, mở menu.
+- Người dùng cầm hộp, chậu, trụ khi đang chơi: trò kết thúc không tính ván, mèo hiện lại tại chỗ.
+- Mèo đang trốn không ngủ, không chuyển cảm xúc tự động; Pause đóng băng cả lúc đếm lẫn lúc tìm.
+- Trò không bắt đầu khi mèo ngủ (chờ tự thức tối đa 30 giây như M1). Thùng carton đang có mèo ngủ thì đã không thể có (mèo phải thức mới chơi).
+
+### Lưu và Python
+
+- `preferences.json` thêm số ván tìm thấy và số lần tìm thấy ngay lượt đầu; file cũ đọc được. Thẻ "Mini-game" trong Nhật ký thêm dòng "Trốn tìm: tìm thấy n ván · m lần ngay lượt đầu".
+- Python như M1: `toy_started` một lần, trạng thái `MiniGame`, không câu nói mới. Không âm thanh mới (dùng lại cue có sẵn, có cooldown).
+
+### Khi code cần kiểm tra
+
+- Chọn chỗ nấp: có đủ 3 chỗ cách nhau, tránh vùng đất/xe hàng, dùng đồ có sẵn trước, bụi cây chỉ khi thiếu; màn hình hẹp không đủ chỗ thì báo "Không đủ chỗ để trốn" và không bắt đầu.
+- Click đúng/sai/tai đuôi, 3 lượt, 60 giây; kéo mèo đang nấp; cầm hộp/chậu/trụ; Esc, click ra ngoài; sleep lock, wake, drag, throw, emotion priority, local fallback, Pause, Quiet.
+- Thứ tự lớp: đồ nấp phải che mèo (mèo vẽ thấp, chỉ lộ tai/đuôi); mèo trong hộp dùng mặt trước hộp trong cửa sổ mèo như M2 Đợt 2.
+- Soát render bụi cây, mèo nấp sau từng loại chỗ, dấu hiệu lộ, nền sáng/tối; chữ vi/en/ja; đo FPS.
+
+### Bổ sung ngoại lệ (chờ duyệt cùng luật)
+
+Trốn tìm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo được "biến mất trong làn khói" rồi hiện ở chỗ nấp (một lần dịch chuyển trong cùng sàn màn hình); app được vẽ tạm bụi cây không physics chỉ trong lúc chơi; cửa sổ hộp, chậu, trụ được nâng lên trên mèo trong lúc nấp. Click vào mèo đang nấp là lượt đoán đúng; kéo quá ~6 DIP vẫn nhấc mèo như thường.

@@ -280,11 +280,66 @@ public sealed partial class PetWindow
             thing.Window.Width = ToySide; thing.Window.Height = ToySide;
         }
         thing.Surface = surface;
+        if (thing != toyBasket) AttachToyMenu(thing, surface);
         surface.MouseLeftButtonDown += (_, e) => { PressToy(thing); e.Handled = true; };
         surface.MouseMove += (_, _) => CheckToyDragThreshold(thing);
         surface.MouseLeftButtonUp += (_, _) => EndToyDrag(thing, true);
         surface.LostMouseCapture += (_, _) => EndToyDrag(thing, false);
         thing.Placed = false;
+    }
+
+    // Each toy's own right-click menu: what the cat can do with it, then back to the basket. Opening it
+    // never touches the cat (no waking, no interaction); a toy in a game, in the cat's mouth, held or
+    // with the cat in it has no menu, and Pause shows none.
+    private void AttachToyMenu(DesktopThing thing, FrameworkElement surface)
+    {
+        var menu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize };
+        PetMenuStyle.Apply(menu);
+        surface.ContextMenu = menu;
+        surface.ContextMenuOpening += (_, e) =>
+        {
+            if (paused || thing.Held || thing.Press || thing.InGame || thing.Carried || (thing.Id == DesktopToyRules.Box && BoxOccupied)) { e.Handled = true; return; }
+            menu.Items.Clear();
+            foreach (var item in ToyMenuItems(thing.Id)) menu.Items.Add(item);
+        };
+    }
+
+    // The rows of a toy's menu (also read by the checks). The cat's own rows come first, a line, then "Put back in the basket".
+    public object[] ToyMenuItems(string id)
+    {
+        var rows = new List<object>();
+        if (id == DesktopToyRules.Box)
+        {
+            var sleep = PetUi.MenuItem(PetUi.Quiet); // The moon, like the cushion's row.
+            sleep.Header = L("Ngủ trong hộp", "Sleep in the box");
+            sleep.Click += (_, _) => SleepInBoxNow(); // PetWindow.ToyBox.cs
+            CatRowState(sleep, BoxNear, PetAction.Sleeping, L("Mèo ở xa hộp quá", "The cat is too far from the box"));
+            rows.Add(sleep);
+        }
+        else if (id == DesktopToyRules.Post)
+        {
+            var scratch = PetUi.MenuItem(PetUi.Post);
+            scratch.Header = L("Cào móng ở đây", "Scratch here");
+            scratch.Click += (_, _) => { if (PostNear) DoNow(PetAction.Scratching); }; // Near the post "Scratch" goes there (PetWindow.ToyPost.cs).
+            CatRowState(scratch, PostNear, PetAction.Scratching, L("Mèo ở xa trụ quá", "The cat is too far from the post"));
+            rows.Add(scratch);
+        }
+        if (rows.Count > 0) rows.Add(new Separator());
+        var stow = PetUi.MenuItem(PetUi.Ball);
+        stow.Header = id == DesktopToyRules.Ball ? L("Cất bóng", "Put ball away") : L("Cất vào giỏ", "Put back in the basket");
+        stow.Click += (_, _) => StowToy(id);
+        rows.Add(stow);
+        return rows.ToArray();
+    }
+
+    // A row asking the cat for something: greyed out, with the reason, while the cat is far, busy or asleep
+    // (the menu of a thing never wakes the cat) or the pet belongs to a battle.
+    private void CatRowState(MenuItem row, bool near, PetAction action, string far)
+    {
+        bool free = !BattleOwnsPet && !dragging && PetBehavior.CanStartManual(pet, action);
+        row.IsEnabled = near && free;
+        row.ToolTip = !free ? L("Mèo đang ngủ hoặc đang bận", "The cat is asleep or busy") : !near ? far : null;
+        ToolTipService.SetShowOnDisabled(row, true);
     }
 
     private void FillToyBasketMenu()

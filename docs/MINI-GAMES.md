@@ -23,7 +23,7 @@ Quyết định chung (người dùng đồng ý 12/11):
 
 ### Mở và thoát trò chơi
 
-- Menu chuột phải và menu khay thêm submenu **"Chơi cùng mèo"**; M1 có một dòng "Úp cốc tìm cá", các mốc sau thêm dòng. Kỷ lục hiện ngay trên dòng (ví dụ "Úp cốc tìm cá · kỷ lục 4").
+- Menu chuột phải và menu khay thêm submenu **"Chơi cùng mèo"**; M1 có một dòng "Úp cốc tìm cá", các mốc sau thêm dòng. Kỷ lục hiện ngay trên dòng (ví dụ "Úp cốc tìm cá · kỷ lục 4"). Từ 12/11 ở menu chuột phải các dòng mini-game nằm trong "Chơi ›" dưới một đường kẻ (không còn submenu riêng); menu khay giữ "Chơi cùng mèo".
 - Dòng mờ kèm lý do khi: Pause, trong trận hoặc màn hình trận, app toàn màn hình, đang có một mini-game khác. Mèo ngủ/waking: dòng vẫn bấm được, trò chờ mèo tự thức tối đa 30 giây rồi bỏ (như Gọi mèo), không đánh thức.
 - Mèo đang bận việc ngắn (đi tới đồ, cử chỉ, "Làm ngay"): dừng việc đó rồi bắt đầu; đang kéo, đang bay, sleep lock thì chờ như hàng đợi của "Làm ngay". Đang chơi bóng/laser/cần câu/chuột hoặc chuyền bóng thì trò đó kết thúc trước.
 - Chạy cả trong Quiet, Giờ tập trung và wake cooldown. Trong lúc chơi, hành vi tự động, lệnh Python và cảm xúc tự động không chen vào (như rủ chơi).

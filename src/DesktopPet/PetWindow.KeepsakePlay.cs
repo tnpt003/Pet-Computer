@@ -80,6 +80,16 @@ public sealed partial class PetWindow
             menu.Items.Clear();
             string language = preferences.Language;
             string? shown = DisplayedKeepsake?.Id;
+            // The slime cushion: the cat can be asked to sleep on it from here (no longer from "Do now").
+            if (DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion)
+            {
+                var sleep = PetUi.MenuItem(PetUi.Quiet); // The moon.
+                sleep.Header = L("Ngủ trên đệm", "Sleep on the cushion");
+                sleep.Click += (_, _) => SleepOnCushionNow();
+                CatRowState(sleep, CushionNear, PetAction.Sleeping, L("Mèo ở xa đệm quá", "The cat is too far from the cushion"));
+                menu.Items.Add(sleep);
+                menu.Items.Add(new Separator());
+            }
             foreach (var keepsake in DisplayableKeepsakes)
             {
                 string id = keepsake.Id;

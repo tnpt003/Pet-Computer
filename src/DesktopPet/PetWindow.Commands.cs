@@ -34,10 +34,8 @@ public sealed partial class PetWindow
     {
         var root = PetUi.MenuItem(PetUi.Play);
         var actions = new MenuItem[CommandItems.Length];
-        var cushionSleep = new MenuItem();
-        cushionSleep.Click += (_, _) => SleepOnCushionNow(); // PetWindow.KeepsakePlay.cs
-        var boxSleep = new MenuItem();
-        boxSleep.Click += (_, _) => SleepInBoxNow(); // PetWindow.ToyBox.cs
+        // Sleeping on the cushion or in the box is asked from the thing's own right-click menu
+        // (PetWindow.KeepsakePlay.cs, PetWindow.Toys.cs), not from here.
         for (int i = 0; i < CommandItems.Length; i++)
         {
             var action = CommandItems[i].Action;
@@ -46,8 +44,6 @@ public sealed partial class PetWindow
             root.Items.Add(actions[i]);
             // Groups: basic poses, self-care, gestures.
             if (action is PetAction.SeekingAttention or PetAction.Stretching) root.Items.Add(new Separator());
-            // Right under "Sleep": sleep on the slime cushion, when it is on display and close by.
-            if (action == PetAction.Sleeping) { root.Items.Add(cushionSleep); root.Items.Add(boxSleep); }
         }
         // Learned tricks join the gestures (living corner M5); hidden until learned.
         var learnedTricks = new MenuItem[TrickRules.All.Length];
@@ -68,6 +64,9 @@ public sealed partial class PetWindow
             lessons[i].Click += (_, _) => TeachTrick(id);
             teach.Items.Add(lessons[i]);
         }
+        // At the end of "Do now", next to the tricks it teaches.
+        root.Items.Add(new Separator());
+        root.Items.Add(teach);
         // Emotions have their own submenu: the manual-control switch, then the emotions it unlocks.
         var feelings = PetUi.MenuItem(PetUi.Emotions);
         var manual = new MenuItem { IsCheckable = true };
@@ -83,7 +82,6 @@ public sealed partial class PetWindow
             feelings.Items.Add(emotions[i]);
         }
         menu.Items.Add(root);
-        menu.Items.Add(teach);
         menu.Items.Add(feelings);
         menu.Opened += (_, _) =>
         {
@@ -111,19 +109,6 @@ public sealed partial class PetWindow
             }
             teach.Header = L("Dạy động tác", "Teach a trick");
             teach.IsEnabled = !paused && !BattleOwnsPet;
-            // Shown only with the cushion on display; greyed out (with the reason) when the cat is far from it.
-            bool cushion = TrophiesVisible && DisplayedKeepsake?.Kind == KeepsakeSpec.Cushion;
-            cushionSleep.Visibility = cushion ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-            cushionSleep.Header = L("Ngủ trên đệm", "Sleep on the cushion");
-            cushionSleep.IsEnabled = CushionNear;
-            cushionSleep.ToolTip = CushionNear ? null : L("Mèo ở xa đệm quá", "The cat is too far from the cushion");
-            ToolTipService.SetShowOnDisabled(cushionSleep, true);
-            // The same for the cardboard box out on the desktop.
-            boxSleep.Visibility = BoxOut ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
-            boxSleep.Header = L("Ngủ trong hộp", "Sleep in the box");
-            boxSleep.IsEnabled = BoxNear;
-            boxSleep.ToolTip = BoxNear ? null : L("Mèo ở xa hộp quá", "The cat is too far from the box");
-            ToolTipService.SetShowOnDisabled(boxSleep, true);
             manual.Header = L("Tự điều khiển cảm xúc", "Control emotions myself");
             manual.IsChecked = pet.Emotions.ManualMode;
             for (int i = 0; i < emotions.Length; i++)

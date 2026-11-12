@@ -371,6 +371,10 @@ internal static class ToyChecks
         check(!window.GoingToBox && pet.Action != PetAction.Walking, "The box picked up on the way: the trip is off");
         SetThing(thing, "Held", false);
         check(!window.BoxNear && !window.SleepInBoxNow(), "Far from the box \"Sleep in the box\" does nothing (greyed out)");
+        var farBoxRows = window.ToyMenuItems(Box);
+        check(farBoxRows.Length == 3 && farBoxRows[0] is MenuItem { Header: "Sleep in the box", IsEnabled: false, ToolTip: "The cat is too far from the box" }
+              && farBoxRows[1] is Separator && farBoxRows[2] is MenuItem { Header: "Put back in the basket", IsEnabled: true },
+            "The box's own right-click menu: \"Sleep in the box\" (greyed out far away, with the reason), a line, \"Put back in the basket\"");
 
         check(window.GoNapInBox(), "Off again");
         Arrive();
@@ -380,6 +384,7 @@ internal static class ToyChecks
         check(window.BoxLift == PetWindow.BoxFloor && FrontDrop() == PetWindow.BoxFloor, "Asleep in it, behind its front panel drawn by the cat's window");
         Snapshot(window, boxWindow, "toy-box-asleep");
         check(!window.StowToy(Box) && window.ToyBasketMenuItems()[1] is { IsEnabled: false } asleepRow && ((string)asleepRow.Header).Contains("asleep"), "The box cannot be put away while the cat is in it");
+        check(window.ToyMenuItems(Box)[0] is MenuItem { IsEnabled: false, ToolTip: "The cat is asleep or busy" }, "A sleeping cat: the box's \"Sleep in the box\" is greyed out, nothing wakes it");
         double sleptBefore = pet.Emotions.SleepElapsed;
         window.SetPaused(true);
         Tick(window, 0.5);
@@ -401,10 +406,13 @@ internal static class ToyChecks
         Snapshot(window, boxWindow, "toy-box-out");
         pet.Emotions.FinishSleep(0);
 
-        // "Do now → Sleep in the box": close by, even in Quiet and in the wake cooldown.
+        // The box's menu → "Sleep in the box": close by, even in Quiet and in the wake cooldown.
         Away(150);
         preferences.Quiet = true; behavior.Quiet = true;
-        check(window.BoxNear && window.SleepInBoxNow() && window.GoingToBox, "Close to it \"Sleep in the box\" works even in Quiet");
+        var nearBoxRow = (MenuItem)window.ToyMenuItems(Box)[0];
+        bool nearBoxEnabled = nearBoxRow.IsEnabled;
+        nearBoxRow.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(window.BoxNear && nearBoxEnabled && window.GoingToBox, "Close to it the box's \"Sleep in the box\" works even in Quiet");
         Arrive();
         check(window.NappingInBox && pet.Action == PetAction.Sleeping, "...and the cat sleeps in it");
         preferences.Quiet = false; behavior.Quiet = false;
@@ -1241,7 +1249,11 @@ internal static class ToyChecks
         // "Do now → Scratch": to the post when it is near, even in Quiet; on the spot when it is not.
         Away(150);
         preferences.Quiet = true; behavior.Quiet = true;
-        check(window.PostNear && window.DoNow(PetAction.Scratching) && window.PostTripPhase == "Walk", "Near the post \"Scratch\" goes to it, even in Quiet");
+        var postRows = window.ToyMenuItems(Post);
+        bool postRowEnabled = postRows[0] is MenuItem { Header: "Scratch here", IsEnabled: true };
+        ((MenuItem)postRows[0]).RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+        check(window.PostNear && postRowEnabled && postRows[2] is MenuItem { Header: "Put back in the basket" } && window.PostTripPhase == "Walk",
+            "Near the post its own menu's \"Scratch here\" goes to it, even in Quiet (Do now → Scratch does the same)");
         FeatureStep();
         check(window.PostTripPhase == "Walk" && pet.Action == PetAction.Walking, "...and keeps going in Quiet");
         pet.X = Stand(); FeatureStep();
@@ -1249,6 +1261,7 @@ internal static class ToyChecks
         Call(window, "StopPostTrip");
         preferences.Quiet = false; behavior.Quiet = false;
         Away(300);
+        check(window.ToyMenuItems(Post)[0] is MenuItem { IsEnabled: false, ToolTip: "The cat is too far from the post" }, "Far from the post \"Scratch here\" is greyed out, with the reason");
         check(!window.PostNear && window.DoNow(PetAction.Scratching) && window.PostTripPhase == "None" && pet.Action == PetAction.Scratching, "Far from it \"Scratch\" scratches on the spot");
         Free(); behavior.Reset(pet);
 

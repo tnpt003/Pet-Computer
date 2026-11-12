@@ -511,17 +511,28 @@ The cat's right-click menu is grouped, with Windows' own icon font (no new asset
 2026-10-23 every group holds one kind of thing, so a submenu has everything related to its name
 (12 rows, 3 separators):
 
-1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer, Toy basket / Quick tidy), Battle Mode, Do now ›,
-   Emotions ›**: playing with the cat and telling it what to do. While the ball is out, **Put ball
-   away** also shows on the main menu right under Play (one click). Play is dimmed when neither
-   game can start.
-2. **Quiet mode** (tooltip), **Sounds**: the two quick switches. Sounds is also the master switch
+1. **Give treat, Play › (Play with ball / Put ball away, Laser pointer, Toy basket / Quick tidy, a
+   line, then the mini-games: Find the fish, Hide and seek, Catch fireflies, Treasure hunt), Cast
+   portal spell / Battle Mode, Do now › (the actions, learned tricks, a line, Teach a trick ›),
+   Emotions ›**: playing with the cat and telling it what to do. Play is dimmed when nothing in it
+   can start.
+2. **Focus time ›, Quiet mode** (tooltip), **Sounds**: the quick switches. Sounds is also the master switch
    in Settings → Sounds.
 3. **{name} ›** ({name}'s status, {name}'s diary, **Customize…**): who the cat is.
    **Location ›** (Go to resting spot, Remember this spot, Forget resting spot, then Bring the pet
    to the main screen): where the cat is. **Settings…**: the app. **More ›** (Behavior debug view,
    About).
 4. **Exit**.
+
+Since 2026-11-12 (13 rows) what belongs to a thing is on that thing's own right-click menu, not the
+cat's: the cardboard box has **Sleep in the box**, the scratching post **Scratch here**, the slime
+cushion (keepsake menu, at the top) **Sleep on the cushion**; every toy and corner thing ends with
+**Put back in the basket** (the yarn ball: **Put ball away**), and the ball of the 45-second ball
+game has **Put ball away** (it was a row on the cat's main menu while the ball was out). Opening a
+thing's menu never touches or wakes the cat and is not an interaction; a row that asks the cat is
+greyed out with the reason when the cat is far ("too far from the box"), asleep or busy, or in a
+battle. A thing being held, used in a mini-game, in the cat's mouth or with the cat in it shows no
+menu, and Pause shows none. The farm plots keep their own menus. The tray keeps **Play with the cat**.
 
 Bring the pet to the main screen (this menu and the tray, 2026-10-23): the cat vanishes in a puff
 where it is, pops up in the middle of the main screen with another puff and sparkles, drops a

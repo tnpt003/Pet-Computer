@@ -481,7 +481,7 @@ Tự động đã có: Phần thưởng trên sảnh (ô có hình, khóa, Mới
 
 ### Menu chuột phải gọn (2026-10-23)
 - [ ] Menu còn 10 dòng: Cho ăn, Chơi ›, Chế độ chiến đấu, Làm ngay ›, Cảm xúc ›, Chế độ yên lặng, {tên mèo} ›, Cài đặt…, Khác ›, Thoát mèo. Menu con mở mượt, không bị cắt ở mép màn hình.
-- [ ] Chơi › Chơi bóng: bóng ra; mở lại menu thấy "Cất bóng" ngay dưới Chơi, bấm cất được. Khi mèo chưa rảnh (đang bế/ngủ/trận) Chơi bị mờ.
+- [ ] Chơi › Chơi bóng: bóng ra; trong Chơi dòng đó thành "Cất bóng", hoặc chuột phải lên quả bóng → "Cất bóng" (từ 12/11 không còn dòng "Cất bóng" ở cấp đầu). Khi mèo chưa rảnh (đang bế/ngủ/trận) Chơi bị mờ.
 - [ ] {tên mèo} › Trạng thái / Nhật ký / Chỗ nghỉ yêu thích chạy như trước. Khác › Âm thanh bật/tắt có hiệu lực và khớp Cài đặt → Âm thanh.
 
 ### Đáp đất chuẩn hóa mèo = món trưng bày (2026-10-23)
@@ -1542,7 +1542,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 
 - [ ] Bấm giỏ → "Thùng carton": hộp nhảy ra, nằm trên sàn, nắp mở hai bên. Có bóng và hộp thì đếm là 2 món; đủ 3 thì món còn lại mờ.
 - [ ] Bấm hộp: chỉ rung nhẹ tại chỗ. Kéo quá một đoạn ngắn mới cầm; ném thì rơi, nảy thấp, trượt ngắn, không lăn, không xoay. Thả đè lên vùng đất: tự trượt sang chỗ trống.
-- [ ] Để hộp gần mèo, chuột phải mèo → Làm ngay → "Ngủ trong hộp": mèo đi tới, nhảy nhẹ vào, ngủ, chỉ lộ đầu và tai. Ở xa thì mục mờ, rê chuột thấy "Mèo ở xa hộp quá". Có mục cả khi Quiet.
+- [ ] Để hộp gần mèo, chuột phải lên hộp → "Ngủ trong hộp" (từ 12/11; trước đó ở Làm ngay): mèo đi tới, nhảy nhẹ vào, ngủ, chỉ lộ đầu và tai. Ở xa thì mục mờ, rê chuột thấy "Mèo ở xa hộp quá". Có mục cả khi Quiet.
 - [ ] Để yên vài phút (không Quiet): mèo tự đi vào hộp ngủ. Có cả đệm slime và hộp: mèo chọn cái gần hơn.
 - [ ] Mèo ngủ trong hộp: rê chuột, AI, ném bóng trúng đều không đánh thức. Khoảng 10 giây sau tự thức: thò đầu lên khoảng 1 giây rồi nhảy nhẹ ra trước hộp.
 - [ ] Click trái mèo trong hộp: thức ngay; kéo được và mèo được nhấc thẳng ra, không thấy hộp dính theo hay mặt trước hộp còn đè lên mèo. Click phải: thức và mở menu.
@@ -1649,7 +1649,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Mèo đứng trên mép cửa sổ: gọi thì đi dọc mép, tới đầu mép thì dừng ngồi, không tự nhảy xuống.
 - [ ] Mèo đang ngủ: gọi thì mèo ngủ tiếp (không thức), tự thức trong 30 giây thì mới tới. Pause, trong trận, app toàn màn hình: dòng "Gọi mèo" mờ.
 - [ ] Nhiều màn hình: con trỏ ở màn hình khác thì mèo chỉ quay đầu nhìn về phía đó.
-- [ ] Chuột phải → "Dạy động tác" → Xoay vòng: mèo làm thử vụng, ngồi chờ; vuốt mèo trong 6 giây thì hiện "1/5" trên đầu, tiến độ trong menu thành ●○○○○. Không vuốt: không tính. Lần kế phải chờ ~30 giây; 3 buổi một ngày thì dòng mờ "Mai học tiếp".
+- [ ] Chuột phải → Làm ngay → "Dạy động tác" (cuối menu, từ 12/11) → Xoay vòng: mèo làm thử vụng, ngồi chờ; vuốt mèo trong 6 giây thì hiện "1/5" trên đầu, tiến độ trong menu thành ●○○○○. Không vuốt: không tính. Lần kế phải chờ ~30 giây; 3 buổi một ngày thì dòng mờ "Mai học tiếp".
 - [ ] Đủ 5 buổi (qua 2 ngày): "Đã thuộc!", một câu nói (nếu bật câu nói), "Làm ngay" có dòng Xoay vòng và mèo làm gọn gàng. Tương tự Ngồi xin, Đập tay; Đập tay để con trỏ gần chân giơ lên thì có tia sáng.
 - [ ] Đóng mở lại mèo: tiến độ và động tác đã thuộc còn nguyên. Mèo không bao giờ tự làm ba động tác này.
 - [ ] Đọc chữ menu và câu "覚えた" tiếng Nhật (chưa ai duyệt).
@@ -1707,3 +1707,11 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 ## Giật mình chỉ khi mèo rảnh (Issue #76, 12/11)
 - [ ] Vẩy chuột thật nhanh sát mèo khi mèo đang đi, đang cào trụ, ghé chậu cây, tha bóng, làm động tác được dạy hoặc lệnh "Làm ngay": mèo không giật mình, việc không bị ngắt.
 - [ ] Vẩy chuột nhanh sát mèo khi mèo đứng/ngồi yên: vẫn giật mình (mắt tròn, dấu "!", tiếng) ~1 giây, cách nhau ít nhất 6 giây. Cổng phép hiện ra, kỷ vật rơi mạnh sát bên: vẫn giật mình như cũ. Mèo ngủ: không giật mình.
+
+## Sắp xếp menu, đồ vật có menu riêng (12/11, chỉ bản 1.6)
+- [ ] Chuột phải mèo: 13 dòng (Cho ăn, Chơi, Niệm phép cổng, Làm ngay, Cảm xúc | Giờ tập trung, Yên lặng, Âm thanh | tên mèo, Vị trí, Cài đặt, Khác | Thoát). Chơi › có 3 dòng đồ chơi, một đường kẻ, rồi 4 mini-game; Làm ngay kết thúc bằng đường kẻ và "Dạy động tác ›". Menu khay vẫn có "Chơi cùng mèo".
+- [ ] Chuột phải lên hộp: "Ngủ trong hộp", đường kẻ, "Cất vào giỏ". Gần thì mèo đi vào ngủ (cả khi Quiet); xa thì mờ, rê thấy "Mèo ở xa hộp quá"; mèo đang ngủ chỗ khác thì mờ "Mèo đang ngủ hoặc đang bận" và mèo KHÔNG thức. Mèo đang trong hộp, hộp đang làm chỗ nấp Trốn tìm, đang cầm hộp, Pause: không có menu.
+- [ ] Chuột phải lên trụ cào: "Cào móng ở đây" (gần thì đi tới cào, xa thì mờ "Mèo ở xa trụ quá"), "Cất vào giỏ". Chậu cây, cần câu, chuột: chỉ "Cất vào giỏ"; bóng len: "Cất bóng"; mèo đang ngậm bóng thì không có menu.
+- [ ] Trưng bày đệm slime, chuột phải lên đệm: dòng đầu "Ngủ trên đệm" rồi đường kẻ, danh sách kỷ vật như cũ; trưng bày cúp thì không có dòng này. Làm ngay không còn "Ngủ trên đệm"/"Ngủ trong hộp".
+- [ ] Chơi bóng 45 giây: chuột phải lên quả bóng → "Cất bóng" cất được, mèo không bị chạm. Mở menu đồ vật không làm mèo quay nhìn, không tính vuốt/click.
+- [ ] Phiếu Chào mừng (xóa preferences trên máy thử, không phải máy thật) có dòng "Chuột phải vào đồ vật…", vi/en/ja không tràn. Câu tiếng Nhật mới chưa ai duyệt.

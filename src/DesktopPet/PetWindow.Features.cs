@@ -52,23 +52,21 @@ public sealed partial class PetWindow
         var basket = PetUi.MenuItem(PetUi.Ball);
         basket.Click += (_, _) => ToggleToyBasket();
         play.Items.Add(toy); play.Items.Add(laser); play.Items.Add(basket);
-        // Mini-games the user starts (docs/MINI-GAMES.md); the same row again ends a game.
-        var games = PetUi.MenuItem(PetUi.Play);
+        // Mini-games the user starts (docs/MINI-GAMES.md), under a line in the same submenu; the same row again ends a game.
+        play.Items.Add(new Separator());
         var cups = PetUi.MenuItem(PetUi.Treat);
         cups.Click += (_, _) => ToggleCupGame();
-        games.Items.Add(cups);
+        play.Items.Add(cups);
         var seek = PetUi.MenuItem(PetUi.Plant);
         seek.Click += (_, _) => ToggleHideSeek();
-        games.Items.Add(seek);
+        play.Items.Add(seek);
         var flies = PetUi.MenuItem(PetUi.Firefly);
         flies.Click += (_, _) => ToggleFireflies();
-        games.Items.Add(flies);
+        play.Items.Add(flies);
         var treasure = PetUi.MenuItem(PetUi.Treasure);
         treasure.Click += (_, _) => ToggleTreasure();
-        games.Items.Add(treasure);
-        // While the ball is out, putting it away is one click on the main menu.
-        var putAway = PetUi.MenuItem(PetUi.Ball);
-        putAway.Click += (_, _) => ToggleToy();
+        play.Items.Add(treasure);
+        // While the ball is out it is put away from "Play" or from the ball's own right-click menu.
         var remember = new MenuItem();
         remember.Click += (_, _) => { preferences.RestX = pet.X; preferences.RestY = pet.Y;
             preferences.RestMonitor = CurrentMonitor().DeviceName;
@@ -107,7 +105,7 @@ public sealed partial class PetWindow
         more.Items.Add(debug); more.Items.Add(about);
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway); menu.Items.Add(games);
+        menu.Items.Add(treat); menu.Items.Add(play);
         InitializeBattle(menu); // "Cast portal spell", or "Battle Mode" in a fight (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
@@ -130,10 +128,8 @@ public sealed partial class PetWindow
             treat.Header = L("Cho ăn", "Give treat");
             play.Header = L("Chơi", "Play");
             toy.Header = toyWindow == null ? L("Chơi bóng", "Play with ball") : L("Cất bóng", "Put ball away");
-            putAway.Header = L("Cất bóng", "Put ball away");
             cat.Header = preferences.Name;
             laser.Header = L("Chơi đèn laser", "Laser pointer");
-            games.Header = L("Chơi cùng mèo", "Play with the cat");
             cups.Header = CupGameActive ? L("Dừng Úp cốc tìm cá", "Stop Find the fish") : CupGameMenuLabel;
             cups.ToolTip = CupGameMenuNote is { Length: > 0 } why ? why : null;
             seek.Header = HideSeekActive ? L("Dừng Trốn tìm", "Stop Hide and seek") : HideSeekMenuLabel;
@@ -163,13 +159,11 @@ public sealed partial class PetWindow
             toy.IsEnabled = toyWindow != null || MayAct(AutoKind.UserGame);
             laser.IsEnabled = MayAct(AutoKind.UserGame); // Right-clicking the cat already ended a running game.
             basket.IsEnabled = ToyBasketMenuEnabled;
-            play.IsEnabled = toy.IsEnabled || laser.IsEnabled || basket.IsEnabled;
             cups.IsEnabled = CupGameMenuEnabled;
             seek.IsEnabled = HideSeekMenuEnabled;
             flies.IsEnabled = FirefliesMenuEnabled;
             treasure.IsEnabled = TreasureMenuEnabled;
-            games.IsEnabled = cups.IsEnabled || seek.IsEnabled || flies.IsEnabled || treasure.IsEnabled;
-            putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
+            play.IsEnabled = toy.IsEnabled || laser.IsEnabled || basket.IsEnabled || cups.IsEnabled || seek.IsEnabled || flies.IsEnabled || treasure.IsEnabled;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue;
             forget.IsEnabled = preferences.RestX.HasValue;
@@ -245,6 +239,15 @@ public sealed partial class PetWindow
         ballHalo = new Ellipse { Width = 36, Height = 36, Stroke = YarnBallArt.Halo, StrokeThickness = 2, Opacity = 0 };
         var art = new YarnBallArt { Width = 24, Height = 24, RenderTransformOrigin = new Point(0.5, 0.5) };
         surface.Children.Add(ballHalo); surface.Children.Add(art); ballArt = art;
+        // Right click on the ball: put it away (it used to be a row on the cat's main menu).
+        var ballMenu = new ContextMenu { FontFamily = PetUi.TextFont, FontSize = PetUi.BodySize };
+        PetMenuStyle.Apply(ballMenu);
+        var stow = PetUi.MenuItem(PetUi.Ball);
+        stow.Header = L("Cất bóng", "Put ball away");
+        stow.Click += (_, _) => { if (toyWindow != null) ToggleToy(); };
+        ballMenu.Items.Add(stow);
+        surface.ContextMenu = ballMenu;
+        surface.ContextMenuOpening += (_, e) => { if (paused) e.Handled = true; else stow.Header = L("Cất bóng", "Put ball away"); };
         toyWindow = CreateOverlayWindow(surface, "Pet toy");
         toyWindow.Width = 56; toyWindow.Height = 56; toyWindow.Left = ball.X - 28; toyWindow.Top = bounds.Bottom - 40;
         toyWindow.MouseLeftButtonDown += (_, e) =>

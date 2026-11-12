@@ -36,7 +36,7 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 - Bóng đang trong giỏ: trò chạy như hiện nay, hết 45 giây bóng về giỏ.
 - Bóng đang nằm ngoài: trò bắt đầu từ chỗ đó, hết giờ bóng nằm lại. Bóng nằm ở màn hình khác với mèo thì trò bắt đầu cạnh mèo như lấy từ giỏ, xong nằm lại ở màn hình của mèo.
 - Trong lúc chơi, bấm vẫn là đẩy bóng và không cầm được, giữ đúng cảm giác cũ.
-- Mèo ngủ, bị kéo hoặc đổi việc thì trò dừng như cũ, nhưng bóng đang nằm ngoài vẫn nằm lại. "Cất bóng" và Cất nhanh thì đưa bóng về giỏ.
+- Mèo ngủ, bị kéo hoặc đổi việc thì trò dừng như cũ, nhưng bóng đang nằm ngoài vẫn nằm lại. "Cất bóng" (trong Chơi ›, hoặc chuột phải lên quả bóng từ 12/11) và Cất nhanh thì đưa bóng về giỏ. Từ 12/11 mỗi đồ có menu chuột phải riêng kết thúc bằng "Cất vào giỏ" (docs/WINDOWS.md → Menu and settings layout).
 - Bóng đang trong trò thì hàng của nó trong giỏ mờ và ghi "đang chơi".
 
 ### Cất nhanh
@@ -62,7 +62,7 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
 - Mèo tự đi tới trong đúng ba dịp như đệm slime: mỗi 4–7 phút, khi mèo tự chọn ngủ, và khi sắp buồn ngủ vì khoảng 95 giây không ai chạm.
 - Bị chặn khi mèo bận, Quiet, Giờ tập trung, trong trận, đang có việc khác, hoặc trong wake cooldown 30 giây. Mèo phải đứng trên sàn, cùng màn hình với hộp. Đi quá 20 giây chưa tới thì thôi.
-- "Làm ngay → Ngủ trong hộp" chỉ khi mèo cách hộp tối đa 200 DIP; như mọi "Làm ngay", chạy cả trong Quiet và wake cooldown.
+- "Ngủ trong hộp" (từ 12/11 ở menu chuột phải của hộp, không còn trong Làm ngay; mèo ngủ/bận thì dòng mờ, mở menu hộp không đánh thức mèo) chỉ khi mèo cách hộp tối đa 200 DIP; như mọi "Làm ngay", chạy cả trong Quiet và wake cooldown.
 - Gợi ý ngủ của AI và away nap vẫn ngủ tại chỗ.
 - Có cả đệm và hộp thì mèo chọn cái gần hơn.
 

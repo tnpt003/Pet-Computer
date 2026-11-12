@@ -179,26 +179,35 @@ internal static class Program
         string catName = Field<PetPreferences>(window, "preferences").Name;
         var catMenu = topItems.Single(item => (string)item.Header == catName);
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
-        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Play with the cat", "Cast portal spell", "Do now", "Teach a trick", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
-              SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket" &&
-              SubHeaders("Play with the cat") == "Find the fish|Hide and seek|Catch fireflies|Treasure hunt · no map yet" &&
+        var playMenu = topItems.Single(item => (string)item.Header == "Play");
+        var doNowMenu = topItems.Single(item => (string)item.Header == "Do now");
+        Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Cast portal spell", "Do now", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
+              SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket|Find the fish|Hide and seek|Catch fireflies|Treasure hunt · no map yet" &&
+              playMenu.Items.IndexOf(playMenu.Items.OfType<System.Windows.Controls.Separator>().Single()) == 3 &&
+              doNowMenu.Items[doNowMenu.Items.Count - 1] is System.Windows.Controls.MenuItem { Header: "Teach a trick" } &&
+              doNowMenu.Items[doNowMenu.Items.Count - 2] is System.Windows.Controls.Separator &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
               catHeaders.Count == 3 && catHeaders[2] == "Customize…" &&
               topItems.Single(item => (string)item.Header == "Sounds").IsCheckable &&
               window.ContextMenu.Items.OfType<System.Windows.Controls.Separator>().Count() == 3 &&
               !string.IsNullOrEmpty(PetWindow.VersionText) && PetWindow.VersionText != "unknown",
-            "Context menu: 15 items in 4 groups (play, mini-games · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
+            "Context menu: 13 items in 4 groups (play with the mini-games under a line, Do now ending with Teach a trick · Focus time, Quiet and Sounds · the cat, where it is, settings, more · Exit); Customize sits under the cat's name; About has a version");
         window.ToggleToy();
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
         // (The spell's item says why it is off while the ball is out.)
         var putAway = topItems.Where(item => item.Visibility == Visibility.Visible).Select(item => (item.Header as string)?.Split(" (")[0]).ToList();
         bool ballOut = Field<Window?>(window, "toyWindow") != null;
-        window.ToggleToy();
+        // The ball's own right-click menu puts it away.
+        var ballSurface = Field<Window?>(window, "toyWindow")?.Content as FrameworkElement;
+        var ballMenu = ballSurface?.ContextMenu;
+        var ballRow = ballMenu?.Items.OfType<System.Windows.Controls.MenuItem>().SingleOrDefault();
+        string? ballRowHeader = ballRow?.Header as string;
+        ballRow?.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
         window.ContextMenu.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.ContextMenu.OpenedEvent));
-        Check(ballOut && putAway.SequenceEqual(new[] { "Give treat", "Play", "Put ball away" }.Concat(headers.Skip(2))) && Field<Window?>(window, "toyWindow") == null &&
+        Check(ballOut && putAway.SequenceEqual(headers) && ballRowHeader == "Put ball away" && Field<Window?>(window, "toyWindow") == null &&
               topItems.Where(item => item.Visibility == Visibility.Visible).Count() == headers.Count,
-            "While the ball is out, \"Put ball away\" shows on the main menu; it hides again once the ball is gone");
+            "While the ball is out the main menu keeps its rows; the ball's own right-click menu says \"Put ball away\" and puts it away");
         int statusIndex = catHeaders.FindIndex(h => h?.EndsWith("'s status", StringComparison.Ordinal) == true);
         var actionBeforeStatus = pet.Action;
         long interactionsBeforeStatus = Field<long>(window, "interactionCount");
@@ -1029,9 +1038,10 @@ internal static class Program
         // "Do now" menu: immediate actions (even in Quiet), queued after waking, manual emotions.
         var doNow = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Làm ngay" or "Do now");
         var feelings = window.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Header is "Cảm xúc" or "Emotions");
-        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count(item => item.Visibility == Visibility.Visible) == 12 &&
+        Check(doNow != null && doNow.Items.OfType<System.Windows.Controls.MenuItem>().Count(item => item.Visibility == Visibility.Visible) == 13 &&
+              !doNow.Items.OfType<System.Windows.Controls.MenuItem>().Any(item => item.Header is "Sleep on the cushion" or "Sleep in the box") &&
               feelings != null && feelings.Items.OfType<System.Windows.Controls.MenuItem>().Count() == 6,
-            "Context menu offers Do now with 12 actions (\"Sleep on the cushion\" hidden without the cushion) and Emotions with the manual switch and 5 emotions");
+            "Context menu offers Do now with 12 actions and Teach a trick (no cushion or box rows: those are on the things) and Emotions with the manual switch and 5 emotions");
         window.Reset();
         Check(window.DoNow(PetAction.ChasingTail) && pet.Action == PetAction.ChasingTail, "Do now starts a gesture at once, even in Quiet mode");
         behavior.Step(pet, 0.5);

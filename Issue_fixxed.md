@@ -9,7 +9,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Triệu chứng:** nhãn của vùng đang gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển nông trại, bay lên rồi bị cắt mất phần trên gần cuối.
 - **Nguyên nhân:** nhãn trên biển bắt đầu cách mép trên cửa sổ biển 8 DIP rồi bay lên 18 DIP, nên khoảng 10 DIP cuối vượt ra ngoài cửa sổ. Nhãn ruộng đặt theo ngọn cây cũng chỉ chặn ở 0, nên cây cao sát mép có thể bị y như vậy.
 - **Sửa (người dùng chọn sửa chung):** mọi nhãn nổi của nông trại (ruộng, bếp, hồ, chuồng, biển) bắt đầu thấp nhất ở `FarmGainTop` = 20 DIP, bằng quãng bay `FarmGainRise` 18 DIP cộng 2, nên cả đoạn bay nằm trong cửa sổ (`PetWindow.Farm.cs`, `PetWindow.FarmLands.cs`).
-- **Commit:** điền sau khi publish.
+- **Commit:** `082764f`, ZIP `artifacts/DesktopPet-1.5.1-082764f-win-x64.zip`, smoke 3/3 PASS.
 - **Kiểm chứng:** script đầy đủ một lần: Python 67 + i18n 5, C# 4914 (104 suite), WPF 3148 đều đạt. Check mới trong FarmDockChecks: nhãn hai dòng trên biển lúc gần hết vẫn trong cửa sổ (đỉnh 2,9 DIP; trước khi sửa khoảng −9).
 - **Cần xem tay:** gập ruộng, thu hoạch hoặc lên cấp để nhãn hiện trên biển, xem chữ không bị cắt khi bay lên; ruộng có cây cao cũng vậy.
 

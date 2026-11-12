@@ -77,6 +77,9 @@ public sealed class PetBehavior(PetSettings settings, Random? randomSource = nul
     public static bool CanStartManual(PetModel pet, PetAction action) =>
         Array.IndexOf(ManualActions, action) >= 0 && PetActionRules.IsSettled(pet) && !pet.Emotions.BlocksAutonomy;
 
+    // A user command ("Do now", a trick) is running right now.
+    public bool RunsManual(PetModel pet) => manualAction is { } action && action == pet.Action;
+
     public bool StartManual(PetModel pet, PetAction action)
     {
         if (!CanStartManual(pet, action)) return false;

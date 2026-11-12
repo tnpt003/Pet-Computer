@@ -292,6 +292,10 @@ public sealed partial class PetWindow
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
         laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement || TreasureFindOwnsMovement);
 
+    // Nothing of the window's runs the cat: a fast cursor may startle it (PetEmotions.FreeToStartle).
+    private bool CatFreeToStartle => !FeatureOwnsMovement() && !behavior.RunsManual(pet) &&
+        postTrip == PostTrip.None && plantTrip == PlantTrip.None && cushionNap == CushionNap.None && boxPeek == BoxPeek.None;
+
     private void TickFeatures(double dt)
     {
         treatCooldown = Math.Max(0, treatCooldown - dt);

@@ -199,8 +199,14 @@ public sealed class PetEmotions
         transientUntil = now + duration;
     }
 
+    // A fast cursor startles the cat only while it is doing nothing (idle, sitting, looking around):
+    // a startle stops what it does, so it must not cut short a walk, a gesture or a trip.
+    public static bool FreeToStartle(PetModel pet) =>
+        pet.Grounded && pet.Action is PetAction.Idle or PetAction.Sitting or PetAction.Looking;
+
     // Returns true only when a deliberate gentle hover-stroke registers as petting.
-    public bool Step(PetModel pet, double dt, double? cursorX = null, double? cursorY = null, bool overPet = false)
+    // catFree: the window has no trip, feature or user command running (see FreeToStartle).
+    public bool Step(PetModel pet, double dt, double? cursorX = null, double? cursorY = null, bool overPet = false, bool catFree = true)
     {
         if (!double.IsFinite(dt) || dt <= 0) return false;
         now += dt;
@@ -239,7 +245,7 @@ public sealed class PetEmotions
             }
             else pettingTime = 0;
             double nearX = x - (pet.X + PetSettings.CenterX), nearY = y - (pet.Y + PetSettings.ChestY);
-            if (!ManualMode && !busy && speed >= 1600 &&
+            if (!ManualMode && !busy && catFree && FreeToStartle(pet) && speed >= 1600 &&
                 nearX * nearX + nearY * nearY <= 140 * 140 && now >= surpriseAfter &&
                 !(now < transientUntil && transient is PetEmotion.Angry or PetEmotion.Happy))
             {

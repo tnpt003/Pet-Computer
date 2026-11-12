@@ -42,7 +42,7 @@ Quyết định chung (người dùng đồng ý 11/11):
 ### Khi bị ngắt
 
 - Click trái hoặc kéo mèo: dừng ngay, kéo như thường. Click phải: dừng và mở menu.
-- Cảm xúc ưu tiên cao (Angry, Surprised, Dizzy...) đến thì dừng cào. Pause đóng băng cả chuyến đi lẫn lúc cào.
+- Cảm xúc ưu tiên cao (Angry, Dizzy, Surprised do sự kiện thật như cổng/kỷ vật) đến thì dừng cào; con trỏ lướt nhanh không làm mèo giật mình khi đang đi tới hoặc đang cào (12/11, Issue #76). Pause đóng băng cả chuyến đi lẫn lúc cào.
 - Người dùng nhấc trụ lúc mèo đang đi tới hoặc đang cào: chuyến đó hủy, mèo về Idle, không phạt gì. Cất nhanh cũng vậy.
 - Không bao giờ bắt đầu khi mèo ngủ; mèo đang cào thì không tự chuyển sang ngủ.
 

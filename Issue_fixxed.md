@@ -5,6 +5,14 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #76 — Giật mình (Surprised) hay ngắt việc mèo đang làm (12/11)
+- **Triệu chứng:** mèo đang đi, cào trụ, ghé cây, làm động tác... thì giật mình và bỏ dở việc.
+- **Nguyên nhân:** con trỏ lướt nhanh (≥1.600 DIP/s trong 140 DIP) gây Surprised bất kể mèo đang làm gì; Surprised nằm trong `BlocksAutonomy` nên PetBehavior ép mèo về Idle và các chuyến (trụ cào, chậu cây, tha bóng...) tự hủy.
+- **Sửa (người dùng chọn):** con trỏ chỉ làm mèo giật mình khi mèo đang rảnh: dưới sàn, Idle/Sitting/Looking, không có chuyến, tính năng hay lệnh người dùng nào đang chạy (`PetEmotions.FreeToStartle`, `PetWindow.CatFreeToStartle`, `PetBehavior.RunsManual`). Giật mình do sự kiện thật (`Startle`: cổng phép, kỷ vật) giữ nguyên.
+- **Commit:** (điền khi chốt).
+- **Kiểm chứng:** test C# mới: ngồi/nhìn quanh thì giật mình; đi, rửa mặt, cào, nhồi bánh hoặc đang trong chuyến/lệnh thì không; Startle vẫn làm mèo đang đi giật mình.
+- **Cần xem tay:** vẩy chuột nhanh qua mèo khi mèo đang đi/cào trụ (không ngắt) và khi mèo ngồi yên (vẫn giật mình).
+
 ## #75 — Vật trưng bày cần giữ đúng lớp so với mèo và vùng đất (09/11)
 - **Triệu chứng:** người dùng muốn vật trưng bày cũng được đưa lên trên, đã chọn thứ tự mèo > vật trưng bày > vùng đất.
 - **Nguyên nhân:** thứ tự mèo và kỷ vật chỉ đặt một lần lúc kỷ vật hiện; WPF áp lại Topmost thì kỷ vật nhảy lên trên mèo (UiChecks đã tái hiện). Bản #74 chỉ sửa lại khi nông trại đang bật.

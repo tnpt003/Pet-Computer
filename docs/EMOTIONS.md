@@ -11,7 +11,7 @@ or the existing action/animation system. No LLM or additional dependencies are u
 | Happy | A click, gentle release, or petting | Happy eyes, smile, small visual bounce, outlined pink heart; about 3 seconds |
 | Angry | Four clicks within 2 seconds, or a throw at 1,600 DIPs/sec or more | Frown, angled brows, tiny shake, outlined red anger symbol; about 4 seconds |
 | Sad | No attention for 5 minutes | Worried brows, frown, outlined blue tear; walking slows to 65% until attention returns |
-| Surprised | Cursor moving at least 1,600 DIPs/sec within 140 DIPs of the pet's center | Wide eyes, open mouth, outlined exclamation mark; about 1.1 seconds |
+| Surprised | Cursor moving at least 1,600 DIPs/sec within 140 DIPs of the pet's center, only while the pet is doing nothing (idle, sitting or looking around on the ground, no trip or user command running); a walk, gesture or trip is never cut short by it. Real events (`Startle`: portal, keepsake) still startle a busy pet | Wide eyes, open mouth, outlined exclamation mark; about 1.1 seconds |
 | Sleepy | No attention for 2 minutes, or the existing Sleeping action | Drooping/closed eyes, yawn, high-contrast floating Zs; grounded movement stops |
 | Dizzy | The existing high-speed pickup detector | Existing wobble, orbit, stars, dizzy eyes; same raised threshold, intensity buffer, hold and fade |
 

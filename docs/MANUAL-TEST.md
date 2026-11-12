@@ -1703,3 +1703,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Pause giữa ván: mọi thứ đứng yên (đồng hồ, gợi ý, rương), click dấu không có tác dụng; bỏ Pause thì chơi tiếp. Toàn màn hình, vào trận/mở Sảnh, đổi DPI, rút màn hình: ván kết thúc ngay, rương chưa mở không được tính.
 - [ ] Mèo đang ngủ khi bấm bản đồ/dòng menu: không bị đánh thức; tự thức trong 30 giây thì ván bắt đầu, quá thì thôi. Yên lặng/Giờ tập trung: vẫn săn được nhưng mèo không tự tìm bản đồ. Không có khách M4 hay cảm xúc tự động chen vào trong ván.
 - [ ] Tùy chỉnh → Thói quen → "Săn kho báu": tắt thì bản đồ đang có mất ngay (đang săn thì ván dừng), không tìm bản đồ nữa. Nhật ký → thẻ "Kho báu": số rương đã mở, số mẩu chuyện đã đọc /12 và nội dung các mẩu đã đọc. DPI 125–150%, nhiều màn hình, đo FPS trong ván.
+
+## Giật mình chỉ khi mèo rảnh (Issue #76, 12/11)
+- [ ] Vẩy chuột thật nhanh sát mèo khi mèo đang đi, đang cào trụ, ghé chậu cây, tha bóng, làm động tác được dạy hoặc lệnh "Làm ngay": mèo không giật mình, việc không bị ngắt.
+- [ ] Vẩy chuột nhanh sát mèo khi mèo đứng/ngồi yên: vẫn giật mình (mắt tròn, dấu "!", tiếng) ~1 giây, cách nhau ít nhất 6 giây. Cổng phép hiện ra, kỷ vật rơi mạnh sát bên: vẫn giật mình như cũ. Mèo ngủ: không giật mình.

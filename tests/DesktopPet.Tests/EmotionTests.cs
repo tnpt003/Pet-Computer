@@ -48,6 +48,29 @@ internal static class EmotionTests
         pet.Emotions.Step(pet, 0.05, -50, 50);
         Advance(pet, 0.4);
         check(pet.Emotions.Current == PetEmotion.Neutral, "Surprise cooldown prevents rapid repeated startling");
+        // Only a cat doing nothing is startled by the cursor; a busy one keeps doing its thing.
+        PetEmotion Swipe(PetAction action, bool catFree = true)
+        {
+            var p = new PetModel { Action = action, Grounded = true };
+            p.Emotions.Step(p, 0.1, -200, 50, false, catFree);
+            p.Emotions.Step(p, 0.05, 56, 50, false, catFree);
+            p.Action = action;
+            for (int i = 0; i < 24; i++) p.Emotions.Step(p, 1.0 / 60, 56, 50, false, catFree);
+            return p.Emotions.Target;
+        }
+        check(Swipe(PetAction.Sitting) == PetEmotion.Surprised && Swipe(PetAction.Looking) == PetEmotion.Surprised,
+            "A sitting or looking-around cat is startled by a fast cursor");
+        check(Swipe(PetAction.Walking) != PetEmotion.Surprised && Swipe(PetAction.Grooming) != PetEmotion.Surprised &&
+            Swipe(PetAction.Scratching) != PetEmotion.Surprised && Swipe(PetAction.Kneading) != PetEmotion.Surprised,
+            "A walking or busy cat is not startled by a fast cursor (its action is not cut short)");
+        check(Swipe(PetAction.Idle, catFree: false) != PetEmotion.Surprised,
+            "An idle cat inside a trip or user command is not startled by a fast cursor");
+        var startled = Pet();
+        startled.Action = PetAction.Walking;
+        bool startle = startled.Emotions.Startle();
+        startled.Emotions.Step(startled, 1.0 / 60, null, null, false, catFree: false);
+        check(startle && startled.Emotions.Target == PetEmotion.Surprised && startled.Emotions.BlocksAutonomy,
+            "A real event (Startle) still startles a walking cat");
         pet = Pet();
         pet.Emotions.Step(pet, 0.1, 1000, 1000);
         pet.Emotions.Step(pet, 0.01, 2000, 1000);

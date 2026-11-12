@@ -444,6 +444,7 @@ public sealed partial class PetWindow : Window
         TickDesktopToys(dt); // The toy basket and the toys left out (PetWindow.Toys.cs).
         TickFarm(paused ? 0 : dt); // The little field above the taskbar (PetWindow.Farm.cs).
         TickFocus(paused ? 0 : elapsed); // Real time, not the capped step (PetWindow.Focus.cs).
+        TickGuests(paused ? 0 : dt); // Visitors: the timer and the guest's way; still in Pause (PetWindow.Guests.cs).
         if (!paused)
         {
             TickFeatures(dt);

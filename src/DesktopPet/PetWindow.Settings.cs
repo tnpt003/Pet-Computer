@@ -22,7 +22,7 @@ public sealed class PetSettingsForm
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
     public Border KeepsakeSection = null!;
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Guests = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
@@ -117,6 +117,9 @@ public sealed partial class PetWindow
             ToolTip = L("Mèo nhảy hoặc trèo lên mép trên các cửa sổ app và đi dạo trên đó.", "The pet jumps or climbs onto the top edge of app windows and walks along it.") };
         form.Weather = new CheckBox { Content = L("Thời tiết quanh mèo", "Weather around the pet"), IsChecked = preferences.Weather,
             ToolTip = L("Mưa, tuyết, lá bay... quanh mèo, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh và không gửi đi đâu.", "Rain, snow, drifting leaves... around the pet, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere.") };
+        form.Guests = new CheckBox { Content = L("Khách ghé thăm", "Visitors"), IsChecked = preferences.Guests,
+            ToolTip = L("Thỉnh thoảng (khoảng 40–90 phút) một con bướm giấy hoặc slime hiền đi ngang, mèo nhìn theo hoặc đuổi một đoạn. Không đến khi mèo ngủ, ở chế độ Yên lặng hay Giờ tập trung.",
+                        "Now and then (every 40–90 minutes or so) a paper butterfly or a gentle slime comes by; the pet watches or follows a little. Never while it sleeps, in Quiet mode or focus time.") };
         form.Farm = new CheckBox { Content = L("Nông trại trên desktop", "Farm on the desktop"), IsChecked = preferences.Farm,
             ToolTip = L("Ruộng, bếp, hồ và các vùng đất khác sát trên thanh taskbar: bấm vào ô ruộng để cày, gieo, tưới và thu hoạch. Tắt thì ẩn đi, cây vẫn được giữ nguyên.", "The field, hearth, pond and other lands just above the taskbar: click a field tile to till, sow, water and harvest. Turned off they are hidden; your crops are kept.") };
         form.FarmHelper = new CheckBox { Content = L("Mèo làm vườn cùng", "Pet helps in the field"), IsChecked = preferences.FarmHelper,
@@ -148,6 +151,7 @@ public sealed partial class PetWindow
             Section(L("Thói quen", "Habits"), PetMotif.Clock,
                 form.ClimbWindows,
                 form.Weather,
+                form.Guests,
                 form.Farm,
                 form.FarmHelper,
                 form.FarmResow,
@@ -188,6 +192,7 @@ public sealed partial class PetWindow
             preferences.ClimbWindows = form.ClimbWindows.IsChecked == true;
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.Weather = form.Weather.IsChecked == true;
+            preferences.Guests = form.Guests.IsChecked == true;
             preferences.Farm = form.Farm.IsChecked == true;
             preferences.FarmHelper = form.FarmHelper.IsChecked == true;
             preferences.FarmResow = form.FarmResow.IsChecked == true;

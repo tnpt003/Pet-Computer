@@ -1681,3 +1681,12 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Hết 30 giây: đốm còn lại bay đi, mèo ngồi nhìn theo; nhãn "Cùng bắt được n đốm (bạn a · mèo b)", lần vượt kỷ lục thêm "Kỷ lục mới!". Dòng menu ghi "Bắt đom đóm · kỷ lục n"; Nhật ký → thẻ "Mini-game" có dòng Bắt đom đóm.
 - [ ] Esc, click ra ngoài vùng chơi, chọn lại dòng menu, click hoặc kéo mèo: dừng, đom đóm biến mất; kéo mèo vẫn nhấc mượt, dangling, ném như thường. Click phải mèo: dừng, mở menu.
 - [ ] Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức (không đánh thức); Pause đóng băng đom đóm và đồng hồ; app toàn màn hình, đổi màn hình/DPI: dừng, không tính ván. Màn hình hẹp hoặc kẹt giữa vùng đất/đồ chơi: mèo đi ra chỗ rộng, không có thì "Không đủ chỗ". DPI 125–150%, đo FPS khi có 5 đốm và hạt tan.
+
+## Mini-game M4 — Khách ghé thăm (12/11, chỉ bản 1.6)
+- [ ] Để mèo chạy tự do (không Yên lặng, không Giờ tập trung, có chạm máy): khoảng 40–90 phút sau khi mở app có một khách. Không có dòng menu gọi khách; muốn thử nhanh phải dùng UiChecks.
+- [ ] Bướm giấy: bay từ một mép màn hình sang mép kia, ngang trên đầu mèo, khoảng 8–15 giây; rõ trên nền sáng và tối; không bao giờ đè vào thân mèo. Mèo quay đầu nhìn theo; có lúc đi theo một đoạn ngắn (≤ ~150 DIP, ≤ 3 giây) rồi vồ một cú tại chỗ, đáp lại đúng chỗ.
+- [ ] Slime hiền (xanh bạc hà, mầm lá trên đầu, khác slime trong trận): bò trên sàn, dừng cách mèo ~80 DIP, nhún chào ~1,5 giây. Mèo đứng dưới sàn: slime quay lại đi ra đúng mép nó đến (không bò xuyên qua mèo). Mèo đứng trên mép cửa sổ: slime bò tiếp ra mép bên kia.
+- [ ] Click bướm: bay vụt đi kèm vài tia sáng. Click slime: nhún một cái rồi đi tiếp. Chỗ trống quanh khách click xuyên xuống cửa sổ dưới; khách không lấy focus của cửa sổ đang gõ.
+- [ ] Click hoặc kéo mèo giữa lượt: mèo thôi nhìn, khách vẫn đi tiếp; kéo vẫn nhấc mượt, dangling, ném như thường. Click phải mở menu như thường. Không có Surprised, Dizzy, Bonk vì khách.
+- [ ] Mèo ngủ, mở app toàn màn hình, vào trận/mở Sảnh, đổi DPI, rút màn hình: khách mờ rồi mất ngay, không đánh thức mèo. Pause: khách đứng yên. Yên lặng, Giờ tập trung, người dùng vắng: không có khách.
+- [ ] Tùy chỉnh → Thói quen → "Khách ghé thăm": tắt thì khách đang có biến mất và không đến nữa; bật lại sau đó khách đến lại. Nhật ký → thẻ "Mini-game" có dòng "Khách đã ghé: n". DPI 125–150%, nhiều màn hình (khách ở màn hình của mèo), đo FPS khi khách bay.

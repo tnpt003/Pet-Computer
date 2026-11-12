@@ -94,6 +94,9 @@ public sealed class PetPreferences
     // Catch the fireflies (docs/MINI-GAMES.md → M3): the most caught in one game (the user's and the cat's together), and games played.
     public int FireflyBest { get; set; }
     public int FireflyPlays { get; set; }
+    // Visitors (docs/MINI-GAMES.md → M4): the switch in Customize → Habits, and how many guests came by.
+    public bool Guests { get; set; } = true;
+    public int GuestVisits { get; set; }
     // Living corner M2 (docs/LIVING-CORNER.md): the plant pot's points (it grows, never wilts) and when the last one came.
     public int PlantPoints { get; set; }
     public DateTime? PlantPointAt { get; set; }
@@ -160,6 +163,7 @@ public sealed class PetPreferences
         p.HideSeekFirstTry = Math.Clamp(p.HideSeekFirstTry, 0, p.HideSeekFound);
         p.FireflyBest = Math.Clamp(p.FireflyBest, 0, 9999);
         p.FireflyPlays = Math.Clamp(p.FireflyPlays, 0, 999999);
+        p.GuestVisits = Math.Clamp(p.GuestVisits, 0, 999999);
         p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
         p.PlantPoints = Math.Clamp(p.PlantPoints, 0, PlantRules.MaxPoints);
         TrickRules.Normalize(p);

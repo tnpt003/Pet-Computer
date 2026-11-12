@@ -7,7 +7,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Đã có code, còn test tay |
-| M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Luật đã duyệt 12/11, chưa code |
+| M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Đã có code, còn test tay |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
 
 Quyết định chung (người dùng đồng ý 12/11):
@@ -218,3 +218,11 @@ Sự kiện tự xảy ra, không phải mini-game: không mở từ "Chơi cùn
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 App được tự hiện khách (bướm giấy, slime hiền) không physics, không chạm mèo, cửa sổ riêng click xuyên qua; mèo được tự quay nhìn, đuổi ngắn và vồ tại chỗ. Sự kiện là hành vi tự động, có công tắc tắt.
+
+### Cách code M4 (12/11)
+
+- Core `PetGuests.cs`: `GuestRules` (hẹn 40–90 phút, thử lại 120 s, cỡ khách, tốc độ chọn sao cho một lượt 8–15 s, `ChaseTarget` giữ mèo trên đúng sàn/mép và cách slime ≥ 50 DIP), `Guest` (đường bay/bò, dừng chào, mờ dần khi bị đuổi đi, click, tối đa 30 s) và `GuestWatcher` (50 % số lượt mèo đi theo, ≤ 150 DIP hoặc 3 s, vồ bướm một lần). `AutoKind.GuestVisit` chặn như `ToyInvite`. `preferences.json` thêm `Guests` (mặc định bật), `GuestVisits`.
+- `PetWindow.Guests.cs`: `TickGuests` chạy mỗi frame từ `Tick` (Pause truyền dt 0 nên khách đứng yên): hẹn giờ chỉ trong RAM; khách mờ rồi mất khi mèo ngủ, toàn màn hình, trận/bảng trận, tắt công tắc; mất ngay khi đổi màn hình/vùng làm việc/DPI. `TickGuestWatch` trong `TickFeatures` sau mini-game: mèo nhìn theo (`Looking`, nghiêng đầu theo độ cao khách), đi theo, vồ bằng `renderer.TeleportDrop` như M3 (`pet.Y` không đổi). Lúc mèo nhìn, `FeatureOwnsMovement` đúng nên PetBehavior và lệnh Python chờ; `CancelFeatureActivity` (click/kéo mèo, cảm xúc chiếm mèo, bắt đầu việc khác) chỉ dừng việc nhìn, khách vẫn đi. Hook UiChecks: `TryGuestVisit(kind, follows)`.
+- **Quyết định khi code (chờ người dùng xem):** luật ghi slime "nhún chào rồi bò tiếp… ra mép bên kia", nhưng khi mèo đứng dưới sàn thì bò tiếp sẽ xuyên qua thân mèo, trái luật "không chạm mèo". Code cho slime quay lại đi ra mép nó đến khi mèo ở sàn; mèo ở trên mép cửa sổ thì slime bò tiếp sang mép bên kia. Mèo bị thả/ném chắn đường thì slime dừng chào hoặc quay đi, không bao giờ bò vào mèo.
+- Vẽ `PetGuestArt.cs`: bướm giấy nhìn chính diện (cánh trên Rose nhạt, cánh dưới Lilac nhạt, nếp gấp giấy, thân và râu ArtInk), slime vòm bạc hà có mầm lá, má hồng, mắt cười khi chào; nét ArtInk 1,8. Mỗi khách một cửa sổ nhỏ di chuyển theo, giữ dưới cửa sổ mèo; chỉ đĩa gần trong suốt quanh khách nhận click.
+- Test: `GuestTests` (Core), `GuestChecks` (UiChecks: hẹn giờ và thử lại khi ngủ, một lượt bướm có đi theo và vồ, một lượt slime không đi theo, click khách, kéo mèo, cảm xúc, ngủ, Pause, Quiet, Giờ tập trung, toàn màn hình, mini-game, công tắc, mép cửa sổ); `AutonomyTests` thêm `GuestVisit`.

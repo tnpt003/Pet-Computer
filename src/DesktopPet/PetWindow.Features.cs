@@ -260,6 +260,7 @@ public sealed partial class PetWindow
         StopCupGame(count: true); // A click or drag on the cat ends the cup game (PetWindow.CupGame.cs).
         StopHideSeek(); // ...and hide-and-seek (PetWindow.HideSeek.cs).
         StopFireflies(count: true); // ...and catching fireflies (PetWindow.Fireflies.cs).
+        StopGuestWatch(); // The cat stops watching a visitor; the guest goes on (PetWindow.Guests.cs).
         StopLaser();
         StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         StopToyChase(); // PetWindow.ToyChase.cs
@@ -282,7 +283,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement);
 
     private void TickFeatures(double dt)
     {
@@ -321,7 +322,7 @@ public sealed partial class PetWindow
         if (TickToyPass(dt)) return; // Passing the yarn ball (PetWindow.ToyPass.cs).
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement || (SeekOwnsMovement && !SeekRidesPress) || FlyOwnsMovement) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement || (SeekOwnsMovement && !SeekRidesPress) || FlyOwnsMovement || GuestOwnsMovement) CancelFeatureActivity();
             return;
         }
         if (TickCall(dt)) return; // The user called the cat (PetWindow.Tricks.cs).
@@ -329,6 +330,7 @@ public sealed partial class PetWindow
         if (TickCupGame(dt)) return; // The cup game (docs/MINI-GAMES.md → M1).
         if (TickHideSeek(dt)) return; // Hide-and-seek (docs/MINI-GAMES.md → M2).
         if (TickFireflies(dt)) return; // Catching fireflies (docs/MINI-GAMES.md → M3).
+        if (TickGuestWatch(dt)) return; // Watching a visitor (docs/MINI-GAMES.md → M4).
         if (pet.TreatRemaining > 0)
         {
             pet.TreatRemaining = Math.Max(0, pet.TreatRemaining - dt);

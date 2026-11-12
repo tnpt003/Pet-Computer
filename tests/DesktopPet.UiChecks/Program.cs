@@ -1000,6 +1000,7 @@ internal static class Program
         CupGameChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M1, the cup game (docs/MINI-GAMES.md).
         HideSeekChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M2, hide-and-seek.
         FireflyChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M3, catching fireflies.
+        GuestChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M4, visitors.
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

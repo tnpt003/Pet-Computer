@@ -1751,5 +1751,8 @@
   "Catch fireflies · {0}s left · {1} caught": "ホタルつかまえ · 残り{0}秒 · {1}匹",
   "Caught {0} together (you {1} · cat {2})": "いっしょに{0}匹 (あなた {1} · ねこ {2})",
   "Caught {0} together (you {1} · cat {2}) · New best!": "いっしょに{0}匹 (あなた {1} · ねこ {2}) · 新記録！",
-  "Catch fireflies: best {0} · {1} game{2}": "ホタルつかまえ：最高 {0}匹 · {1}回プレイ"
+  "Catch fireflies: best {0} · {1} game{2}": "ホタルつかまえ：最高 {0}匹 · {1}回プレイ",
+  "Visitors": "おきゃくさん",
+  "Visitors so far: {0}": "来てくれたおきゃくさん：{0}",
+  "Now and then (every 40–90 minutes or so) a paper butterfly or a gentle slime comes by; the pet watches or follows a little. Never while it sleeps, in Quiet mode or focus time.": "ときどき（40〜90分くらいに一度）紙のちょうちょや、やさしいスライムが通りかかります。ペットは見つめたり、少し追いかけたりします。眠っているとき、おとなしいモードや集中タイム中は来ません。"
 }

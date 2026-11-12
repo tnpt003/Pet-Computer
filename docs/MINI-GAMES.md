@@ -5,7 +5,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
 | M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
-| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Bản nháp luật, chờ duyệt |
+| M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Luật đã duyệt 12/11, đang code |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
 | M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Chưa viết luật |
@@ -72,7 +72,7 @@ Mini-game do người dùng mở từ "Chơi cùng mèo" (menu chuột phải v�
 - Python: trạng thái `MiniGame` gửi thay tên hành động khi trò sở hữu mèo, nằm trong `BUSY_STATES` (tách khỏi tập hành động C# để test đồng bộ `RejectsDecisions` vẫn đúng). Mỗi ván gửi `toy_started` một lần.
 - Test: `CupGameTests` (Core), `CupGameChecks` (UiChecks: thắng, thua, kỷ lục, Quiet, ngủ, Esc, click ngoài/trên cốc, click mèo, Pause, 2 phút); menu chuột phải nay 15 mục. Đã soát ảnh render (bày cốc, tráo, chọn, hất, ngậm cá, lật cốc có cá) nền sáng/tối; chưa xem trên desktop thật, chưa bấm chuột thật, chưa thử mép cửa sổ, DPI khác, nhiều màn hình, chưa đo FPS; tiếng Nhật chưa ai duyệt.
 
-## Luật M2 Trốn tìm (bản nháp 12/11, chờ duyệt)
+## Luật M2 Trốn tìm (duyệt 12/11)
 
 Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng mèo", lệnh người dùng như "Làm ngay", không đánh thức mèo ngủ, chặn hành vi/cảm xúc tự động khi chơi, Pause đóng băng, Esc/click ra ngoài/chọn lại dòng menu/hết giờ thoát, toàn màn hình/trận/rút màn hình/đổi DPI kết thúc không tính ván, `toy_started` một lần mỗi ván, trạng thái `MiniGame` cho Python). Dưới đây chỉ ghi phần riêng.
 
@@ -113,6 +113,6 @@ Dùng chung toàn bộ luật nền mini-game của M1 (mở từ "Chơi cùng m
 - Thứ tự lớp: đồ nấp phải che mèo (mèo vẽ thấp, chỉ lộ tai/đuôi); mèo trong hộp dùng mặt trước hộp trong cửa sổ mèo như M2 Đợt 2.
 - Soát render bụi cây, mèo nấp sau từng loại chỗ, dấu hiệu lộ, nền sáng/tối; chữ vi/en/ja; đo FPS.
 
-### Bổ sung ngoại lệ (chờ duyệt cùng luật)
+### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Trốn tìm dùng ngoại lệ mini-game của M1, thêm: trong ván, mèo được "biến mất trong làn khói" rồi hiện ở chỗ nấp (một lần dịch chuyển trong cùng sàn màn hình); app được vẽ tạm bụi cây không physics chỉ trong lúc chơi; cửa sổ hộp, chậu, trụ được nâng lên trên mèo trong lúc nấp. Click vào mèo đang nấp là lượt đoán đúng; kéo quá ~6 DIP vẫn nhấc mèo như thường.

@@ -7,8 +7,8 @@ Người dùng duyệt chia mốc 2026-11-11. Luật từng mốc viết và duy
 | M1. Trụ cào | Món mới trong giỏ; mèo tới cào rồi vươn vai; lệnh Cào móng có trụ gần thì đi tới trụ | Đã có code, còn test tay |
 | M2. Chậu cây, hộp thêm trạng thái | Chậu cây (ngửi, chạm lá, ngồi cạnh, lớn theo số lần chơi, không héo); hộp thò đầu và vồ đồ đi ngang | Đã có code, còn test tay |
 | M3. Mốc thân thiết | Bond thành 5 cấp có tên trong Nhật ký; mỗi cấp mở một hành vi (chào theo cấp, ngủ tựa vào đồ, chuỗi sau khi chơi) | Đã có code, còn test tay |
-| M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Luật duyệt 12/11, chưa code |
-| M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; mở vẫy tay, xoay vòng qua tương tác rồi gọi từ "Làm ngay" | Chưa viết luật |
+| M4. Món yêu thích, lựa chọn | Python đếm lần chơi từng món; mèo quay lại món thích, rủ chơi bằng món đó; hai món cạnh nhau thì chọn một | Đã có code, còn test tay |
+| M5. Gọi mèo, dạy động tác | Lệnh "Gọi mèo"; dạy Xoay vòng, Ngồi xin, Đập tay qua vuốt ve rồi gọi từ "Làm ngay" | Luật nháp 12/11, chờ duyệt |
 
 Quyết định chung (người dùng đồng ý 11/11):
 
@@ -246,3 +246,51 @@ Món yêu thích: C# gửi `toy_plays` (lượt người dùng chơi Bóng len, 
 - Chọn một trong hai: khi có Python và một món chơi được khác nằm trong 250 DIP của món định tới (ghé, rủ chơi, hoặc hai món mới chưa ngửi), mèo đi tới giữa hai món, nhìn mỗi bên 1 giây (đầu nghiêng), rồi chọn món thích, không có thì ngẫu nhiên; chọn Bóng len khi rủ thì chuyển sang tha bóng như M3, chọn món mới thì đi ngửi như M5. Cầm cần câu và lên dây chuột cùng lúc: `ChaseLure` ưu tiên món thích (mặc định vẫn cần câu trước).
 - Nhật ký: thẻ "Món yêu thích" (tên món, lượt gần đây ba món), chỉ khi decision có `diary.toy_plays`.
 - Đã soát ảnh render mèo vỗ cần câu và nghiêng đầu hai bên. Chưa chơi với Python thật qua nhiều ngày (giảm nửa 7 ngày, đổi món), chưa xem thẻ Nhật ký trên máy thật; câu tiếng Nhật chưa ai duyệt.
+
+## Luật M5 Gọi mèo và dạy động tác (nháp 12/11, chờ duyệt)
+
+Người dùng chốt 12/11: dạy 3 động tác mới; lưu ở C#, Python tắt vẫn dạy được; gọi mèo chỉ trong cùng màn hình. Vẫy chân và Lăn ngửa đã có sẵn trong "Làm ngay" từ 13/10 nên giữ nguyên, không khóa lại.
+
+### Gọi mèo
+
+- Menu khay thêm dòng **"Gọi mèo"**. Mèo quay đầu về phía con trỏ khoảng 0,5 giây, rồi đi trên sàn (hoặc dọc mép cửa sổ đang đứng, không tự nhảy xuống) về phía **con trỏ hiện tại**, bám theo con trỏ tối đa khoảng 10 giây, vì lúc bấm khay con trỏ đang ở góc taskbar. Tới gần (khoảng 40 DIP) thì ngồi ngước nhìn con trỏ khoảng 3 giây rồi rảnh.
+- Con trỏ ở màn hình khác với mèo: mèo chỉ quay đầu nhìn về phía màn hình đó khoảng 1,5 giây, không đi; menu vẫn bấm được.
+- Là lệnh của người dùng như "Làm ngay": chạy cả trong Quiet, Giờ tập trung và wake cooldown; không cắt kéo, đang bay, sleep lock hay waking. Mèo đang ngủ (kể cả away nap) không bị đánh thức: lệnh chờ tới lúc mèo tự thức, tối đa 30 giây rồi bỏ. Không chạy khi Pause, trong trận và màn hình trận, app toàn màn hình (dòng menu mờ).
+- Ngắt như mọi việc của mèo: click trái/kéo dừng và kéo như thường, click phải dừng và mở menu, cảm xúc ưu tiên cao nhường, Pause đóng băng. Gọi lần nữa thì bắt đầu lại.
+- Không phải tương tác của needs, bond, learning (như "Làm ngay"); không âm thanh mới.
+
+### Ba động tác mới
+
+| Động tác | Khi đã thuộc | Khi đang học (làm thử vụng) |
+|---|---|---|
+| **Xoay vòng** | Nhún nhẹ rồi xoay một vòng tại chỗ (~1,2 giây) | Xoay nửa vòng, lảo đảo, ngồi phịch xuống |
+| **Ngồi xin** | Đứng trên hai chân sau, hai chân trước co trước ngực (~2 giây) | Nhổm lên được một nửa rồi chống chân xuống |
+| **Đập tay** | Giơ một chân trước cao về phía con trỏ, giữ ~1,2 giây; con trỏ ở gần bàn chân thì có tia sáng nhỏ (chỉ là hình) | Giơ chân thấp, rụt lại |
+
+- Tư thế vẽ vector/procedural trong PetRenderer, theo docs/DESIGN-SYSTEM.md; không sprite. Là động tác cử chỉ (như Vẫy chân): lệnh AI không thay được giữa chừng, click/kéo hủy về Idle ngay.
+
+### Dạy động tác
+
+- Menu chuột phải thêm submenu **"Dạy động tác"**, mỗi động tác một dòng kèm tiến độ (ví dụ "Xoay vòng ●●○○○", đã thuộc thì "✓ Đã thuộc").
+- Chọn một động tác chưa thuộc: mèo ngồi nhìn con trỏ, **làm thử vụng** khoảng 3 giây, rồi ngồi chờ 6 giây. Người dùng **vuốt ve** mèo (cử chỉ vuốt sẵn có) trong 6 giây đó thì tính **một buổi học**: hiện nhãn nhỏ "2/5" trên đầu mèo khoảng 1,5 giây. Không vuốt thì hết buổi, không tính, không phạt.
+- Mỗi động tác tối đa **3 buổi mỗi ngày** (ngày theo giờ máy), cách nhau ít nhất 30 giây; đủ **5 buổi** là thuộc, tức ít nhất 2 ngày. Hết lượt hôm nay thì dòng menu mờ, ghi "Mai học tiếp".
+- Thuộc rồi: động tác hiện trong "Làm ngay" (nhóm cử chỉ, cạnh Vẫy chân) và mèo làm bản gọn gàng. Lần đầu thuộc có một câu nói (câu nói sẵn có của C#, im trong Quiet) và nhãn "Đã thuộc!".
+- Buổi học là lệnh của người dùng như "Làm ngay": chạy cả Quiet và wake cooldown, không cắt kéo/bay/sleep lock/waking (mèo bận thì chờ như hàng đợi của "Làm ngay"). Click/kéo/cảm xúc ưu tiên cao giữa buổi thì hủy buổi, không tính. Pause đóng băng.
+- Mèo **không tự làm** các động tác đã học trong M5 (không có hành vi tự động mới).
+
+### Lưu và Python
+
+- Lưu trong preferences của C#: số buổi từng động tác, ngày và số buổi hôm nay. Python không tham gia, không trường giao thức mới; Python tắt vẫn dạy và gọi được. "Quên điều mèo đã học" (dữ liệu học của Python) không xóa động tác đã thuộc.
+- Ba hành động mới báo cho Python qua trường `state` sẵn có như mọi PetAction; thêm vào `BUSY_STATES` của `ai/service.py` để Python không gợi ý chen giữa (giữ đồng bộ với `PetActionRules.RejectsDecisions`).
+- Vuốt ve trong buổi học vẫn là vuốt ve bình thường cho Python (needs, bond, learning như hiện nay); bản thân buổi học, gọi mèo và động tác không cộng gì thêm.
+- Không âm thanh mới.
+
+### Khi code cần kiểm tra
+
+- Gọi mèo: cùng màn hình đi tới con trỏ và bám theo; khác màn hình chỉ quay đầu; trên mép cửa sổ không tự rơi; ngủ không bị đánh thức và tới sau khi thức trong 30 giây; Quiet, wake cooldown vẫn chạy; Pause, trận, fullscreen không chạy; click/kéo/menu ngắt.
+- Dạy: vuốt trong 6 giây mới tính; giới hạn 3 buổi/ngày, 30 giây, 5 buổi; lưu qua lần mở lại; hủy khi click/kéo/cảm xúc; thuộc rồi mới có trong "Làm ngay"; sleep lock, wake, drag, throw, emotion priority, local fallback không đổi.
+- Soát render 3 động tác (bản thuộc và bản vụng), hai hướng mặt, có phụ kiện; chữ menu vi/en/ja.
+
+### Bổ sung ngoại lệ đề xuất (chờ duyệt, sẽ ghi vào docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
+
+Gọi mèo và dạy động tác: "Gọi mèo" trong menu khay đưa mèo đi về phía con trỏ hiện tại trên sàn/mép cửa sổ của nó (tối đa ~10 giây, cùng màn hình; khác màn hình chỉ quay đầu) rồi ngồi ngước nhìn; "Dạy động tác" cho Xoay vòng, Ngồi xin, Đập tay: mèo làm thử vụng, người dùng vuốt ve trong 6 giây thì tính một buổi (tối đa 3 buổi/ngày mỗi động tác, 5 buổi là thuộc), thuộc rồi gọi từ "Làm ngay". Cả hai là lệnh người dùng như "Làm ngay": chạy cả Quiet và wake cooldown, không cắt kéo/bay/sleep lock/waking, mèo ngủ thì chờ tự thức (gọi tối đa 30 giây); không khi Pause, trận, fullscreen; click/kéo/cảm xúc ngắt như thường. Lưu ở C#, Python không tham gia; mèo không tự làm động tác đã học; không âm thanh mới.

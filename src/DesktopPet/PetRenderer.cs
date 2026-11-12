@@ -227,6 +227,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     public double BoxFrontDrop = -1;
     // The yarn ball in the cat's mouth while it fetches.
     public bool CarryBall;
+    // The cup game (PetWindow.CupGame.cs): the little dried fish held in the mouth.
+    public bool CarryFish;
     // A high five with the cursor by the raised paw: a little spark (living corner M5).
     public bool TrickSpark;
 
@@ -977,6 +979,12 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
         dc.DrawLine(Outline, new Point(78, 61), new Point(93, 63));
         // Fetch (PetWindow.ToyFetch.cs): the yarn ball held in the mouth, a little ahead (the facing flip carries it).
         if (CarryBall && !p.PickedUp) YarnBallArt.Draw(dc, new Point(56 + PetWindow.FetchMouthAhead, 68), 8.5);
+        if (CarryFish && !p.PickedUp)
+        {
+            dc.PushTransform(new MatrixTransform(0.55, 0, 0, 0.55, 58 + PetWindow.FetchMouthAhead, 69));
+            PetFarmArt.DrawFish(dc, FarmFish.Carp);
+            dc.Pop();
+        }
         DrawAccessory(dc, AccessoryLayer.Head);
         if (p.Grooming)
         {

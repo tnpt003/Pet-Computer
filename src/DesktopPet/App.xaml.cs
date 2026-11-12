@@ -80,6 +80,11 @@ public partial class App : Application
         menu.Items.Add(callCat);
         var toys = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleToyBasket());
         menu.Items.Add(toys);
+        // Mini-games (docs/MINI-GAMES.md): the same row again ends a game.
+        var games = new Forms.ToolStripMenuItem();
+        var cups = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleCupGame());
+        games.DropDownItems.Add(cups);
+        menu.Items.Add(games);
         // Updates (installed app only): "Update to x" once one is downloaded, else "Check for updates".
         updates = new PetUpdates();
         updates.ForgetUninstallChoice();
@@ -97,6 +102,8 @@ public partial class App : Application
         reset.Image = PetTrayMenuStyle.Icon(PetUi.Home);
         callCat.Image = PetTrayMenuStyle.Icon(PetUi.Call);
         toys.Image = PetTrayMenuStyle.Icon(PetUi.Ball);
+        games.Image = PetTrayMenuStyle.Icon(PetUi.Play);
+        cups.Image = PetTrayMenuStyle.Icon(PetUi.Treat);
         checkUpdates.Image = applyUpdate.Image = PetTrayMenuStyle.Icon(PetUi.Update);
         exit.Image = PetTrayMenuStyle.Icon(PetUi.Exit);
         PetTrayMenuStyle.Apply(menu);
@@ -113,6 +120,10 @@ public partial class App : Application
             callCat.Enabled = pet.CallMenuEnabled;
             toys.Text = pet.ToyBasketMenuLabel;
             toys.Enabled = pet.ToyBasketMenuEnabled;
+            games.Text = pet.L("Chơi cùng mèo", "Play with the cat");
+            cups.Text = pet.CupGameActive ? pet.L("Dừng Úp cốc tìm cá", "Stop Find the fish") : pet.CupGameMenuLabel;
+            cups.Enabled = games.Enabled = pet.CupGameMenuEnabled;
+            cups.ToolTipText = pet.CupGameMenuNote;
             exit.Text = pet.L("Thoát", "Exit");
             checkUpdates.Text = pet.L("Kiểm tra cập nhật", "Check for updates");
             applyUpdate.Text = pet.LF($"Cập nhật lên bản {updates.ReadyVersion} (mở lại mèo)", $"Update to {updates.ReadyVersion} (restarts the pet)");

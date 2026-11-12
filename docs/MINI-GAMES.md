@@ -4,7 +4,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 
 | Mốc | Nội dung | Trạng thái |
 |---|---|---|
-| M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Luật đã duyệt 12/11, đang code |
+| M1. Nền mini-game, Úp cốc tìm cá | Mục "Chơi cùng mèo" ở menu chuột phải và menu khay; luật chung (người dùng mở, có giới hạn thời gian, Esc/click ra ngoài thoát, kỷ lục trong Nhật ký). Úp cốc: 3 cốc tráo nhanh dần 3 vòng, người dùng chọn, mèo ngửi, lật cốc, phản ứng | Đã có code, còn test tay |
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Chưa viết luật |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Chưa viết luật |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Chưa viết luật |
@@ -62,3 +62,12 @@ Quyết định chung (người dùng đồng ý 12/11):
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Mini-game do người dùng mở từ "Chơi cùng mèo" (menu chuột phải và khay) là lệnh người dùng như "Làm ngay": chạy cả Quiet, Giờ tập trung và wake cooldown; không đánh thức mèo ngủ (chờ tự thức tối đa 30 s); trong lúc chơi chặn hành vi tự động, lệnh Python và cảm xúc tự động; phản ứng thắng/thua là hoạt cảnh, không phải cảm xúc; đồ trò chơi vẽ trong cửa sổ riêng, vùng trống click xuyên qua, không chạm mèo; Pause đóng băng, fullscreen/trận/kéo mèo kết thúc.
+
+### Cách code M1 (12/11)
+
+- Core `PetCupGame.cs`: `CupGameRules` (số liệu, `Place` chọn chỗ đứng của mèo và bên bày cốc theo vùng đất/xe hàng/đồ chơi, `SlotAt`, `RaiseBest`/`CountPlay`/`TellBest`) và `CupShuffle` (cốc giữ id, cá đi theo cốc, mỗi lần tráo một cốc nhảy vòng cung phía trước, cốc kia trượt phía sau). `preferences.json` thêm `CupGameBest`, `CupGamePlays` (kẹp khi đọc).
+- Cửa sổ `PetWindow.CupGame.cs`: `ToggleCupGame()` từ submenu "Chơi cùng mèo" (menu chuột phải, ngay sau "Chơi"/"Cất bóng"; menu khay dưới "Giỏ đồ chơi"). Bị chặn (`CupGameBlocked`) khi Pause, app toàn màn hình, trận và màn hình trận; mèo bận/ngủ thì chờ (`Wait`, tối đa 30 s) như Gọi mèo. `TickCupClock` chạy mỗi khung trước CanPlay: kết thúc không tính khi bị chặn, đổi màn hình, đổi DPI hoặc mặt đất dịch đi; quá 2 phút; Esc và click ra ngoài đọc bằng `GetAsyncKeyState` (chỉ phím Esc, nút chuột; nhấn lúc chọn menu không tính). `TickCupGame` sở hữu chuyển động sau `TickLesson`; `CupOwnsMovement` nằm trong `FeatureOwnsMovement` nên hành vi tự động, lệnh Python, việc khác bị chặn; cảm xúc tự động tắt bằng `Emotions.SetSuspended` (trả lại khi xong, không đụng khi trận đang giữ).
+- Vẽ `PetCupGameArt.cs` (cửa sổ riêng, chỉ hình cốc nhận click, chỗ trong suốt click xuyên qua), cá dùng `PetFarmArt.DrawFish`; mèo ngậm cá qua `PetRenderer.CarryFish`. Nhãn "Cá ở cốc nào?", "+1", "n vòng" dùng nhãn trên đầu mèo của M5 (`ShowTrickLabel`).
+- **Lệch nhỏ so với luật đã duyệt:** cốc cao 36 DIP, rộng 40 (luật ghi khoảng 44) vì mèo vẽ mặt trước, đứng sau hàng cốc 44 DIP bị che mặt; cốc được hất thì trượt sang bên và nghiêng thay vì nhấc thẳng lên, để lộ cá mà không che mặt mèo. Khoảng cách 70 DIP giữ nguyên.
+- Python: trạng thái `MiniGame` gửi thay tên hành động khi trò sở hữu mèo, nằm trong `BUSY_STATES` (tách khỏi tập hành động C# để test đồng bộ `RejectsDecisions` vẫn đúng). Mỗi ván gửi `toy_started` một lần.
+- Test: `CupGameTests` (Core), `CupGameChecks` (UiChecks: thắng, thua, kỷ lục, Quiet, ngủ, Esc, click ngoài/trên cốc, click mèo, Pause, 2 phút); menu chuột phải nay 15 mục. Đã soát ảnh render (bày cốc, tráo, chọn, hất, ngậm cá, lật cốc có cá) nền sáng/tối; chưa xem trên desktop thật, chưa bấm chuột thật, chưa thử mép cửa sổ, DPI khác, nhiều màn hình, chưa đo FPS; tiếng Nhật chưa ai duyệt.

@@ -36,6 +36,7 @@ static class ToolingTests
         var python = match.Groups[1].Value.Split(',').Select(s => s.Trim().Trim('"')).Where(s => s.Length > 0).OrderBy(s => s);
         var csharp = Enum.GetValues<PetAction>().Where(PetActionRules.RejectsDecisions).Select(a => a.ToString()).OrderBy(s => s);
         check(match.Success && python.SequenceEqual(csharp), "Python BUSY_STATES matches C# actions that reject AI decisions");
+        check(service.Contains("BUSY_STATES = frozenset({") && service.Contains("}) | {\"MiniGame\"}"), "Python also counts the mini-game state C# reports as busy (docs/MINI-GAMES.md)");
         string json = System.Text.Json.JsonSerializer.Serialize(
             new DesktopPet.AI.PetObservation("Idle", true, 3, 1, "test", "LOCAL", LocalHour: 23.5), DesktopPet.AI.AiProtocol.Json);
         check(json.Contains("\"local_hour\":23.5"), "Observation sends the local hour for Python's day rhythm");

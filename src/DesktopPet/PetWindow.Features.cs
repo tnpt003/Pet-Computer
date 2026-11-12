@@ -52,6 +52,11 @@ public sealed partial class PetWindow
         var basket = PetUi.MenuItem(PetUi.Ball);
         basket.Click += (_, _) => ToggleToyBasket();
         play.Items.Add(toy); play.Items.Add(laser); play.Items.Add(basket);
+        // Mini-games the user starts (docs/MINI-GAMES.md); the same row again ends a game.
+        var games = PetUi.MenuItem(PetUi.Play);
+        var cups = PetUi.MenuItem(PetUi.Treat);
+        cups.Click += (_, _) => ToggleCupGame();
+        games.Items.Add(cups);
         // While the ball is out, putting it away is one click on the main menu.
         var putAway = PetUi.MenuItem(PetUi.Ball);
         putAway.Click += (_, _) => ToggleToy();
@@ -93,7 +98,7 @@ public sealed partial class PetWindow
         more.Items.Add(debug); more.Items.Add(about);
         var exit = PetUi.MenuItem(PetUi.Exit);
         exit.Click += (_, _) => Application.Current.Shutdown();
-        menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway);
+        menu.Items.Add(treat); menu.Items.Add(play); menu.Items.Add(putAway); menu.Items.Add(games);
         InitializeBattle(menu); // "Cast portal spell", or "Battle Mode" in a fight (PetWindow.Battle.cs).
         InitializeCommands(menu); // "Do now" and "Emotions".
         menu.Items.Add(new Separator());
@@ -119,6 +124,9 @@ public sealed partial class PetWindow
             putAway.Header = L("Cất bóng", "Put ball away");
             cat.Header = preferences.Name;
             laser.Header = L("Chơi đèn laser", "Laser pointer");
+            games.Header = L("Chơi cùng mèo", "Play with the cat");
+            cups.Header = CupGameActive ? L("Dừng Úp cốc tìm cá", "Stop Find the fish") : CupGameMenuLabel;
+            cups.ToolTip = CupGameMenuNote is { Length: > 0 } why ? why : null;
             basket.Header = ToyBasketMenuLabel;
             place.Header = L("Vị trí", "Location");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
@@ -141,6 +149,8 @@ public sealed partial class PetWindow
             laser.IsEnabled = MayAct(AutoKind.UserGame); // Right-clicking the cat already ended a running game.
             basket.IsEnabled = ToyBasketMenuEnabled;
             play.IsEnabled = toy.IsEnabled || laser.IsEnabled || basket.IsEnabled;
+            cups.IsEnabled = CupGameMenuEnabled;
+            games.IsEnabled = cups.IsEnabled;
             putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue;
@@ -235,6 +245,7 @@ public sealed partial class PetWindow
     private void CancelFeatureActivity()
     {
         StopPostTrip(); StopPlantTrip(); StopBoxPeek(); StopBondAct(); StopFavorite(); StopCall(); StopLesson(); // PetWindow.ToyPost.cs, ToyPlant.cs, ToyBox.cs, Bond.cs, FavoriteToy.cs, Tricks.cs
+        StopCupGame(count: true); // A click or drag on the cat ends the cup game (PetWindow.CupGame.cs).
         StopLaser();
         StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         StopToyChase(); // PetWindow.ToyChase.cs
@@ -257,7 +268,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement);
 
     private void TickFeatures(double dt)
     {
@@ -284,6 +295,7 @@ public sealed partial class PetWindow
         WatchFarmChores(dt); // The cat's trips to the field (PetWindow.FarmChores.cs).
         TickBondClock(dt); // Bond milestones: their waits and a new milestone's hearts (PetWindow.Bond.cs).
         TickTrickClock(dt); // Calling the cat, a lesson: their waits and the lesson label (PetWindow.Tricks.cs).
+        TickCupClock(dt); // The cup game: its wait, what ends it, Esc and clicks elsewhere (PetWindow.CupGame.cs).
         if (TickPortal(dt)) return; // The magic portal (PetWindow.Portal.cs).
         if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
         if (TickLaser(dt)) return;
@@ -292,11 +304,12 @@ public sealed partial class PetWindow
         if (TickToyPass(dt)) return; // Passing the yarn ball (PetWindow.ToyPass.cs).
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement) CancelFeatureActivity();
             return;
         }
         if (TickCall(dt)) return; // The user called the cat (PetWindow.Tricks.cs).
         if (TickLesson(dt)) return; // A trick lesson.
+        if (TickCupGame(dt)) return; // The cup game (docs/MINI-GAMES.md → M1).
         if (pet.TreatRemaining > 0)
         {
             pet.TreatRemaining = Math.Max(0, pet.TreatRemaining - dt);

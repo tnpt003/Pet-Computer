@@ -42,6 +42,7 @@ public sealed partial class PetWindow
         tracker.Clear(); // Samples from two DPI coordinate systems cannot form a throw.
         scale = newScale;
         pet.Motion.Reset(pet);
+        StopCupGame(count: false); // Another DPI: the cup game ends, not counted (PetWindow.CupGame.cs).
         CancelFeatureActivity();
         // Window edges were measured at the old scale: back to the floor, then rescan.
         ledges.Clear(); ledgeScan = 0; pet.LedgeId = 0;

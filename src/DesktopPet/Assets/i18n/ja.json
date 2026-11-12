@@ -1719,5 +1719,16 @@
   "Open all land": "土地をすべて開く",
   "Fold all land": "土地をすべてたたむ",
   "Move the sign": "看板を動かす",
-  "Click a board to fold or open land": "札をクリックで土地をたたむ・開く"
+  "Click a board to fold or open land": "札をクリックで土地をたたむ・開く",
+  "Play with the cat": "ねこと遊ぶ",
+  "Stop Find the fish": "お魚さがしをやめる",
+  "Find the fish · best {0}": "お魚さがし · 最高 {0}",
+  "Find the fish": "お魚さがし",
+  "Battle Mode is open.": "バトルモード中です。",
+  "No room for the cups": "カップを置く場所がない",
+  "Which cup is the fish under?": "お魚はどのカップ？",
+  "{0} in a row · New best!": "{0}連続 · 新記録！",
+  "{0} in a row": "{0}連続",
+  "Mini-games": "ミニゲーム",
+  "Find the fish: best {0} in a row · {1} game{2}": "お魚さがし：最高 {0}連続 · {1}回プレイ"
 }

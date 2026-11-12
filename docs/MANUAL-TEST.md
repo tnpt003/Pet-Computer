@@ -1653,3 +1653,13 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Đủ 5 buổi (qua 2 ngày): "Đã thuộc!", một câu nói (nếu bật câu nói), "Làm ngay" có dòng Xoay vòng và mèo làm gọn gàng. Tương tự Ngồi xin, Đập tay; Đập tay để con trỏ gần chân giơ lên thì có tia sáng.
 - [ ] Đóng mở lại mèo: tiến độ và động tác đã thuộc còn nguyên. Mèo không bao giờ tự làm ba động tác này.
 - [ ] Đọc chữ menu và câu "覚えた" tiếng Nhật (chưa ai duyệt).
+
+## Mini-game M1 — Úp cốc tìm cá (12/11, chỉ bản 1.6)
+- [ ] Menu chuột phải → "Chơi cùng mèo" → "Úp cốc tìm cá" (và menu khay → "Chơi cùng mèo"): 3 cốc hiện cạnh mèo trên sàn, cá khô trước cốc giữa, cốc úp xuống, tráo theo vòng cung mắt theo kịp. Vòng 1 chậm, vòng 2 nhanh hơn, từ vòng 3 nhanh nhất.
+- [ ] Hiện "Cá ở cốc nào?"; rê chuột lên cốc có viền sáng, con trỏ bàn tay. Chọn cốc: mèo đi sau hàng cốc tới cốc đó, cúi ngửi, hất cốc trượt sang bên. Đúng: mèo ngậm cá, "+1", vòng mới. Sai: mèo nghiêng đầu, cốc có cá lật ra, nhãn "n vòng" (từ 3 vòng có "Kỷ lục mới!").
+- [ ] Click chỗ trống giữa hai cốc hoặc quanh cốc: click xuyên xuống cửa sổ bên dưới (không chặn chuột). Click cốc không tính là click mèo.
+- [ ] Esc, click ra ngoài, chọn lại dòng menu (ghi "Dừng Úp cốc tìm cá"), click hoặc kéo mèo: trò dừng, cốc biến mất. Kéo mèo vẫn kéo bình thường.
+- [ ] Bật Quiet hoặc Giờ tập trung: vẫn chơi được. Mèo đang ngủ: chọn trò thì mèo ngủ tiếp, tự thức trong 30 giây thì mới chơi. Pause, trong trận, app toàn màn hình: dòng mờ.
+- [ ] Đang chơi mở app toàn màn hình hoặc kéo mèo sang màn hình khác/đổi DPI: trò dừng, không tính ván. Pause giữa chừng: cốc đứng yên, bỏ Pause chơi tiếp.
+- [ ] Trong lúc chơi mèo không tự đi, không ngủ, không đổi cảm xúc; xong trò mèo về bình thường. Mở lại app: kỷ lục còn trên dòng menu và trong Nhật ký (thẻ "Mini-game", cả khi tắt AI).
+- [ ] Mèo đứng trên mép cửa sổ: cốc bày trên mép đó; mép quá hẹp hoặc kẹt giữa vùng đất nông trại/đồ chơi: mèo đi ra chỗ rộng, không có thì báo "Không đủ chỗ bày cốc". Thử nền sáng/tối, DPI 125–150%, đo FPS lúc tráo nhanh nhất.

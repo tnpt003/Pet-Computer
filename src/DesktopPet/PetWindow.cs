@@ -646,7 +646,8 @@ public sealed partial class PetWindow : Window
         long requestedRevision = revision;
         double requestedAt = clock.Elapsed.TotalSeconds;
         string requestedLanguage = preferences.Language;
-        var observation = new PetObservation(pet.Action.ToString(), pet.Grounded,
+        // A mini-game owns the cat: Python sees it as busy (BUSY_STATES), not as sitting about.
+        var observation = new PetObservation(CupOwnsMovement ? "MiniGame" : pet.Action.ToString(), pet.Grounded,
             pet.Emotions.SecondsWithoutAttention, interactionCount, lastEvent, behavior.LastAppliedCommand,
             pet.Emotions.Reported.ToString(), pet.Activity.Snapshot(), preferences.Personality, sessionId, preferences.Tuning?.Normalized(),
             DateTime.Now.Hour + DateTime.Now.Minute / 60.0, pet.Interactions.Snapshot(),

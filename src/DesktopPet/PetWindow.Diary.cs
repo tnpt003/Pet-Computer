@@ -52,6 +52,7 @@ public sealed partial class PetWindow
             AddLine(L("AI đang tắt hoặc chưa sẵn sàng, nên chỉ có số liệu của lần chạy này.",
                    "The AI is off or not ready yet, so only this session's numbers are shown."), PetUi.Muted);
             AddStats((session.Petted, L("Được vuốt", "Petted"), PetMotif.Heart), (session.Treats, L("Treat", "Treats"), PetMotif.Fish), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games"), PetMotif.Ball));
+            AddMiniGameCard();
             AddFarmCard();
             return;
         }
@@ -72,6 +73,8 @@ public sealed partial class PetWindow
 
         if (diary.ToyPlays is { } plays) AddFavoriteToyCard(diary.FavoriteToy, plays);
 
+        AddMiniGameCard();
+
         AddFarmCard();
 
         var hours = AddCard(L("Giờ sen hay chơi", "When you usually play"), PetMotif.Clock);
@@ -88,6 +91,15 @@ public sealed partial class PetWindow
         var learned = AddCard(L("Những gì mèo đã học", "What the cat has learned"), PetMotif.Book);
         learned.Children.Add(TextLine(L("Thích: ", "Likes: ") + (aiLearned is { Likes.Length: > 0 } ? string.Join("; ", aiLearned.Likes) : L("chưa có", "nothing yet"))));
         learned.Children.Add(TextLine(L("Không thích: ", "Dislikes: ") + (aiLearned is { Dislikes.Length: > 0 } ? string.Join("; ", aiLearned.Dislikes) : L("chưa có", "nothing yet"))));
+    }
+
+    // Mini-games (docs/MINI-GAMES.md): kept by C#, so shown with the AI off too; nothing until a first game.
+    private void AddMiniGameCard()
+    {
+        if (preferences.CupGamePlays <= 0 && preferences.CupGameBest <= 0) return;
+        var card = AddCard(L("Mini-game", "Mini-games"), PetMotif.Fish);
+        card.Children.Add(TextLine(LF($"Úp cốc tìm cá: kỷ lục {preferences.CupGameBest} vòng · đã chơi {preferences.CupGamePlays} ván",
+            $"Find the fish: best {preferences.CupGameBest} in a row · {preferences.CupGamePlays} game{(preferences.CupGamePlays == 1 ? "" : "s")}")));
     }
 
     // What C# itself knows about the farm, so it does not need the AI.

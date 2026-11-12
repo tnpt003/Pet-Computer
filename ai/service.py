@@ -47,7 +47,8 @@ LEARNED_NAMES = {
 }
 BUSY_STATES = frozenset({"Dragging", "Thrown", "Jumping", "PreparingJump", "Sleeping", "Waking", "Grooming", "Stretching", "SeekingAttention",
                          "Kneading", "RollingOver", "ChasingTail", "Scratching", "Sneezing", "Climbing",
-                         "Spinning", "Begging", "HighFive"})  # Taught tricks (docs/LIVING-CORNER.md → M5).
+                         "Spinning", "Begging", "HighFive"}) | {"MiniGame"}  # Taught tricks (docs/LIVING-CORNER.md → M5).
+# "MiniGame" is not a cat action: C# reports it as the state while a mini-game owns the cat (docs/MINI-GAMES.md).
 THOUGHTS = ("hungry", "bored", "sleepy", "love")  # Priority order for thought bubbles.
 NEED_KEYS = ("hunger", "boredom", "affection", "bond")
 INTERACTION_KEYS = ("petted", "clicked", "treats", "toy", "ball_clicks", "ball_hits", "rough_throws")

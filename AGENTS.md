@@ -87,6 +87,7 @@ Ngoại lệ nào có link tới docs/APPROVED-EXCEPTIONS.md: trước khi sửa
 
 - Bổ sung #66 đã duyệt: Slime biến dị tuần tra hai mép/CD5 s phase2–3, Truy sát khóa đúng mèo cả sát biên, mở core0,35 s; luật đầy đủ docs/APPROVED-EXCEPTIONS.md → Battle Mode và docs/MUTANT-SLIME.md.
 
+- Bổ sung duyệt 12/11 (M2a, chưa code): màn mở đầu mỗi lần mở app, cổng trang trí quăng mèo ra (dưới ngưỡng Dizzy, không cảm xúc), biển nông trại trồi lên, kỷ vật/đồ chơi/giỏ hiện kiểu phép; click bỏ qua. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Cổng phép.
 - Ngoại lệ đã duyệt 1.5.1: cổng phép là lối vào Battle Mode (tự hiện 20–40 phút, menu "Niệm phép cổng"); chỉ click của người dùng mới mở Sảnh, cổng không tự bắt đầu trận. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Cổng phép (Portal).
 
 - Ngoại lệ đã duyệt: mèo hàng xóm là khách ngồi yên ở nông trại, không physics, không chạm hay đánh thức mèo. Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Mèo hàng xóm nông trại.

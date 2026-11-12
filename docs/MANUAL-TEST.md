@@ -1726,3 +1726,11 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Mở app khi đang có app toàn màn hình: không có màn mở đầu. Mở EXE lần hai: không có. Khởi động cùng Windows và sau cập nhật: có.
 - [ ] Âm thanh: cue lấp lánh và tiếng đáp, tắt Âm thanh thì im. Người dùng mới (máy thử): phiếu Chào mừng hiện sau màn mở đầu.
 - [ ] Nhìn trên nền sáng/tối, DPI khác, đồ vật ở màn hình khác: khói/đất vụn đúng chỗ.
+
+## M2b Chào mừng rút gọn và hướng dẫn mèo dẫn (12/11, chỉ bản 1.6)
+- [ ] Máy thử (đặt `PET_DATA_DIRECTORY` tới thư mục trống, không dùng dữ liệu thật) cài bằng Setup: màn mở đầu xong mới hiện phiếu Chào mừng; không còn dòng mẹo; có ngôn ngữ, Khởi động cùng Windows, nhắc nghỉ, hai nút "Đi cùng mèo"/"Để sau"; đổi ngôn ngữ thì chữ đổi ngay; vi/en/ja không tràn.
+- [ ] "Đi cùng mèo": thẻ "Hướng dẫn · 1/6" trên đầu mèo, mèo ngồi chờ. Kéo thả mèo thật: đáp xong qua bước 2 (kéo/ném/Dizzy vẫn như thường). Chuột phải mèo: đóng menu thì qua bước tiếp.
+- [ ] Bước biển: mèo đi tới cạnh biển nông trại rồi ngồi quay về biển. Bước đồ vật: mèo đi tới kỷ vật (hoặc giỏ đồ chơi) cùng màn hình. Tắt nông trại / không trưng kỷ vật, giỏ: các bước đó không có, số bước giảm.
+- [ ] Bước khay: thẻ ở góc phải dưới, cạnh khay. "Xong" đóng thẻ, mèo đi lại bình thường. "Bỏ qua" bất kỳ lúc nào: thẻ đóng ngay.
+- [ ] Trong lúc hướng dẫn: mèo không tự đi, không tự ngủ, không rủ chơi, cổng không tự hiện; Pause thì thẻ và mèo đứng yên; mở app toàn màn hình hoặc vào trận thì hướng dẫn tắt hẳn.
+- [ ] Cài đặt → Chung → "Xem lại hướng dẫn": chạy lại từ đầu; mèo đang ngủ thì báo "Mèo đang ngủ…" và mèo KHÔNG thức.

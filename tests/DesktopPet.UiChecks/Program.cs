@@ -299,14 +299,17 @@ internal static class Program
         welcome.Left = -10000; welcome.Show(); welcome.UpdateLayout();
         var welcomeButtons = Descendants<System.Windows.Controls.Button>((FrameworkElement)welcome.Content).ToList();
         bool WelcomeSays(string text) => Descendants<System.Windows.Controls.TextBlock>((FrameworkElement)welcome.Content).Any(t => t.Text.Contains(text));
-        Check(welcomeAutostart.IsChecked == true && welcomeAutostart.IsVisible && welcomeButtons.Count == 1 && welcomeButtons[0].IsDefault &&
-              (string)welcomeButtons[0].Content == "Let's go" && welcomeLanguage.SelectedIndex == 0 && WelcomeSays("tray icon"),
-            "The welcome shows tips, the language, one button and a ticked Start with Windows");
+        var welcomeGo = welcomeButtons.Single(b => !b.IsCancel);
+        var welcomeLater = welcomeButtons.Single(b => b.IsCancel);
+        Check(welcomeAutostart.IsChecked == true && welcomeAutostart.IsVisible && welcomeButtons.Count == 2 && welcomeGo.IsDefault &&
+              (string)welcomeGo.Content == "Go with the cat" && (string)welcomeLater.Content == "Later" && welcomeLanguage.SelectedIndex == 0 &&
+              WelcomeSays("show you around") && !WelcomeSays("tray icon"),
+            "The short welcome (M2b): no tips, the language, Go with the cat / Later and a ticked Start with Windows");
         welcomeLanguage.SelectedIndex = 1; welcome.UpdateLayout();
-        Check(WelcomeSays("Biểu tượng mèo ở khay") && (string)welcomeButtons[0].Content == "Bắt đầu" && (string)welcomeAutostart.Content == "Khởi động cùng Windows",
+        Check(WelcomeSays("Mèo sẽ dẫn bạn đi xem một vòng") && (string)welcomeGo.Content == "Đi cùng mèo" && (string)welcomeLater.Content == "Để sau" && (string)welcomeAutostart.Content == "Khởi động cùng Windows",
             "Choosing Tiếng Việt rewrites the welcome at once");
         welcomeLanguage.SelectedIndex = 2; welcome.UpdateLayout();
-        Check((string)welcomeLanguage.SelectedItem == "日本語" && PetWelcome.Chosen(welcomeLanguage) == "ja" && (string)welcomeButtons[0].Content == "はじめる"
+        Check((string)welcomeLanguage.SelectedItem == "日本語" && PetWelcome.Chosen(welcomeLanguage) == "ja" && (string)welcomeGo.Content == "猫と一緒に見る"
               && (string)welcomeAutostart.Content == "Windows の起動時に開始", "The welcome offers 日本語 and rewrites itself in Japanese");
         Check(PetWelcome.DefaultLanguage(false, "vi") == "vi" && PetWelcome.DefaultLanguage(false, "en") == "en" &&
               PetWelcome.DefaultLanguage(false, "ja") == "ja" &&
@@ -1008,6 +1011,7 @@ internal static class Program
         await TutorialChecks.Run(window, pet, Check);
         PortalChecks.Run(window, pet, behavior, preferences, Check);
         IntroChecks.Run(window, pet, behavior, preferences, Check); // The startup intro (M2a).
+        TourChecks.Run(window, pet, behavior, preferences, Check); // The cat-led guide (M2b).
         WeatherChecks.Run(window, pet, preferences, Check);
         FarmChecks.Run(window, pet, preferences, Check);
         FarmChoreChecks.Run(window, pet, behavior, preferences, Check);

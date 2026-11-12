@@ -335,6 +335,13 @@ public sealed partial class PetWindow
         form.DebugView = PetUi.SecondaryButton(L("Xem debug hành vi", "Behavior debug view"));
         form.DebugView.HorizontalAlignment = HorizontalAlignment.Left;
         form.DebugView.Click += (_, _) => ToggleDebug();
+        // The cat-led guide again (M2b, PetWindow.Tour.cs); the settings stay open.
+        var replayGuide = PetUi.SecondaryButton(L("Xem lại hướng dẫn", "Replay the guide"));
+        replayGuide.HorizontalAlignment = HorizontalAlignment.Left;
+        replayGuide.Click += (_, _) =>
+        {
+            if (StartTour() is string reason) PetDialog.Show(settingsWindow, "Desktop Pet", reason, "OK");
+        };
         var dataFolder = new TextBox { Text = PetPreferences.DataDirectory, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap };
         var generalTab = Page(
             Section(L("Ứng dụng", "App"), PetMotif.Gear,
@@ -359,6 +366,7 @@ public sealed partial class PetWindow
                 Row(L("Phiên bản", "Version"), new TextBlock { Text = PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }),
                 Row(L("Dữ liệu và log", "Data and logs"), dataFolder),
                 PetUi.Hint(AiStatusText),
+                replayGuide,
                 form.DebugView));
 
         foreach (var pair in new[] { (speechTab, PetSceneKind.Speech), (soundsTab, PetSceneKind.Sound), (generalTab, PetSceneKind.Settings) })

@@ -286,7 +286,7 @@ public sealed partial class PetWindow
     }
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
-    private bool FeatureOwnsMovement() => IntroOwnsMovement || CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
+    private bool FeatureOwnsMovement() => IntroOwnsMovement || TourOwnsMovement || CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
         laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement || TreasureFindOwnsMovement);
 
     // Nothing of the window's runs the cat: a fast cursor may startle it (PetEmotions.FreeToStartle).
@@ -318,6 +318,7 @@ public sealed partial class PetWindow
         WatchFarmChores(dt); // The cat's trips to the field (PetWindow.FarmChores.cs).
         TickBondClock(dt); // Bond milestones: their waits and a new milestone's hearts (PetWindow.Bond.cs).
         TickTrickClock(dt); // Calling the cat, a lesson: their waits and the lesson label (PetWindow.Tricks.cs).
+        TickTourClock(dt); // The cat-led guide: what ends it, the drag step, its card (PetWindow.Tour.cs).
         TickCupClock(dt); // The cup game: its wait, what ends it, Esc and clicks elsewhere (PetWindow.CupGame.cs).
         TickHideSeekClock(dt); // Hide-and-seek, the same (PetWindow.HideSeek.cs).
         TickFirefliesClock(dt); // Catching fireflies, the same (PetWindow.Fireflies.cs).
@@ -334,6 +335,7 @@ public sealed partial class PetWindow
             if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement || (SeekOwnsMovement && !SeekRidesPress) || FlyOwnsMovement || GuestOwnsMovement || TreasureOwnsMovement || TreasureFindOwnsMovement) CancelFeatureActivity();
             return;
         }
+        if (TickTour()) return; // The cat-led guide (PetWindow.Tour.cs).
         if (TickCall(dt)) return; // The user called the cat (PetWindow.Tricks.cs).
         if (TickLesson(dt)) return; // A trick lesson.
         if (TickCupGame(dt)) return; // The cup game (docs/MINI-GAMES.md → M1).
@@ -499,5 +501,5 @@ public sealed partial class PetWindow
     private void ApplyAccessory() =>
         renderer.Accessory = PetScene.Accessory = preferences.HolidayAccessories && PetAccessories.ForEvent(specialDay) is { } outfit ? outfit.Id : preferences.Accessory;
 
-    private void CloseFeatures() { afterIntro = null; FinishIntro(); ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); passWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
+    private void CloseFeatures() { afterIntro = null; FinishIntro(); StopTour(); ClosePortal(); CloseWeather(); CloseFarm(); CloseTrophies(); EndBattle(); CloseBattleHub(); CloseBattlePrep(); CloseAdventureMap(); CloseExpeditionMap(); CloseBattleBag(); CloseBattleSummary(); CloseBattleNotice(); CloseBattleTutorial(); laserWindow?.Close(); diaryWindow?.Close(); CloseStatusCard(); behaviorSettingsWindow?.Close(); toyWindow?.Close(); CloseDesktopToys(); settingsWindow?.Close(); customizeWindow?.Close(); speechWindow?.Close(); focusWindow?.Close(); passWindow?.Close(); sound?.Stop(); sound?.Dispose(); soundStream?.Dispose(); }
 }

@@ -6,8 +6,8 @@ using System.Windows.Controls;
 
 namespace DesktopPet;
 
-// First run after the installer (Velopack's OnFirstRun; a copied folder never sees it): a short
-// welcome with a few tips, the language (switching it rewrites the welcome at once) and "Start with
+// First run after the installer (Velopack's OnFirstRun; a copied folder never sees it), after the
+// startup intro: a short welcome (M2b: the tips moved into the cat-led guide), the language (switching it rewrites the welcome at once) and "Start with
 // Windows", ticked. The choice is written to the Run key for this installed copy, which also moves an
 // entry left by an older copied folder over to it.
 public static class PetWelcome
@@ -37,27 +37,20 @@ public static class PetWelcome
         var extra = new StackPanel();
         extra.Children.Add(new PetScene(PetSceneKind.Home, 86));
         extra.Children.Add(row); extra.Children.Add(check); extra.Children.Add(reminders);
-        var window = PetDialog.Create(null, "Desktop Pet", "", "", extra: extra);
+        // "Go with the cat" (OK) starts the guide; "Later" (or closing the window) does not.
+        var window = PetDialog.Create(null, "Desktop Pet", "", "", "", extra: extra);
         var message = (TextBlock)((Panel)extra.Parent).Children[0];
-        var start = Buttons(window).Single();
+        var later = Buttons(window).Single(button => button.IsCancel);
+        var start = Buttons(window).Single(button => !button.IsCancel);
         void Apply()
         {
             Func<string, string, string> L = (vi, en) => PetText.Pick(Chosen(choose), vi, en);
-            message.Text = L("Chào mừng! Mèo đã ở trên màn hình của bạn.\n" +
-                             "• Kéo mèo để bế lên, thả hoặc vung để ném.\n" +
-                             "• Chuột phải vào mèo: chơi, động tác; cho ăn và cảm xúc ở mục tên mèo.\n" +
-                             "• Chuột phải vào đồ vật (hộp, trụ cào, đệm, vùng đất) để dùng nó.\n" +
-                             "• Chuột phải rồi chọn Giờ tập trung: mèo ngồi cùng bạn làm việc, hết giờ sẽ báo.\n" +
-                             "• Biểu tượng mèo ở khay (góc phải dưới): Cài đặt, Tạm dừng, Kiểm tra cập nhật.",
-                             "Welcome! The pet is on your screen.\n" +
-                             "• Drag the pet to pick it up; let go or swing to throw.\n" +
-                             "• Right-click the pet: play, actions; feeding and emotions are under the pet's name.\n" +
-                             "• Right-click a thing (box, scratching post, cushion, a farm plot) to use it.\n" +
-                             "• Right-click and pick Focus time: the pet keeps you company and tells you when time is up.\n" +
-                             "• The pet's tray icon (bottom right): Settings, Pause, Check for updates.");
+            message.Text = L("Chào mừng! Mèo đã ở trên màn hình của bạn.\nMèo sẽ dẫn bạn đi xem một vòng.",
+                             "Welcome! The pet is on your screen.\nThe pet will show you around.");
             check.Content = L("Khởi động cùng Windows", "Start with Windows");
             reminders.Content = L("Nhắc tôi nghỉ giải lao mỗi {0} phút", "Remind me to take a break every {0} minutes").Replace("{0}", breakMinutes.ToString(CultureInfo.InvariantCulture));
-            start.Content = L("Bắt đầu", "Let's go");
+            start.Content = L("Đi cùng mèo", "Go with the cat");
+            later.Content = L("Để sau", "Later");
         }
         Apply();
         choose.SelectionChanged += (_, _) => Apply();
@@ -73,9 +66,10 @@ public static class PetWelcome
     {
         // A new user gets it ticked; someone reinstalling sees their own setting.
         var window = Create(DefaultLanguage(newUser, pet.UiLanguage), out var autostart, out var language, out var reminders, newUser || pet.BreakRemindersOn, pet.BreakMinutes);
-        window.ShowDialog();
+        bool guide = window.ShowDialog() == true;
         pet.SetLanguage(Chosen(language));
         pet.SetBreakReminders(reminders.IsChecked == true);
+        if (guide && pet.StartTour() is string reason) System.Diagnostics.Trace.WriteLine($"Welcome: the guide could not start: {reason}");
         if (Environment.ProcessPath is not string exe) return;
         bool on = autostart.IsChecked == true;
         if (!startup.SetEnabled(on, exe)) System.Diagnostics.Trace.WriteLine("Welcome: Windows startup could not be changed.");

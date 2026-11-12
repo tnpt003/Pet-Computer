@@ -398,6 +398,7 @@ public sealed partial class PetWindow : Window
         if (battle is BattleSim fight)
             System.Diagnostics.Trace.WriteLine($"Cat let go in battle: {(throwPet ? "mouse released" : "capture lost")}, button {Mouse.LeftButton}, captured by {Mouse.Captured?.GetType().Name ?? "none"}, held {(Environment.TickCount64 - dragStartedAt) / 1000.0:0.0} s, {fight.Alive} enemies, {(fight.Paused ? "paused" : "running")}.");
         Interact(throwPet ? "released" : "drag_cancelled");
+        TourSawDrag(); // The guide's drag step (PetWindow.Tour.cs).
         UpdateDrag();
         dragging = false; // Set before releasing capture; LostMouseCapture is synchronous.
         ReleaseMouseCapture();

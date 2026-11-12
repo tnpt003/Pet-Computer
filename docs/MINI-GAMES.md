@@ -8,7 +8,7 @@ Người dùng duyệt chia mốc 2026-11-12. Luật từng mốc viết và duy
 | M2. Trốn tìm | Mèo nấp sau đồ đang có trên desktop (thùng carton, chậu cây, trụ cào), không có thì app vẽ tạm bụi cây/rèm; lộ tai hoặc đuôi; tìm đúng thì mèo bật ra. Không đọc nội dung cửa sổ, icon hay file thật | Đã có code, còn test tay |
 | M3. Bắt đom đóm | Khoảng 30 giây, đốm sáng bay quanh mèo, người dùng chạm thì tan thành hạt sáng, mèo cũng vồ vài con; đếm số đốm | Đã có code, còn test tay |
 | M4. Khách ghé thăm | Bướm giấy hoặc slime hiền thỉnh thoảng bay ngang; mèo nhìn theo hoặc đuổi một đoạn rồi khách đi. Sự kiện tự xảy ra, cần ngoại lệ mới | Đã có code, còn test tay |
-| M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Đã duyệt luật, chưa code |
+| M5. Săn kho báu | Mèo thỉnh thoảng tìm thấy mẩu bản đồ; người dùng tìm 3 dấu chân ẩn rồi mở rương cùng mèo; trong rương là một mẩu chuyện lưu vào Nhật ký, không có vật phẩm | Đã có code, còn test tay |
 
 Quyết định chung (người dùng đồng ý 12/11):
 
@@ -282,3 +282,12 @@ Hai phần: **mèo tìm thấy bản đồ** là sự kiện tự xảy ra (như
 ### Bổ sung ngoại lệ (đã duyệt 12/11, bản đầy đủ ở docs/APPROVED-EXCEPTIONS.md → Hành vi mèo)
 
 Mèo được tự "tìm thấy bản đồ" (hoạt cảnh ngồi ngậm giấy ~2 s, biểu tượng trên đầu 10 phút), là hành vi tự động có công tắc; đi săn là lệnh người dùng theo ngoại lệ mini-game M1, dấu chân và rương vẽ trong cửa sổ riêng click xuyên qua, mèo đi tới dấu đã tìm và vỗ mở rương.
+
+### Cách code M5 (12/11)
+
+- Core `PetTreasure.cs`: `TreasureRules` (hẹn 60–120 phút, thử lại 120 s, tối đa 3 bản đồ/ngày theo ngày máy, `Place` đặt 3 dấu chân ±400 DIP ngang và tới 300 DIP trên mặt đất, cách nhau ≥ 80, trong vùng làm việc, tránh thân mèo và đồ trên sàn; `Glow` 20 % → sáng dần trong 50 DIP quanh con trỏ, 40 % khi là gợi ý 40 s, 100 % khi tìm thấy; `Under`, `ChestSpot`, `StandSpot` giữ mèo và rương trên đúng sàn/mép; `PickStory`/`OpenChest` chọn truyện chưa mở, mở hết thì quay vòng theo thứ tự cũ), `TreasureMap` (10 phút, dt 0 khi Pause, mờ 20 s cuối), `TreasureHunt` (thứ tự bất kỳ, gợi ý 20/40 s tính từ lần tìm gần nhất, 3 phút tự sáng phần còn lại). `AutoKind.TreasureFind` chặn như `GuestVisit`. `preferences.json` thêm `Treasure` (mặc định bật), `TreasureChests`, `TreasureStories` (id đã mở, mới nhất cuối), `TreasureMapsToday`, `TreasureMapDay`; file cũ đọc được.
+- `PetWindow.Treasure.cs`: `TickTreasure` chạy mỗi frame từ `Tick` (Pause truyền dt 0): hẹn giờ chỉ trong RAM và đứng yên khi đang có bản đồ; công tắc tắt thì bản đồ (và ván) mất ngay. Cảnh tìm thấy (`TickTreasureFind`, 2 s ngồi, `renderer.CarryMap`, ngước nhìn bằng `ReactTilt`) là việc chiếm mèo như khách M4, bị click/kéo/cảm xúc cắt thì bản đồ vẫn còn. Biểu tượng bản đồ là cửa sổ nhỏ riêng trên đầu mèo, giữ trên cửa sổ mèo để click không bao giờ rơi vào mèo; ẩn khi kéo mèo, toàn màn hình, trong trận.
+- Ván săn theo khung M1: chờ mèo tự thức tối đa 30 s, `toy_started` một lần, cảm xúc tự động tạm dừng, `FeatureOwnsMovement` đúng nên PetBehavior, Python và khách M4 không chen vào; Python thấy trạng thái "MiniGame". Khác M1 theo luật: Pause đóng băng (TickFeatures không chạy), click chỗ trống không thoát, chỉ Esc/chọn lại dòng/click hoặc kéo mèo/toàn màn hình/trận/đổi màn hình-DPI/mặt đất đổi kết thúc. Click phải mèo cũng kết thúc như mọi mini-game (qua `CancelFeatureActivity`) rồi mở menu như thường.
+- Dấu chân và rương vẽ trong một cửa sổ dưới cửa sổ mèo (`PetTreasureArt.cs`), chỉ đĩa gần trong suốt sau dấu chưa tìm và sau rương nhận click. Mẩu chuyện là thẻ PetUi riêng (minh họa Scroll), click tắt sớm. Không thêm âm thanh: dùng `sparkle` và `ball_tap` sẵn có. 12 mẩu chuyện vi/en/ja nằm trong `TreasureStoryText` (viết lúc code, **chờ người dùng duyệt nội dung**).
+- **Quyết định khi code (chờ người dùng xem):** đồng hồ 10 phút của bản đồ vẫn chạy trong ván (ván không bị cắt khi hết giờ, rương vẫn mở được); hẹn giờ tìm bản đồ mới không chạy khi đang giữ bản đồ; mép cửa sổ quá ngắn không đủ chỗ cho rương cạnh mèo thì không vẽ rương, mèo vỗ mở tại chỗ và mẩu chuyện vẫn hiện; hết 3 phút thì rương đặt gần dấu cuối cùng tự sáng.
+- Test: `TreasureTests` (Core), `TreasureChecks` (UiChecks), `AutonomyTests` thêm `TreasureFind`; ảnh soát `treasure-*.png` khi đặt `PET_RENDER_REVIEW`.

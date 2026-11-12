@@ -97,6 +97,13 @@ public sealed class PetPreferences
     // Visitors (docs/MINI-GAMES.md → M4): the switch in Customize → Habits, and how many guests came by.
     public bool Guests { get; set; } = true;
     public int GuestVisits { get; set; }
+    // Treasure hunt (docs/MINI-GAMES.md → M5): the switch in Customize → Habits, chests opened, the stories
+    // read (each once, the most recent last), and the maps found today (with that day).
+    public bool Treasure { get; set; } = true;
+    public int TreasureChests { get; set; }
+    public List<int>? TreasureStories { get; set; }
+    public int TreasureMapsToday { get; set; }
+    public DateTime? TreasureMapDay { get; set; }
     // Living corner M2 (docs/LIVING-CORNER.md): the plant pot's points (it grows, never wilts) and when the last one came.
     public int PlantPoints { get; set; }
     public DateTime? PlantPointAt { get; set; }
@@ -164,6 +171,9 @@ public sealed class PetPreferences
         p.FireflyBest = Math.Clamp(p.FireflyBest, 0, 9999);
         p.FireflyPlays = Math.Clamp(p.FireflyPlays, 0, 999999);
         p.GuestVisits = Math.Clamp(p.GuestVisits, 0, 999999);
+        p.TreasureChests = Math.Clamp(p.TreasureChests, 0, 999999);
+        p.TreasureStories = TreasureRules.Normalize(p.TreasureStories);
+        p.TreasureMapsToday = Math.Clamp(p.TreasureMapsToday, 0, TreasureRules.MapsPerDay);
         p.ToysSniffed = ToyReactRules.Normalize(p.ToysSniffed);
         p.PlantPoints = Math.Clamp(p.PlantPoints, 0, PlantRules.MaxPoints);
         TrickRules.Normalize(p);

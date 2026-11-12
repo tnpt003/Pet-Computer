@@ -63,6 +63,9 @@ public sealed partial class PetWindow
         var flies = PetUi.MenuItem(PetUi.Firefly);
         flies.Click += (_, _) => ToggleFireflies();
         games.Items.Add(flies);
+        var treasure = PetUi.MenuItem(PetUi.Treasure);
+        treasure.Click += (_, _) => ToggleTreasure();
+        games.Items.Add(treasure);
         // While the ball is out, putting it away is one click on the main menu.
         var putAway = PetUi.MenuItem(PetUi.Ball);
         putAway.Click += (_, _) => ToggleToy();
@@ -137,6 +140,8 @@ public sealed partial class PetWindow
             seek.ToolTip = HideSeekMenuNote is { Length: > 0 } seekWhy ? seekWhy : null;
             flies.Header = FirefliesActive ? L("Dừng Bắt đom đóm", "Stop Catch fireflies") : FirefliesMenuLabel;
             flies.ToolTip = FirefliesMenuNote is { Length: > 0 } fliesWhy ? fliesWhy : null;
+            treasure.Header = TreasureMenuLabel;
+            treasure.ToolTip = TreasureMenuNote is { Length: > 0 } treasureWhy ? treasureWhy : null;
             basket.Header = ToyBasketMenuLabel;
             place.Header = L("Vị trí", "Location");
             remember.Header = L("Nhớ chỗ này", "Remember this spot");
@@ -162,7 +167,8 @@ public sealed partial class PetWindow
             cups.IsEnabled = CupGameMenuEnabled;
             seek.IsEnabled = HideSeekMenuEnabled;
             flies.IsEnabled = FirefliesMenuEnabled;
-            games.IsEnabled = cups.IsEnabled || seek.IsEnabled || flies.IsEnabled;
+            treasure.IsEnabled = TreasureMenuEnabled;
+            games.IsEnabled = cups.IsEnabled || seek.IsEnabled || flies.IsEnabled || treasure.IsEnabled;
             putAway.Visibility = toyWindow != null ? Visibility.Visible : Visibility.Collapsed;
             remember.IsEnabled = pet.Grounded && pet.LedgeId == 0; // Resting spots are on the floor.
             visit.IsEnabled = MayAct(AutoKind.RestVisit) && preferences.RestX.HasValue;
@@ -261,6 +267,7 @@ public sealed partial class PetWindow
         StopHideSeek(); // ...and hide-and-seek (PetWindow.HideSeek.cs).
         StopFireflies(count: true); // ...and catching fireflies (PetWindow.Fireflies.cs).
         StopGuestWatch(); // The cat stops watching a visitor; the guest goes on (PetWindow.Guests.cs).
+        StopTreasure(); EndTreasureFind(); // A treasure hunt ends, a find scene too; a map found stays (PetWindow.Treasure.cs).
         StopLaser();
         StopToyFetch(drop: true); // A ball in the mouth falls out (PetWindow.ToyFetch.cs).
         StopToyChase(); // PetWindow.ToyChase.cs
@@ -283,7 +290,7 @@ public sealed partial class PetWindow
 
     // Also lets a walk carry the pet past a window ledge's end (it drops off).
     private bool FeatureOwnsMovement() => CanPlay && (pet.TreatRemaining > 0 || pet.CastRemaining > 0 || treatSatisfiedRemaining > 0 || toyWindow != null || returningHome || admiring ||
-        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement);
+        laserWindow != null || climbPlan != null || ledgeExit != 0 || keepsakeShove != KeepsakeShove.None || keepsakeWatch > 0 || pet.Bonk > 0 || cushionNap == CushionNap.Walk || farmChores.Active || fetch != Fetch.None || chase != Chase.None || pass != Pass.None || react != React.None || postTrip == PostTrip.Walk || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || BondOwnsMovement || favorite != Favorite.None || TrickOwnsMovement || MiniGameOwnsMovement || GuestOwnsMovement || TreasureFindOwnsMovement);
 
     private void TickFeatures(double dt)
     {
@@ -313,6 +320,7 @@ public sealed partial class PetWindow
         TickCupClock(dt); // The cup game: its wait, what ends it, Esc and clicks elsewhere (PetWindow.CupGame.cs).
         TickHideSeekClock(dt); // Hide-and-seek, the same (PetWindow.HideSeek.cs).
         TickFirefliesClock(dt); // Catching fireflies, the same (PetWindow.Fireflies.cs).
+        TickTreasureClock(dt); // The treasure hunt: its wait, what ends it, Esc (PetWindow.Treasure.cs).
         TickMiniLabel(dt); // PetWindow.MiniGames.cs
         if (TickPortal(dt)) return; // The magic portal (PetWindow.Portal.cs).
         if (BattleActive) return; // The battle owns the pet; games, treats and rest visits wait.
@@ -322,7 +330,7 @@ public sealed partial class PetWindow
         if (TickToyPass(dt)) return; // Passing the yarn ball (PetWindow.ToyPass.cs).
         if (!CanPlay)
         {
-            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement || (SeekOwnsMovement && !SeekRidesPress) || FlyOwnsMovement || GuestOwnsMovement) CancelFeatureActivity();
+            if (toyWindow != null || returningHome || admiring || keepsakeShove != KeepsakeShove.None || cushionNap == CushionNap.Walk || pet.TreatRemaining > 0 || treatSatisfiedRemaining > 0 || fetch != Fetch.None || postTrip != PostTrip.None || plantTrip != PlantTrip.None || boxPeek != BoxPeek.None || bondAct != BondAct.None || favorite != Favorite.None || TrickOwnsMovement || CupOwnsMovement || (SeekOwnsMovement && !SeekRidesPress) || FlyOwnsMovement || GuestOwnsMovement || TreasureOwnsMovement || TreasureFindOwnsMovement) CancelFeatureActivity();
             return;
         }
         if (TickCall(dt)) return; // The user called the cat (PetWindow.Tricks.cs).
@@ -330,7 +338,9 @@ public sealed partial class PetWindow
         if (TickCupGame(dt)) return; // The cup game (docs/MINI-GAMES.md → M1).
         if (TickHideSeek(dt)) return; // Hide-and-seek (docs/MINI-GAMES.md → M2).
         if (TickFireflies(dt)) return; // Catching fireflies (docs/MINI-GAMES.md → M3).
+        if (TickTreasureHunt(dt)) return; // The treasure hunt (docs/MINI-GAMES.md → M5).
         if (TickGuestWatch(dt)) return; // Watching a visitor (docs/MINI-GAMES.md → M4).
+        if (TickTreasureFind(dt)) return; // The cat finding a map (M5).
         if (pet.TreatRemaining > 0)
         {
             pet.TreatRemaining = Math.Max(0, pet.TreatRemaining - dt);

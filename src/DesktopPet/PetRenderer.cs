@@ -239,6 +239,8 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
     public bool CarryBall;
     // The cup game (PetWindow.CupGame.cs): the little dried fish held in the mouth.
     public bool CarryFish;
+    // The treasure hunt (PetWindow.Treasure.cs): the rolled map held in the mouth as the cat finds it.
+    public bool CarryMap;
     // Hide-and-seek (PetWindow.HideSeek.cs): how far the cat is sunk behind its cover (cut at the floor), the
     // cover drawn over it (1: a bush, 2: the box's front), and a rustle of that bush (seconds; negative: still).
     public double HideSink, HideRustle = -1, HideHalf = 38;
@@ -999,6 +1001,7 @@ public sealed partial class PetRenderer(PetModel pet) : FrameworkElement
             PetFarmArt.DrawFish(dc, FarmFish.Carp);
             dc.Pop();
         }
+        if (CarryMap && !p.PickedUp) TreasureDrawing.Scroll(dc, 57 + PetWindow.FetchMouthAhead, 69, 0.95);
         DrawAccessory(dc, AccessoryLayer.Head);
         if (p.Grooming)
         {

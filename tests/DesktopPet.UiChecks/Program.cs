@@ -181,7 +181,7 @@ internal static class Program
         var catHeaders = catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Select(item => item.Header as string).ToList();
         Check(headers.SequenceEqual(new[] { "Give treat", "Play", "Play with the cat", "Cast portal spell", "Do now", "Teach a trick", "Emotions", "Focus time", "Quiet mode", "Sounds", catName, "Location", "Settings…", "More", "Exit" }) &&
               SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket" &&
-              SubHeaders("Play with the cat") == "Find the fish|Hide and seek|Catch fireflies" &&
+              SubHeaders("Play with the cat") == "Find the fish|Hide and seek|Catch fireflies|Treasure hunt · no map yet" &&
               SubHeaders("Location") == "Go to resting spot|Remember this spot|Forget resting spot|Bring the pet to the main screen" &&
               SubHeaders("More") == "Behavior debug view|About Desktop Pet" &&
               catHeaders.Count == 3 && catHeaders[2] == "Customize…" &&
@@ -1001,6 +1001,7 @@ internal static class Program
         HideSeekChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M2, hide-and-seek.
         FireflyChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M3, catching fireflies.
         GuestChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M4, visitors.
+        TreasureChecks.Run(window, pet, behavior, preferences, Check); // Mini-games M5, the treasure hunt.
         await WeaponChecks.Run(window, pet, Check);
         await BattlePrepChecks.Run(window, pet, behavior, preferences, Check);
         await AdventureChecks.Run(window, pet, behavior, preferences, Check);

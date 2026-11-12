@@ -22,7 +22,7 @@ public sealed class PetSettingsForm
     public ComboBox Trophy = null!;
     public string[] TrophyIds = Array.Empty<string>();
     public Border KeepsakeSection = null!;
-    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Guests = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
+    public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Guests = null!, Treasure = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
     public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!;
     public PetRenderer PetPreview = null!;
@@ -120,6 +120,9 @@ public sealed partial class PetWindow
         form.Guests = new CheckBox { Content = L("Khách ghé thăm", "Visitors"), IsChecked = preferences.Guests,
             ToolTip = L("Thỉnh thoảng (khoảng 40–90 phút) một con bướm giấy hoặc slime hiền đi ngang, mèo nhìn theo hoặc đuổi một đoạn. Không đến khi mèo ngủ, ở chế độ Yên lặng hay Giờ tập trung.",
                         "Now and then (every 40–90 minutes or so) a paper butterfly or a gentle slime comes by; the pet watches or follows a little. Never while it sleeps, in Quiet mode or focus time.") };
+        form.Treasure = new CheckBox { Content = L("Săn kho báu", "Treasure hunt"), IsChecked = preferences.Treasure,
+            ToolTip = L("Thỉnh thoảng (khoảng 60–120 phút, tối đa 3 lần mỗi ngày) mèo tìm thấy một tấm bản đồ; bấm bản đồ trên đầu mèo để cùng tìm 3 dấu chân và mở rương. Tắt thì bản đồ đang có mất ngay.",
+                        "Now and then (every 60–120 minutes or so, at most 3 a day) the pet finds a map; click the map over its head to find 3 paw prints together and open a chest. Turned off, a map it holds is gone at once.") };
         form.Farm = new CheckBox { Content = L("Nông trại trên desktop", "Farm on the desktop"), IsChecked = preferences.Farm,
             ToolTip = L("Ruộng, bếp, hồ và các vùng đất khác sát trên thanh taskbar: bấm vào ô ruộng để cày, gieo, tưới và thu hoạch. Tắt thì ẩn đi, cây vẫn được giữ nguyên.", "The field, hearth, pond and other lands just above the taskbar: click a field tile to till, sow, water and harvest. Turned off they are hidden; your crops are kept.") };
         form.FarmHelper = new CheckBox { Content = L("Mèo làm vườn cùng", "Pet helps in the field"), IsChecked = preferences.FarmHelper,
@@ -152,6 +155,7 @@ public sealed partial class PetWindow
                 form.ClimbWindows,
                 form.Weather,
                 form.Guests,
+                form.Treasure,
                 form.Farm,
                 form.FarmHelper,
                 form.FarmResow,
@@ -193,6 +197,7 @@ public sealed partial class PetWindow
             if (!preferences.ClimbWindows) DropLedges(); // A pet on a window falls; a climbing one lets go.
             preferences.Weather = form.Weather.IsChecked == true;
             preferences.Guests = form.Guests.IsChecked == true;
+            preferences.Treasure = form.Treasure.IsChecked == true;
             preferences.Farm = form.Farm.IsChecked == true;
             preferences.FarmHelper = form.FarmHelper.IsChecked == true;
             preferences.FarmResow = form.FarmResow.IsChecked == true;

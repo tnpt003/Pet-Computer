@@ -59,6 +59,7 @@ public enum AutoKind
     BondAct,        // What a bond milestone opens: greeting the user back, the after-play routine (docs/LIVING-CORNER.md → M3).
     FavoriteVisit,  // Walking to its favourite toy on its own (docs/LIVING-CORNER.md → M4; blocked like bringing the ball).
     GuestVisit,     // A visitor coming by on its own (docs/MINI-GAMES.md → M4; blocked like bringing the ball).
+    TreasureFind,   // Finding a treasure map on its own (docs/MINI-GAMES.md → M5; blocked like a visitor).
 }
 
 public static class PetAutonomy
@@ -100,6 +101,7 @@ public static class PetAutonomy
         AutoKind.ToyInvite => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         AutoKind.FavoriteVisit => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         AutoKind.GuestVisit => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
+        AutoKind.TreasureFind => AutoBlock.Busy | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Feature | AutoBlock.WakeCooldown | AutoBlock.Away,
         _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
     };
 

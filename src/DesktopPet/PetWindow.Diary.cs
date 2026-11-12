@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -53,6 +54,7 @@ public sealed partial class PetWindow
                    "The AI is off or not ready yet, so only this session's numbers are shown."), PetUi.Muted);
             AddStats((session.Petted, L("Được vuốt", "Petted"), PetMotif.Heart), (session.Treats, L("Treat", "Treats"), PetMotif.Fish), (session.Toy + session.BallClicks, L("Chơi bóng", "Ball games"), PetMotif.Ball));
             AddMiniGameCard();
+            AddTreasureCard();
             AddFarmCard();
             return;
         }
@@ -74,6 +76,8 @@ public sealed partial class PetWindow
         if (diary.ToyPlays is { } plays) AddFavoriteToyCard(diary.FavoriteToy, plays);
 
         AddMiniGameCard();
+
+        AddTreasureCard();
 
         AddFarmCard();
 
@@ -105,6 +109,18 @@ public sealed partial class PetWindow
         card.Children.Add(TextLine(LF($"Bắt đom đóm: kỷ lục {preferences.FireflyBest} đốm · đã chơi {preferences.FireflyPlays} ván",
             $"Catch fireflies: best {preferences.FireflyBest} · {preferences.FireflyPlays} game{(preferences.FireflyPlays == 1 ? "" : "s")}")));
         card.Children.Add(TextLine(LF($"Khách đã ghé: {preferences.GuestVisits}", $"Visitors so far: {preferences.GuestVisits}")));
+    }
+
+    // Treasure hunt (docs/MINI-GAMES.md → M5): the chests opened and the stories read, kept by C#; nothing until a first chest.
+    private void AddTreasureCard()
+    {
+        if (preferences.TreasureChests <= 0 && preferences.TreasureStories == null) return;
+        var card = AddCard(L("Kho báu", "Treasure"), PetMotif.Scroll);
+        var stories = preferences.TreasureStories ?? new List<int>();
+        card.Children.Add(TextLine(LF($"Đã mở {preferences.TreasureChests} rương · đọc {stories.Count}/{TreasureRules.StoryCount} mẩu chuyện",
+            $"Chests opened: {preferences.TreasureChests} · stories read: {stories.Count}/{TreasureRules.StoryCount}")));
+        foreach (int id in stories.OrderBy(id => id))
+            card.Children.Add(TextLine("· " + TreasureStoryText(id), PetUi.Muted));
     }
 
     // What C# itself knows about the farm, so it does not need the AI.

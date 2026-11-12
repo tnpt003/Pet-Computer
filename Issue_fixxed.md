@@ -9,8 +9,8 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Triệu chứng:** mèo đang đi, cào trụ, ghé cây, làm động tác... thì giật mình và bỏ dở việc.
 - **Nguyên nhân:** con trỏ lướt nhanh (≥1.600 DIP/s trong 140 DIP) gây Surprised bất kể mèo đang làm gì; Surprised nằm trong `BlocksAutonomy` nên PetBehavior ép mèo về Idle và các chuyến (trụ cào, chậu cây, tha bóng...) tự hủy.
 - **Sửa (người dùng chọn):** con trỏ chỉ làm mèo giật mình khi mèo đang rảnh: dưới sàn, Idle/Sitting/Looking, không có chuyến, tính năng hay lệnh người dùng nào đang chạy (`PetEmotions.FreeToStartle`, `PetWindow.CatFreeToStartle`, `PetBehavior.RunsManual`). Giật mình do sự kiện thật (`Startle`: cổng phép, kỷ vật) giữ nguyên.
-- **Commit:** (điền khi chốt).
-- **Kiểm chứng:** test C# mới: ngồi/nhìn quanh thì giật mình; đi, rửa mặt, cào, nhồi bánh hoặc đang trong chuyến/lệnh thì không; Startle vẫn làm mèo đang đi giật mình.
+- **Commit:** `453fa39`, ZIP `artifacts/DesktopPet-1.5.1-453fa39-win-x64.zip`, smoke 3/3 PASS.
+- **Kiểm chứng:** script đầy đủ một lần: Python 67 + i18n 5, C# 4914 (104 suite), WPF 3143 đều đạt. Test C# mới: ngồi/nhìn quanh thì giật mình; đi, rửa mặt, cào, nhồi bánh hoặc đang trong chuyến/lệnh thì không; Startle vẫn làm mèo đang đi giật mình.
 - **Cần xem tay:** vẩy chuột nhanh qua mèo khi mèo đang đi/cào trụ (không ngắt) và khi mèo ngồi yên (vẫn giật mình).
 
 ## #75 — Vật trưng bày cần giữ đúng lớp so với mèo và vùng đất (09/11)

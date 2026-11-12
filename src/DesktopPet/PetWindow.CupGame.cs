@@ -29,7 +29,7 @@ public sealed partial class PetWindow
     private bool cupBestRaised, cupSuspended, cupKeysDown;
     private string? cupMonitor;
     // Replaceable for UI checks: whether a key (virtual-key code) is down now.
-    private Func<int, bool>? keyProbe;
+    private Func<int, bool>? keyProbe = null;
 
     public bool CupGameActive => cupStep != CupStep.None;
     public string CupGamePhase => cupStep.ToString();
@@ -116,15 +116,15 @@ public sealed partial class PetWindow
         bool down = AnyCupKeyDown();
         if (down && !cupKeysDown)
         {
-            if (KeyDown(0x1B)) { StopCupGame(count: true); return; } // Esc.
-            if ((KeyDown(0x01) || KeyDown(0x02)) && !OverCups(CursorPosition())) { StopCupGame(count: true); return; } // A click elsewhere.
+            if (CupKeyDown(0x1B)) { StopCupGame(count: true); return; } // Esc.
+            if ((CupKeyDown(0x01) || CupKeyDown(0x02)) && !OverCups(CursorPosition())) { StopCupGame(count: true); return; } // A click elsewhere.
         }
         cupKeysDown = down;
         PlaceCups();
     }
 
-    private bool KeyDown(int key) => keyProbe?.Invoke(key) ?? (GetAsyncKeyState(key) & 0x8000) != 0;
-    private bool AnyCupKeyDown() => KeyDown(0x1B) || KeyDown(0x01) || KeyDown(0x02);
+    private bool CupKeyDown(int key) => keyProbe?.Invoke(key) ?? (GetAsyncKeyState(key) & 0x8000) != 0;
+    private bool AnyCupKeyDown() => CupKeyDown(0x1B) || CupKeyDown(0x01) || CupKeyDown(0x02);
 
     private bool OverCups(Point p)
     {

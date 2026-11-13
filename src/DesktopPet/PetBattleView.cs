@@ -74,8 +74,6 @@ public sealed partial class BattleFieldView : FrameworkElement
             }
             // A drop on the floor before the slimes (1.5 M19: cat, chosen skill, drop, slime, icon).
             else if (!OnPopup(point) && DropAt(point) is int drop) DropClicked?.Invoke(drop);
-            // A fish a slime dropped (1.5 M20), like a drop.
-            else if (!OnPopup(point) && FishAt(point) is int fish) FishClicked?.Invoke(fish);
             else if (!OnPopup(point) && !OnWall(point) && SlimeAt(point) is int id && sim.Find(id) is { } slime) SlimeClicked?.Invoke(id, point.X - (slime.X - OriginX));
             e.Handled = true;
         };
@@ -281,7 +279,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         DrawLinkMarks(dc, floor, time);
         DrawThiefBeams(dc, floor, time);
         DrawLeaves(dc, floor, time);
-        DrawCarriedFish(dc, floor, time);
+        DrawAggroMarks(dc, floor, time);
         DrawNursing(dc, floor, time);
         DrawBossTactics(dc, floor, SlimeTime(time));
         DrawZipActs(dc, floor, SlimeTime(time));

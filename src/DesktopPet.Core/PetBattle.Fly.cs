@@ -179,11 +179,14 @@ public sealed partial class BattleSim
             return;
         }
         if (s.ShotClock > 0) return;
-        var (catX, _) = CatCentre();
+        var (catX, _) = FlyAim(s);
         s.Facing = catX < s.X ? -1 : 1;
         s.AimLeft = fly.Aim;
         events.Add(new(BattleEventKind.FlyAimed, s.X, s.Id));
     }
+
+    // What a flyer aims at: the fish basket's middle (1.5 M20 defence), else the cat.
+    private (double X, double Height) FlyAim(Slime s) => s.OnBasket && double.IsFinite(BasketX) ? (BasketX, BasketHeight / 2) : CatCentre();
 
     // Where its drop flies from: its centre.
     public static (double X, double Height) Muzzle(Slime s) => (s.X, s.Altitude + s.Height / 2);
@@ -191,12 +194,12 @@ public sealed partial class BattleSim
     private void Fire(Slime s, FlySpec fly)
     {
         var (fromX, fromH) = Muzzle(s);
-        var (toX, toH) = CatCentre();
+        var (toX, toH) = FlyAim(s);
         double dx = toX - fromX, dh = toH - fromH, d = Math.Max(1, Math.Sqrt(dx * dx + dh * dh));
         shots.Add(new BattleShot
         {
             OwnerId = s.Id, X = fromX, Height = fromH, VX = dx / d * fly.ShotSpeed, VY = dh / d * fly.ShotSpeed,
-            Remaining = d / fly.ShotSpeed + ShotOverrun, Damage = s.Damage, Radius = fly.Radius, Slow = fly.Slow, SlowSeconds = fly.SlowSeconds, Tint = s.Type.Color
+            Remaining = d / fly.ShotSpeed + ShotOverrun, Damage = s.Damage, Radius = fly.Radius, Slow = fly.Slow, SlowSeconds = fly.SlowSeconds, Tint = s.Type.Color, Basket = s.OnBasket
         });
         FlyShots++;
         events.Add(new(BattleEventKind.FlyShot, s.X, s.Id));
@@ -218,7 +221,21 @@ public sealed partial class BattleSim
             if (shot.Paper) StepPaper(shot, dt);
             shot.X += shot.VX * dt; shot.Height += shot.VY * dt;
             shot.Remaining -= dt;
-            if (shot.Paper ? PaperTouchesCat(x0, h0, shot.X, shot.Height, shot.Radius) : Near(x0, h0, shot.X, shot.Height, catX, catH) <= shot.Radius)
+            if (shot.Basket)
+            {
+                // 1.5 M20 defence: a drop shot at the fish basket hits it (never the cat).
+                if (double.IsFinite(BasketX) && Near(x0, h0, shot.X, shot.Height, BasketX, BasketHeight / 2) <= shot.Radius + BasketHalfWidth * 0.7)
+                {
+                    shots.RemoveAt(i--);
+                    FlyShotHits++;
+                    AddEffect(BattleEffectKind.Splat, BasketX, BasketHeight / 2);
+                    effects[^1].Tint = shot.Tint;
+                    if (Find(shot.OwnerId) is { Targetable: true, Damage: > 0 } flyer) HurtBasket(flyer, shot.Damage / flyer.Damage);
+                    if (Over) return;
+                    continue;
+                }
+            }
+            else if (shot.Paper ? PaperTouchesCat(x0, h0, shot.X, shot.Height, shot.Radius) : Near(x0, h0, shot.X, shot.Height, catX, catH) <= shot.Radius)
             {
                 shots.RemoveAt(i--);
                 ShotHit(shot, catX);

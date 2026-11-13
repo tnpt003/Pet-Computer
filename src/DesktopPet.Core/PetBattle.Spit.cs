@@ -34,9 +34,10 @@ public sealed partial class BattleSim
     // under landing protection, or with the spit still recovering).
     private bool StartSpit(Slime slime, double catX, bool catHeld)
     {
-        if (slime.Type.Spit is not SpitSpec spit || slime.SpitCooldown > 0 || catHeld || Grace > 0 || slime.Airborne || slime.Handled) return false;
-        // A quick slime to boost first (2026-10-31): a puddle just ahead of it on its way to the cat.
-        double target = spit.Lane && LaneSpot(slime, spit, catX) is (double lane, Slime dasher) ? lane : catX;
+        if (slime.Type.Spit is not SpitSpec spit || slime.SpitCooldown > 0 || catHeld || Grace > 0 && !slime.OnBasket || slime.Airborne || slime.Handled) return false;
+        // A quick slime to boost first (2026-10-31): a puddle just ahead of it on its way to the cat
+        // (one spitting at the fish basket spits at it).
+        double target = !slime.OnBasket && spit.Lane && LaneSpot(slime, spit, catX) is (double lane, Slime dasher) ? lane : catX;
         double distance = Math.Abs(target - slime.X);
         if (distance < spit.MinRange) return false;
         if (target != catX)
@@ -114,6 +115,7 @@ public sealed partial class BattleSim
     {
         var spit = slime.Type.Spit!;
         var targets = new List<double>(SpitTargets(slime));
+        bool basket = slime.OnBasket;
         slime.Set(SlimeState.Recover);
         slime.SpitCooldown = spit.Cooldown;
         double puddle = spit.PuddleSeconds * (slime.Elite != null ? spit.ElitePuddle : 1);
@@ -124,7 +126,7 @@ public sealed partial class BattleSim
             {
                 OwnerId = slime.Id, FromX = slime.X, X = x, Flight = flight, Remaining = flight, Damage = slime.Damage, Radius = spit.Radius,
                 PuddleSeconds = puddle, PuddleRadius = spit.PuddleRadius, DashDistance = spit.DashDistance, DashSpeed = spit.DashSpeed, Tint = slime.Type.Color,
-                PuddleDamage = spit.PuddleDamage, PuddleSlow = spit.PuddleSlow
+                PuddleDamage = spit.PuddleDamage, PuddleSlow = spit.PuddleSlow, Basket = basket
             });
         }
     }
@@ -162,6 +164,17 @@ public sealed partial class BattleSim
         // A wall climber's spike (1.5 M15) sparks on the floor instead.
         AddEffect(goo.Spike ? BattleEffectKind.Spark : BattleEffectKind.Splat, goo.X, 4);
         effects[^1].Tint = goo.Tint;
+        if (goo.Basket)
+        {
+            // 1.5 M20 defence: a drop spat at the fish basket hurts it, if it lands on it.
+            if (goo.PuddleSeconds > 0) AddPuddle(goo);
+            bool onBasket = double.IsFinite(BasketX) && Math.Abs(BasketX - goo.X) <= goo.Radius + BasketHalfWidth;
+            events.Add(new(BattleEventKind.GooLanded, goo.X, 0));
+            if (!onBasket) return;
+            SpitHits++;
+            if (Find(goo.OwnerId) is { Targetable: true, Damage: > 0 } spitter) HurtBasket(spitter, goo.Damage / spitter.Damage);
+            return;
+        }
         bool hit = !CatLifted && Grace <= 0 && Math.Abs(lastCatX - goo.X) <= goo.Radius;
         if (goo.PuddleSeconds > 0) AddPuddle(goo);
         events.Add(new(BattleEventKind.GooLanded, goo.X, hit ? 1 : 0));

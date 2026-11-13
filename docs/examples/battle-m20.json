@@ -1,11 +1,11 @@
 {
-  // 1.5 M20 try-out: a stage with a fish basket (T1). No built-in stage has one yet (chapter 2 brings it in).
-  // Copy this file to %LOCALAPPDATA%\DesktopPet\battle.json (keep a copy of yours first), then Battle Mode →
-  // Adventure: this file's chapter stands in for chapter 1 while it is there (custom data: no progress, no
-  // records, no rewards). Delete the file to get the usual Adventure back. The basket stands in the middle
-  // of the strip; every second plain slime goes for it, takes a fish and runs for the edge away from the
-  // cat. Beat it (or Push it) on the way: the fish falls, click it to put it back (left alone it hops back
-  // after 5 s). Every fish carried off loses the stage, whatever HP the cat has left.
+  // 1.5 M20 try-out, defence rules since 2026-11-13: a stage with a fish basket that has HP. Copy this file
+  // to a test data folder (or %LOCALAPPDATA%\DesktopPet\battle.json after keeping a copy of yours), then
+  // Battle Mode → Adventure: this file's chapter stands in for chapter 1 while it is there (custom data: no
+  // progress, no records, no rewards). Delete the file to get the usual Adventure back. The basket stands
+  // in the middle of the strip; slimes come from both edges and hit it with their own blows. Each slime the
+  // cat hits turns on the cat for "aggro" s (every hit starts that again), then goes back for the basket.
+  // The basket broken loses the stage, whatever HP the cat has left.
   "schemaVersion": 1,
   "campaign": {
     "chapters": [
@@ -13,10 +13,10 @@
         "id": "m20", "nameVi": "Thử giỏ cá", "nameEn": "Fish basket try-out", "skillChoice": true,
         "stages": [
           {
-            "id": "m20_basket", "nameVi": "Giữ giỏ cá", "nameEn": "Keep the basket",
-            "goalVi": "Slime tha cá ra mép màn hình: hạ nó trước, click cá rơi để trả về giỏ",
-            "goalEn": "Slimes carry fish off the screen: beat them first, click a dropped fish to put it back",
-            "basket": { "fish": 5 }, "maxAlive": 5,
+            "id": "m20_basket", "nameVi": "Bảo vệ giỏ cá", "nameEn": "Defend the basket",
+            "goalVi": "Slime hai bên đánh giỏ: đánh trúng con nào thì con đó quay sang mèo",
+            "goalEn": "Slimes from both sides hit the basket: each one the cat hits turns on the cat",
+            "basket": { "hp": 150 }, "maxAlive": 5,
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 4 } ] },
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 2 } ] },
@@ -25,8 +25,8 @@
           },
           {
             "id": "m20_basket_hold", "nameVi": "Giữ giỏ 60 giây", "nameEn": "Hold the basket 60 s",
-            "goalVi": "Sống sót 60 giây mà không mất hết cá", "goalEn": "Survive 60 s without losing every fish",
-            "objective": "survive", "surviveSeconds": 60, "basket": { "fish": 4, "every": 1 }, "maxAlive": 4,
+            "goalVi": "Sống sót 60 giây mà giỏ không vỡ", "goalEn": "Survive 60 s without the basket breaking",
+            "objective": "survive", "surviveSeconds": 60, "basket": { "hp": 120, "aggro": 3 }, "maxAlive": 4,
             "waves": [ { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "runner", "count": 1 } ] } ]
           }
         ]

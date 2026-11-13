@@ -349,7 +349,7 @@ public sealed partial class PetWindow
         ? LF($"sống sót {stage.SurviveSeconds:0} giây", $"survive {stage.SurviveSeconds:0} s")
         : LF($"{stage.Waves.Length} đợt", $"{stage.Waves.Length} wave{(stage.Waves.Length == 1 ? "" : "s")}"))
         // 1.5 M20: a stage with a fish basket says so.
-        + (stage.Basket is BasketSpec basket ? LF($" · giữ giỏ {basket.Fish} cá", $" · keep the basket of {basket.Fish} fish") : "");
+        + (stage.Basket != null ? L(" · bảo vệ giỏ cá", " · defend the fish basket") : "");
     private string StageRules(StageSpec stage) => stage.Upgrades ? L(" · có nâng cấp giữa các đợt", " · upgrades between waves") : "";
 
     // Wins and the fastest win of a stage over every loadout (the result panel shows per loadout).
@@ -360,8 +360,8 @@ public sealed partial class PetWindow
         if (wins == 0) return null;
         double? best = records.Where(r => r.BestSeconds != null).Select(r => r.BestSeconds).Min();
         string fastest = best is double s ? LF($" · nhanh nhất {Clock(s)}", $" · fastest {Clock(s)}") : "";
-        int fish = records.Select(r => r.MostFish).DefaultIfEmpty(0).Max();
-        if (stage.Basket != null && fish > 0) fastest += LF($" · giữ nhiều nhất {fish} cá", $" · most fish kept {fish}");
+        int basket = records.Select(r => r.BestBasket).DefaultIfEmpty(0).Max();
+        if (stage.Basket != null && basket > 0) fastest += LF($" · giỏ còn nhiều nhất {basket}%", $" · best basket {basket}%");
         return LF($"Đã thắng {wins} lần{fastest}", $"Won {wins} time{(wins == 1 ? "" : "s")}{fastest}");
     }
 
@@ -406,7 +406,7 @@ public sealed partial class PetWindow
     {
         if (finished.Stage is not StageSpec stage || AdventureOf(finished.Settings) is not Adventure adventure) return default;
         var outcome = adventure.Apply(battleRunId, stage, !battleCustomData, won, finished.Weapon.Id, finished.Difficulty, finished.Defeated, finished.FightSeconds, finished.Build(), noApps: !finished.AppsOn,
-            fishKept: finished.Basket != null && won ? finished.FishInBasket : -1);
+            basketKept: finished.Basket != null && won ? finished.BasketPercent : -1);
         if (outcome.Counted && AdventureProgressFile != null) adventureSaveFailed = !AdventureProgress.Save(AdventureProgressFile);
         if (outcome.Counted) System.Diagnostics.Trace.WriteLine($"Adventure stage {stage.Id} {(won ? "won" : "lost")}{(outcome.Unlocked != null ? $", {outcome.Unlocked.Id} opened" : "")}.");
         return outcome;
@@ -478,7 +478,7 @@ public sealed partial class PetWindow
             var news = Line(PetUi.BodySize, RecordGold, true);
             news.Text = result.News.Fastest ? L("Kỷ lục mới của màn: thắng nhanh nhất!", "New stage record: fastest win!")
                 : result.News.MostDefeated ? L("Kỷ lục mới của màn: hạ nhiều slime nhất!", "New stage record: most slimes!")
-                : L("Kỷ lục mới của màn: giữ được nhiều cá nhất!", "New stage record: most fish kept!");
+                : L("Kỷ lục mới của màn: giỏ cá còn nhiều máu nhất!", "New stage record: the fullest basket!");
             lines.Children.Add(news);
         }
         if (result.Ranked && adventure?.Record(stage, result.Weapon, result.Difficulty, result.NoApps) is { Empty: false } best)

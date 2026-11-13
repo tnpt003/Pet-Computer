@@ -47,8 +47,7 @@ public sealed partial class PetWindow
         // 1.5 M25: Ground quake, Sleight of paw, Skill feast.
         [BattleEventKind.Quaked] = ("pop", 5), [BattleEventKind.SkillRefunded] = ("sparkle", 4), [BattleEventKind.SkillFeast] = ("sparkle", 5),
         // 1.5 M20: the fish basket.
-        [BattleEventKind.FishTaken] = ("swoosh", 4), [BattleEventKind.FishDropped] = ("pop", 4), [BattleEventKind.FishReturned] = ("satisfied", 4),
-        [BattleEventKind.FishLost] = ("annoyed", 6),
+        [BattleEventKind.BasketHurt] = ("pop", 4), [BattleEventKind.BasketBroken] = ("annoyed", 6),
         [BattleEventKind.AppUsed] = ("sparkle", 6), [BattleEventKind.AppInfected] = ("surprised", 6), [BattleEventKind.AppCleaned] = ("excited", 6),
         [BattleEventKind.PopupOpened] = ("surprised", 5), [BattleEventKind.PopupSpawned] = ("surprised", 5),
         [BattleEventKind.GooShot] = ("squish", 4), [BattleEventKind.PopupClosed] = ("pop", 4), [BattleEventKind.AppScrubbed] = ("ball_tap", 3),
@@ -216,11 +215,12 @@ public sealed partial class PetWindow
     private readonly HashSet<string> elitesExplained = new();
     // 1.5 M13: the events of the slimes the cursor beats already explained in this battle.
     private readonly HashSet<BattleEventKind> trickExplained = new();
+    private readonly HashSet<int> basketWarned = new(); // 1.5 M20 defence: "about to break" once a battle.
     private readonly HashSet<string> formationsExplained = new();
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) trickExplained.Clear();
+        if (battle.Time < 0.05) { trickExplained.Clear(); basketWarned.Clear(); }
         if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = flagExplained = panicExplained = false; elitesExplained.Clear(); formationsExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
@@ -360,10 +360,9 @@ public sealed partial class PetWindow
                     or BattleEventKind.ClockRang when trickExplained.Add(e.Kind) => TrickBanner(e),
                 // 1.5 M16: the thief's news shows every time (what it took matters).
                 BattleEventKind.ThiefStole or BattleEventKind.ThiefReturned or BattleEventKind.ThiefEscaped or BattleEventKind.ThiefShaken => TrickBanner(e),
-                // 1.5 M20: the first fish taken and dropped of a battle say what to do; every fish lost counts down.
-                BattleEventKind.FishTaken when trickExplained.Add(e.Kind) => L("Slime tha cá! Hạ nó trước khi nó chạy khỏi màn", "A slime is taking a fish! Beat it before it gets off the screen"),
-                BattleEventKind.FishDropped when trickExplained.Add(e.Kind) => L("Cá rơi! Click vào cá để trả về giỏ", "Fish dropped! Click it to put it back in the basket"),
-                BattleEventKind.FishLost when e.Value > 0 => LF($"Mất một con cá! Còn {(int)e.Value}", $"A fish is gone! {(int)e.Value} left"),
+                // 1.5 M20 defence: the first hit on the basket says what to do; once it is low, a warning.
+                BattleEventKind.BasketHurt when trickExplained.Add(e.Kind) => L("Slime đánh giỏ cá! Đánh trúng nó để nó quay sang mèo", "A slime is hitting the basket! Hit it and it turns on the cat"),
+                BattleEventKind.BasketHurt when e.Value <= 30 && basketWarned.Add(1) => L("Giỏ cá sắp vỡ!", "The basket is about to break!"),
                 BattleEventKind.Won => L("CHIẾN THẮNG!", "VICTORY!"),
                 BattleEventKind.Lost => L("THUA RỒI…", "DEFEATED…"),
                 _ => null

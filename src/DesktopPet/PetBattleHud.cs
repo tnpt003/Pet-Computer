@@ -349,7 +349,7 @@ public sealed class BattleHud : Border
         statusColumn.Visibility = showBanner ? Visibility.Hidden : Visibility.Visible;
         int left = b.Alive + b.ToSpawn;
         int clock = b.Survival ? (int)Math.Ceiling(b.SurviveRemaining) : -1;
-        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0) + (b.ChoosingMutation ? 8 : 0), clock, RunCoins + b.Coins, b.FishLeft, b.Mutation?.Id, b.MutationWavesLeft);
+        var statusKey = (b.Phase, b.Wave, left, b.Paused, fullscreen, Math.Round(b.LastHeal), (b.IsBossWave(b.Wave) ? 1 : 0) + (away ? 2 : 0) + (b.ChoosingUpgrade ? 4 : 0) + (b.ChoosingMutation ? 8 : 0), clock, RunCoins + b.Coins, b.BasketPercent, b.Mutation?.Id, b.MutationWavesLeft);
         if (statusKey != shownStatus)
         {
         shownStatus = statusKey;
@@ -368,7 +368,7 @@ public sealed class BattleHud : Border
         // 1.5 M19: an Expedition step shows the run's coins (those before it and this battle's).
         if (b.Loot == BattleLoot.Coins) text += LF($" · Xu {RunCoins + b.Coins}", $" · Coins {RunCoins + b.Coins}");
         // 1.5 M20: a basket stage's fish still the cat's.
-        if (b.FishTotal > 0) text += LF($" · Cá {b.FishLeft}/{b.FishTotal}", $" · Fish {b.FishLeft}/{b.FishTotal}");
+        if (b.Basket != null) text += LF($" · Giỏ {b.BasketPercent}%", $" · Basket {b.BasketPercent}%");
         // 1.5 M24: Infinity's mutation in force and the waves it still holds.
         // On a line of its own (2026-11-04: it no longer runs off the end of the wave's line).
         if (b.Mutation is MutationSpec rule && !b.Over)

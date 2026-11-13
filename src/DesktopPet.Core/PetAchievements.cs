@@ -103,6 +103,9 @@ public static class PetAchievements
 // The numbers a finished (or left) battle gives the achievements. Only reads the battle.
 public static class AchievementStats
 {
+    // fullBasket (1.5 M20 defence, 2026-11-13): a basket stage won with the basket at least this full.
+    public const int FullBasketPercent = 75;
+
     public static readonly string[] Names =
     {
         "wins", "defeated", "bosses", "combos", "flawless", "clutch", "hardWin", "quickWin", "heldHits", "throwHits",
@@ -146,7 +149,7 @@ public static class AchievementStats
             ["bubbles"] = b.BubblesPopped,
             ["ghosts"] = b.GhostsRevealed,
             ["iceBreaks"] = b.IceBreaks,
-            ["fullBasket"] = won && b.Basket != null && b.FishTotal > 0 && b.FishInBasket >= b.FishTotal ? 1 : 0,
+            ["fullBasket"] = won && b.Basket != null && b.BasketPercent >= FullBasketPercent ? 1 : 0,
             ["coins"] = b.Coins,
             ["endlessWaves"] = b.Endless ? b.WavesCleared : 0,
             ["popups"] = b.PopupsClosed,

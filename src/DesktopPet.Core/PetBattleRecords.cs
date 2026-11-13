@@ -21,9 +21,12 @@ public sealed class BattleRecord
     public int MostWaves { get; set; }
     // Infinity: the most waves cleared in one run (records before 2026-10-22 have 0: MostWaves − 1 stands in).
     public int MostCleared { get; set; }
-    // A stage with a fish basket (1.5 M20): the most fish kept in a win (0: none yet; only in its stage records).
+    // A stage with a fish basket under its old rules (1.5 M20, fish carried off): the most fish kept in a win.
+    // Kept only so old records keep it; the defence rules (2026-11-13) use BestBasket.
     public int MostFish { get; set; }
-    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0 && MostCleared == 0 && MostFish == 0;
+    // A stage with a fish basket (defence, 2026-11-13): the most basket HP left in a win, in percent (0: none yet).
+    public int BestBasket { get; set; }
+    [JsonIgnore] public bool Empty => Wins == 0 && BestSeconds == null && MostDefeated == 0 && MostWaves == 0 && MostCleared == 0 && MostFish == 0 && BestBasket == 0;
 
     internal void Normalize()
     {
@@ -32,15 +35,16 @@ public sealed class BattleRecord
         MostWaves = Math.Max(0, MostWaves);
         MostCleared = Math.Clamp(MostCleared, 0, MostWaves);
         MostFish = Math.Max(0, MostFish);
+        BestBasket = Math.Clamp(BestBasket, 0, 100);
         if (BestSeconds is double s && (!double.IsFinite(s) || s <= 0)) BestSeconds = null;
     }
 }
 
 // What a finished battle changed: a new fastest win and/or a new most-slimes count (a basket stage: the
-// most fish kept in a win).
-public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated, bool FurthestWave = false, bool MostFish = false)
+// most basket HP left in a win).
+public readonly record struct BattleRecordNews(bool Fastest, bool MostDefeated, bool FurthestWave = false, bool BestBasket = false)
 {
-    public bool Any => Fastest || MostDefeated || FurthestWave || MostFish;
+    public bool Any => Fastest || MostDefeated || FurthestWave || BestBasket;
 }
 
 // Version 2 (2026-10-19): records per loadout, keyed by the weapon's stable id and the

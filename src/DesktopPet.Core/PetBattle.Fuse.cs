@@ -30,7 +30,7 @@ public sealed partial class BattleSim
     private bool StartFuse(Slime slime, double catX, bool catHeld)
     {
         var fuse = slime.Type.Fuse!;
-        if (catHeld || Grace > 0 || slime.Riding || slime.Handled || Math.Abs(catX - slime.X) > fuse.Range) return false;
+        if (catHeld || Grace > 0 && !slime.OnBasket || slime.Riding || slime.Handled || Math.Abs(catX - slime.X) > fuse.Range) return false;
         if (Math.Abs(catX - slime.X) > 1) slime.Facing = catX < slime.X ? -1 : 1;
         Light(slime, slime.Elite != null ? fuse.EliteSeconds : fuse.Seconds);
         return true;
@@ -175,6 +175,12 @@ public sealed partial class BattleSim
         {
             BlastHitsOnCat++;
             HurtCat(bomb, lastCatX, fuse.Stun > 0, 1, fuse.Stun);
+            if (Over) return;
+        }
+        // 1.5 M20 defence: the fish basket in the ring is hit too (never by a bomb the user threw).
+        if (!bomb.ByUser && bomb.Damage > 0 && double.IsFinite(BasketX) && Math.Abs(BasketX - x) <= radius + BasketHalfWidth)
+        {
+            HurtBasket(bomb);
             if (Over) return;
         }
         if (leaf) { LeafBurst(bomb); return; }

@@ -49,9 +49,10 @@ public sealed partial class BattleSim
                 double gap = catX - s.X;
                 if (Math.Abs(gap) > 1) s.Facing = gap < 0 ? -1 : 1;
                 s.X = Math.Clamp(s.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(s) * b.Speed * dt), minX, maxX);
-                if (s.BurrowRest <= 0 && !catHeld && Grace <= 0 && Math.Abs(catX - s.X) <= 12)
+                if (s.BurrowRest <= 0 && !catHeld && (s.OnBasket || Grace <= 0) && Math.Abs(catX - s.X) <= 12)
                 {
                     s.Burrow = BurrowPhase.Cracking;
+                    s.CrackBasket = s.OnBasket; // 1.5 M20 defence: under the fish basket.
                     s.CrackX = catX;
                     s.BurrowClock = CrackTime(s);
                     events.Add(new(BattleEventKind.BurrowCracked, catX, s.Id));
@@ -78,6 +79,15 @@ public sealed partial class BattleSim
         s.Burrow = BurrowPhase.Emerging;
         s.BurrowClock = b.Emerge;
         AddEffect(BattleEffectKind.Slam, s.CrackX, 0, b.Radius);
+        if (s.CrackBasket)
+        {
+            // 1.5 M20 defence: it comes up under the fish basket.
+            s.CrackBasket = false;
+            bool under = double.IsFinite(BasketX) && Math.Abs(BasketX - s.CrackX) <= b.Radius + BasketHalfWidth;
+            events.Add(new(BattleEventKind.BurrowEmerged, s.CrackX, 0));
+            if (under) { BurrowHits++; HurtBasket(s); }
+            return;
+        }
         bool hit = !CatLifted && Grace <= 0 && Math.Abs(lastCatX - s.CrackX) <= b.Radius;
         events.Add(new(BattleEventKind.BurrowEmerged, s.CrackX, hit ? 1 : 0));
         if (!hit) return;

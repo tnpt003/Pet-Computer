@@ -1,26 +1,30 @@
 using System;
-using System.Collections.Generic;
 
 namespace DesktopPet;
 
-// 1.5 M20 (docs/UPDATE-1.5.md T1; docs/BATTLE-DATA.md → Bảo vệ giỏ cá): a stage with a fish basket. The
-// basket stands on the floor with its fish; every n-th plain slime that comes in goes for it instead of the
-// cat, takes a fish (a moment at the basket) and runs with it for the edge away from the cat: there it gets
-// away and the fish is lost. Defeated, dazed or grabbed on the way, it drops the fish: a click puts it back,
-// left alone it hops back after a while (another taker may pick it up first). The cat goes for a slime
-// carrying a fish first. Every fish lost loses the battle, whatever HP the cat has; a won battle keeps the
-// fish still carried or lying. No random stream is used; a stage without a basket plays as before.
+// 1.5 M20, defence since 2026-11-13 (docs/BATTLE-DATA.md → Bảo vệ giỏ cá): a stage with a fish basket that
+// has HP. It stands on the floor (in the middle by default) and the slimes coming in from both edges go for
+// it rather than the cat, each with its own blow (a strike, a dash, goo, a bomb, a thrown rider, a burrower
+// coming up under it, a flyer's drops). A slime the cat hits turns on the cat for Aggro s (each blow of the
+// cat starts that again), then goes back for the basket. Bosses, supports, rocks and the slimes with a job
+// of their own (thief, ghost, spring, wall climber, timer, drummer, file shards) keep going for the cat.
+// The basket broken loses the battle whatever HP the cat has. No random stream is used; a stage without a
+// basket plays as before.
 public sealed class BasketSpec
 {
-    // Fish in the basket; where it stands (0–1 across the strip); every n-th slime that may take fish does.
-    public int Fish { get; init; } = 5;
+    // The basket's HP; where it stands (0–1 across the strip); × a slime's damage on it; seconds a slime the
+    // cat hit goes for the cat.
+    public double Hp { get; init; } = 150;
     public double At { get; init; } = 0.5;
-    public int Every { get; init; } = 2;
-    // Seconds at the basket to take a fish (a fish lying on the floor: half of it); the speed (× its own)
-    // of a slime carrying one; seconds a dropped fish lies before it hops back by itself.
-    public double Grab { get; init; } = 1.2;
-    public double Carry { get; init; } = 0.8;
-    public double Back { get; init; } = 5;
+    public double Damage { get; init; } = 1;
+    public double Aggro { get; init; } = 4;
+    // The old rules' keys (fish carried off, before 2026-11-13): still read so an older custom battle.json
+    // loads, and ignored.
+    public double? Fish { get; init; }
+    public double? Every { get; init; }
+    public double? Grab { get; init; }
+    public double? Carry { get; init; }
+    public double? Back { get; init; }
 
     public static void Validate(BasketSpec b, string where)
     {
@@ -29,172 +33,101 @@ public sealed class BasketSpec
             if (!double.IsFinite(value) || value < min || value > max)
                 throw new System.IO.InvalidDataException($"{where}.basket.{name} must be {min.ToString(System.Globalization.CultureInfo.InvariantCulture)}–{max.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
-        Within(b.Fish, 1, 20, "fish"); Within(b.At, 0.15, 0.85, "at"); Within(b.Every, 1, 6, "every");
-        Within(b.Grab, 0.2, 5, "grab"); Within(b.Carry, 0.3, 2, "carry"); Within(b.Back, 1, 30, "back");
+        Within(b.Hp, 10, 2000, "hp"); Within(b.At, 0.15, 0.85, "at"); Within(b.Damage, 0.1, 5, "damage"); Within(b.Aggro, 0.5, 30, "aggro");
     }
-}
-
-// A fish a slime dropped on the floor (its clock: seconds lying there).
-public sealed class StrayFish
-{
-    public int Id;
-    public double X, Age;
 }
 
 public sealed partial class BattleSim
 {
     public BasketSpec? Basket => Stage?.Basket;
-    // Where the basket stands (NaN: no basket), the fish in it, every fish of the stage and those lost.
+    // Where the basket stands (NaN: no basket), its HP now and at most, and whether it was broken.
     public double BasketX { get; private set; } = double.NaN;
-    public int FishInBasket { get; private set; }
-    public int FishTotal => Basket?.Fish ?? 0;
-    public int FishLost { get; private set; }
-    // Fish still the cat's: in the basket, lying on the floor or carried off but not yet away.
-    public int FishLeft => FishTotal - FishLost;
-    // The battle was lost because every fish was carried off (not the cat's HP).
-    public bool FishGone { get; private set; }
-    public int FishTaken { get; private set; }
-    public int FishReturned { get; private set; }
-    private readonly List<StrayFish> strayFish = new();
-    public IReadOnlyList<StrayFish> StrayFish => strayFish;
-    private int nextFishId = 1, takersCounted;
-    public const double FishHalfWidth = 13, FishPickHeight = 30, BasketHalfWidth = 26;
+    public double BasketHp { get; private set; }
+    public double BasketMaxHp => Basket?.Hp ?? 0;
+    // The basket's HP left in whole percent (0–100; 0 without a basket).
+    public int BasketPercent => BasketMaxHp > 0 ? (int)Math.Ceiling(Math.Round(BasketHp / BasketMaxHp * 100, 6)) : 0;
+    public bool BasketBroken { get; private set; }
+    public double BasketHurtTaken { get; private set; }
+    public int BasketHits { get; private set; }
+    public int Aggroed { get; private set; }
+    // Seconds the basket flashes after a hit (for the view).
+    public double BasketFlash { get; private set; }
+    public const double BasketHalfWidth = 26, BasketHeight = 26;
 
     private void PlaceBasket()
     {
         if (Basket is not BasketSpec b) return;
         BasketX = Left + (Right - Left) * b.At;
-        FishInBasket = b.Fish;
+        BasketHp = b.Hp;
     }
 
-    // A plain slime with no job of its own may take fish (bosses, supports, rocks, traps, flyers, linked
-    // and trick slimes keep theirs).
-    public static bool MayTakeFish(EnemyType t) => !t.Boss && !t.Support && !t.Blocker && !t.Still && t.Hover <= 0 && t.Link == null
-        && t.Spit == null && t.Spring == null && t.Fuse == null && t.Fly == null && t.Burrow == null && t.Cling == null && t.Steal == null
-        && t.Ghost == null && t.Bubble == null && t.Mirage == null && t.Sulk == null && t.Ice == null && t.Quills == null && t.Clock == null;
+    // A kind that goes for the basket while the cat has not hit it: not a boss, a support (herb), a rock or a
+    // still thing (file shard, flag; a spitter, kept back like a support, spits at it), nor a slime whose job is the cat (thief, ghost, spring trap, wall climber,
+    // timer, drummer).
+    public static bool AttacksBasket(EnemyType t) => !t.Boss && (!t.Support || t.Spit != null) && !t.Blocker && !t.Still && t.Steal == null && t.Ghost == null
+        && t.Spring == null && t.Cling == null && t.Clock == null && t.Zip == null && t.Link?.Kind != EnemyLinks.Rhythm;
 
-    // From AddSlime: every n-th slime that may take fish does.
-    private void MarkTaker(Slime slime)
+    // From the start of its step: this slime goes for the basket now (not one the cat hit lately).
+    private bool AimsAtBasket(Slime s) => Basket != null && double.IsFinite(BasketX) && !Over && s.AggroLeft <= 0 && AttacksBasket(s.Type);
+
+    // Every blow of the cat's own (its weapon, combo, splash, echo, the cat thrown) on a slime of a basket
+    // stage: it turns on the cat for Aggro s.
+    private void Provoke(Slime s, DamageSource source)
     {
-        if (Basket is not BasketSpec b || !MayTakeFish(slime.Type)) return;
-        takersCounted++;
-        slime.FishTaker = takersCounted % b.Every == 0;
+        if (Basket is not BasketSpec b || !AttacksBasket(s.Type)) return;
+        if (source is not (DamageSource.Weapon or DamageSource.Combo or DamageSource.Splash or DamageSource.Echo or DamageSource.Throw)) return;
+        if (s.AggroLeft <= 0)
+        {
+            Aggroed++;
+            events.Add(new(BattleEventKind.EnemyAggroed, s.X, s.Id));
+        }
+        s.AggroLeft = b.Aggro;
+        s.OnBasket = false;
     }
 
-    // From the Moving step of a taker: to the nearest fish lying on the floor, else to the basket; with a
-    // fish, to its edge. False: nothing left to take, it goes for the cat as any slime.
-    private bool TakeFish(Slime s, double dt, double minX, double maxX)
+    // In reach of the basket from x (a slime's strike of `range`).
+    private bool BasketInReach(double x, double range) => double.IsFinite(BasketX) && Math.Abs(BasketX - x) <= range + 12;
+
+    // Every hit on the basket. True when it took damage (a mirage's copy only pretends).
+    private bool HurtBasket(Slime from, double share = 1)
     {
-        if (Basket is not BasketSpec b || s.Decoy) return false;
-        if (s.CarriesFish)
+        if (Basket is not BasketSpec b || Over || BasketHp <= 0) return false;
+        if (from.Decoy) { AddEffect(BattleEffectKind.Miss, BasketX, BasketHeight + 10); return false; }
+        if (from.Rooted) share *= 1 - Settings.FanColumnCut;
+        double hurt = Math.Min(BasketHp, from.Damage * share * from.Puff * b.Damage);
+        if (hurt <= 0) return false;
+        BasketHp = Math.Max(0, BasketHp - hurt);
+        BasketHurtTaken += hurt;
+        BasketHits++;
+        BasketFlash = Settings.HurtFlashSeconds;
+        AddEffect(BattleEffectKind.Number, BasketX, BasketHeight + 16, Math.Round(hurt));
+        events.Add(new(BattleEventKind.BasketHurt, BasketX, BasketPercent));
+        if (BasketHp <= 0)
         {
-            double edge = s.FleeSide < 0 ? minX : maxX, gap = edge - s.X;
-            s.Facing = s.FleeSide;
-            if (Math.Abs(gap) > 1) s.X = Math.Clamp(s.X + Math.Sign(gap) * Math.Min(Math.Abs(gap), Speed(s) * b.Carry * dt), minX, maxX);
-            else CarryOff(s);
-            return true;
+            BasketBroken = true;
+            AddEffect(BattleEffectKind.Poof, BasketX, BasketHeight / 2, 1.4);
+            events.Add(new(BattleEventKind.BasketBroken, BasketX));
+            Finish(BattlePhase.Lost);
         }
-        StrayFish? stray = null;
-        foreach (var f in strayFish) if (stray == null || Math.Abs(f.X - s.X) < Math.Abs(stray.X - s.X)) stray = f;
-        if (stray == null && FishInBasket <= 0) { s.FishClock = 0; return false; }
-        double goal = stray?.X ?? BasketX, dx = goal - s.X;
-        if (Math.Abs(dx) > 8)
-        {
-            s.Facing = dx < 0 ? -1 : 1;
-            s.X = Math.Clamp(s.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(s) * dt), minX, maxX);
-            s.FishClock = 0;
-            // Kept off the goal by the field's edge or a wall: it fights instead.
-            return Math.Abs(goal - s.X) <= 8 || s.X > minX && s.X < maxX;
-        }
-        s.FishClock += dt;
-        if (s.FishClock < (stray != null ? b.Grab / 2 : b.Grab)) return true;
-        if (stray != null) strayFish.Remove(stray);
-        else FishInBasket--;
-        s.FishClock = 0;
-        s.CarriesFish = true;
-        s.FleeSide = s.X >= lastCatX ? 1 : -1; // Away from the cat.
-        FishTaken++;
-        events.Add(new(BattleEventKind.FishTaken, s.X, s.Id));
         return true;
     }
 
-    // At its edge with a fish: away with it (gone, not a defeat of the cat's); the last fish loses the battle.
-    private void CarryOff(Slime s)
-    {
-        s.CarriesFish = false;
-        s.Set(SlimeState.Defeated);
-        s.Escaped = true;
-        s.KnockVelocity = 0;
-        ClearStatus(s);
-        if (SelectedId == s.Id) SelectedId = null;
-        LinkFallen(s, false);
-        FishLost++;
-        AddEffect(BattleEffectKind.Poof, s.X, s.Height / 2, 1);
-        effects[^1].Tint = s.Type.Color;
-        events.Add(new(BattleEventKind.FishLost, s.X, FishLeft));
-        if (FishLeft <= 0 && !Over)
-        {
-            FishGone = true;
-            Finish(BattlePhase.Lost);
-        }
-    }
-
-    // A carrier defeated, dazed or grabbed lets its fish fall where it is.
-    private void DropFish(Slime s)
-    {
-        if (!s.CarriesFish) return;
-        s.CarriesFish = false;
-        var fish = new StrayFish { Id = nextFishId++, X = Math.Clamp(s.X, Left + FishHalfWidth, Right - FishHalfWidth) };
-        strayFish.Add(fish);
-        events.Add(new(BattleEventKind.FishDropped, fish.X, fish.Id));
-    }
-
-    // Each Step: a carrier that cannot carry on drops its fish; a fish left lying long enough hops back.
+    // Each Step: the basket's flash fades.
     private void StepBasket(double dt)
     {
-        if (Basket is not BasketSpec b) return;
-        foreach (var s in slimes)
-            if (s.CarriesFish && (s.State is SlimeState.Stunned or SlimeState.Defeated || s.Handled || s.Decoy)) DropFish(s);
-        for (int i = strayFish.Count - 1; i >= 0; i--)
-        {
-            strayFish[i].Age += dt;
-            if (strayFish[i].Age >= b.Back) ReturnFish(i, false);
-        }
+        if (Basket == null) return;
+        BasketFlash = Math.Max(0, BasketFlash - dt);
     }
 
-    private void ReturnFish(int index, bool clicked)
-    {
-        var fish = strayFish[index];
-        strayFish.RemoveAt(index);
-        FishInBasket++;
-        FishReturned++;
-        events.Add(new(BattleEventKind.FishReturned, fish.X, clicked ? 1 : 0));
-    }
-
-    public StrayFish? FindFish(int id) { foreach (var f in strayFish) if (f.Id == id) return f; return null; }
-
-    // A click on a fish lying on the floor: back in the basket at once (not while paused, choosing a card or over).
-    public bool PickUpFish(int id)
-    {
-        if (Over || Paused || ChoosingUpgrade) return false;
-        for (int i = 0; i < strayFish.Count; i++)
-            if (strayFish[i].Id == id) { ReturnFish(i, true); return true; }
-        return false;
-    }
-
-    // The battle ends: a win keeps every fish not yet away (lying or still carried go back to the basket).
     private void ClearBasket(bool won)
     {
         if (Basket == null) return;
-        foreach (var s in slimes)
-            if (s.CarriesFish) { s.CarriesFish = false; if (won) FishInBasket++; }
-        if (won) FishInBasket += strayFish.Count;
-        strayFish.Clear();
+        BasketFlash = 0;
+        foreach (var s in slimes) { s.AggroLeft = 0; s.OnBasket = false; }
     }
 
     private void MapBasket(double left, double oldWidth, double newWidth)
     {
         if (double.IsFinite(BasketX)) BasketX = left + (BasketX - Left) / oldWidth * newWidth;
-        foreach (var f in strayFish) f.X = left + (f.X - Left) / oldWidth * newWidth;
     }
 }

@@ -819,6 +819,7 @@ public sealed partial class BattleSim
     internal HitResult Damage(Slime slime, double amount, DamageSource source)
     {
         if (!slime.Targetable || amount <= 0) return HitResult.Landed;
+        Provoke(slime, source); // 1.5 M20 defence: a slime the cat hits turns on the cat (PetBattle.Basket.cs).
         if (MotherDamage(slime, amount, source) is HitResult motherHit) return motherHit;
         if (MutantDamage(slime, source) is HitResult mutationHit) return mutationHit;
         if (slime.ZipProp != ZipProp.None) return HitZipProp(slime, source);
@@ -977,7 +978,6 @@ public sealed partial class BattleSim
         SplitApart(slime);
         DropLoot(slime); // 1.5 M19: a fish, a coin or a potion, sometimes.
         DefeatRecharge(); // 1.5 M25: Quick reload.
-        DropFish(slime); // 1.5 M20: the basket's fish it carried falls there.
     }
 
     // A stony enemy's block roll for one hit (rolled once per hit, never per frame).

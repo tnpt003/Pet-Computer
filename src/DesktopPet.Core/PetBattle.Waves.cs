@@ -392,7 +392,6 @@ public sealed partial class BattleSim
         slime.Set(SlimeState.Spawning);
         slime.Shielded = slime.FlagGuard = type.Plant != null; // A flag slime, until its first flag.
         JoinLinks(slime);
-        MarkTaker(slime); // 1.5 M20: every n-th plain slime goes for the fish basket.
         slimes.Add(slime);
         return slime;
     }

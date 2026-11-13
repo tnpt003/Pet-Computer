@@ -25,7 +25,7 @@ public sealed partial class BattleSim
         // Never a shielded boss: the cat cannot hurt it (with nothing else to hit it waits).
         // One guarded by a heal is left alone too while there is another to hit.
         // A sulky one (2026-11-04) only once nothing else is left, and never the one being soothed.
-        Slime? nearest = null, guarded = null, carrier = null;
+        Slime? nearest = null, guarded = null;
         sulkyLeft.Clear();
         foreach (var s in slimes)
         {
@@ -35,8 +35,6 @@ public sealed partial class BattleSim
             if (s.Handled) continue; // In the Grabber's claw or flying from it (PetBattle.Grabber.cs).
             if (s.Faded) continue; // A faded ghost cannot be hit (PetBattle.Tricks.cs).
             if (s.Burrowed) continue; // Under the floor (PetBattle.Burrow.cs).
-            // One running off with a fish of the basket comes first (1.5 M20, PetBattle.Basket.cs).
-            if (s.CarriesFish && (carrier == null || Math.Abs(s.X - catX) < Math.Abs(carrier.X - catX))) carrier = s;
             // One in a bubble or sulking takes no HP from the cat's blows, one in its ice shell only scratches
             // (1.5 M15): left alone while there is another.
             if (s.Type.Sulk != null) { sulkyLeft.Add(s); continue; }
@@ -45,7 +43,6 @@ public sealed partial class BattleSim
         }
         nearest ??= guarded;
         nearest ??= SulkyTarget(sulkyLeft, catX);
-        if (carrier != null) { autoTargetId = carrier.Id; return carrier; }
         // Keep the current choice unless another slime is clearly closer (no dithering).
         var current = Find(autoTargetId);
         if (current != null && current.Targetable && !current.Shielded && !current.Faded && !current.Burrowed && !current.Airborne && (!(current.Mended || current.Bubbled || current.Type.Sulk != null || current.Iced || current.Puffed) || nearest == current) && nearest != null &&
@@ -70,7 +67,7 @@ public sealed partial class BattleSim
         return (min, Math.Max(min, max));
     }
 
-    private void StepSlimes(double dt, double catX, bool catHeld)
+    private void StepSlimes(double dt, double realCatX, bool realCatHeld)
     {
         var s = Settings;
         // Who guards whom is decided a few times a second, from where the cat was then (a reaction
@@ -82,18 +79,23 @@ public sealed partial class BattleSim
         if (decisionClock <= 0 && !Over && !frozen)
         {
             decisionClock = DecisionInterval;
-            decisionCatX = catX;
+            decisionCatX = realCatX;
             AssignGuards();
-            FormLinks(catX);
+            FormLinks(realCatX);
         }
         RefreshGuards();
-        if (linkKinds.Count > 0 && !Over && !frozen) StepLinks(dt, catX, catHeld);
+        if (linkKinds.Count > 0 && !Over && !frozen) StepLinks(dt, realCatX, realCatHeld);
         // By index over the slimes there were at the start: a hit on the cat can send damage back
         // (Thorns) and make a boss call helpers, which join the list and move from the next frame.
         int count = slimes.Count;
         for (int index = 0; index < count; index++)
         {
             var slime = slimes[index];
+            // 1.5 M20 defence (PetBattle.Basket.cs): its target this step, the basket or the cat.
+            if (!frozen) slime.AggroLeft = Math.Max(0, slime.AggroLeft - dt); // The Screenshot freezes it too.
+            slime.OnBasket = AimsAtBasket(slime);
+            double catX = slime.OnBasket ? BasketX : realCatX;
+            bool catHeld = !slime.OnBasket && realCatHeld;
             if (!slime.Type.Support) slime.KeepingBack = false;
             var (minX, maxX) = Bounds(slime);
             if (frozen && !BossDebuffImmune(slime) && slime.State != SlimeState.Defeated)
@@ -248,8 +250,6 @@ public sealed partial class BattleSim
                     if (slime.Faded) { Drift(slime, dt, catX, minX, maxX); break; }
                     // A thief runs off with its loot, or trails a cat with nothing to steal (PetBattle.Quills.cs).
                     if (slime.Type.Steal is StealSpec steal && Sneak(slime, steal, dt, catX, minX, maxX)) break;
-                    // A fish taker goes for the basket, and runs off with a fish (PetBattle.Basket.cs).
-                    if (slime.FishTaker && TakeFish(slime, dt, minX, maxX)) break;
                     // A spring trap never attacks: it lies still, or slides up to a cat far away (PetBattle.Spring.cs).
                     if (slime.Type.Spring != null) { Creep(slime, dt, catX, minX, maxX); break; }
                     if (SeekMerge(slime, dt, minX, maxX)) break;
@@ -277,7 +277,7 @@ public sealed partial class BattleSim
                     bool facingCat = Math.Abs(dx) <= 1 || Turn(slime, dx < 0 ? -1 : 1, dt);
                     // A dash enemy starts its windup from further away; its lane is set now.
                     double reach = slime.Type.Dash ? slime.Type.DashRange : slime.Range;
-                    if (!catHeld && !slime.Airborne && slime.Type.Fuse == null && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && Grace <= 0 && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
+                    if (!catHeld && !slime.Airborne && slime.Type.Fuse == null && facingCat && Math.Abs(dx) <= reach && slime.Cooldown <= 0 && (slime.OnBasket || Grace <= 0) && MayAttack(slime) && (slime.IsBoss || WallBetween(slime.X, catX) == null))
                     {
                         slime.Rolling = false;
                         slime.DashDirection = slime.Facing;
@@ -292,7 +292,7 @@ public sealed partial class BattleSim
                     }
                     // A shielded boss guards its edge: it slams a cat that comes close but never walks up.
                     else if (facingCat && Math.Abs(dx) > reach * 0.75 && !slime.Shielded)
-                        slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * (CatLifted ? HeldFollow : 1) * dt), minX, maxX);
+                        slime.X = Math.Clamp(slime.X + Math.Sign(dx) * Math.Min(Math.Abs(dx), Speed(slime) * (CatLifted && !slime.OnBasket ? HeldFollow : 1) * dt), minX, maxX);
                     break;
             }
             if (slime.Stuck && slime.State != SlimeState.Defeated) slime.X = stuckAt;
@@ -497,7 +497,7 @@ public sealed partial class BattleSim
         live.Clear();
         // A leaping boss flies over the others; a dash or a roll (2026-11-13) runs through its allies to the
         // end of its locked lane (shoved back each frame, it fell short of the cat).
-        foreach (var slime in slimes) if (slime.State is not (SlimeState.Defeated or SlimeState.Dashing) &&!slime.KeepingBack && slime.RunAwayLeft <= 0 && !slime.Faded && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
+        foreach (var slime in slimes) if (slime.State is not (SlimeState.Defeated or SlimeState.Dashing) &&!slime.KeepingBack && slime.RunAwayLeft <= 0 && !slime.Faded && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {
@@ -521,6 +521,8 @@ public sealed partial class BattleSim
         slime.Cooldown = AttackCooldown(slime);
         double share = ZipStrike(slime); // 2026-11-05: a stage's blow, the end of its leap (PetBattle.Zip.cs).
         if (slime.Type.Slam) AddEffect(BattleEffectKind.Slam, slime.X, 0, slime.Range);
+        // 1.5 M20 defence: its blow on the basket (the cat hit it lately: on the cat as below).
+        if (slime.OnBasket) { if (BasketInReach(slime.X, slime.Range)) HurtBasket(slime, share); return; }
         // Missed: the cat moved away, is protected, or is off the floor right now.
         if (CatLifted || Math.Abs(catX - slime.X) > slime.Range + 12 || Grace > 0) return;
         // A thief's windup steals instead of hurting (1.5 M16).
@@ -544,7 +546,17 @@ public sealed partial class BattleSim
         slime.X = Math.Clamp(slime.X + slime.DashDirection * step, minX, maxX);
         slime.DashLeft = slime.X == before ? 0 : slime.DashLeft - step; // Stopped by the field's edge.
         double reach = slime.HitWidth / 2 + CatHalfWidth;
-        if (!slime.DashHit && !CatLifted && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
+        if (slime.OnBasket)
+        {
+            // 1.5 M20 defence: a dash at the basket hits it on its way (once per dash).
+            double basketReach = slime.HitWidth / 2 + BasketHalfWidth;
+            if (!slime.DashHit && BasketX >= Math.Min(before, slime.X) - basketReach && BasketX <= Math.Max(before, slime.X) + basketReach)
+            {
+                slime.DashHit = true;
+                HurtBasket(slime);
+            }
+        }
+        else if (!slime.DashHit && !CatLifted && Grace <= 0 && catX >= Math.Min(before, slime.X) - reach && catX <= Math.Max(before, slime.X) + reach)
         {
             slime.DashHit = true;
             HurtCat(slime, catX, true, melee: true);

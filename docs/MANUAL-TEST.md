@@ -825,6 +825,7 @@ Có sẵn trong Viễn chinh (cá, xu, bình) và Vô tận (cá, bình); không
 - [ ] DPI 100/150/200%, đổi DPI giữa trận, màn hình phụ: món đồ nằm đúng sàn, click trúng; chữ vi/en/ja đúng.
 
 ## Bảo vệ giỏ cá 1.5 M20 (2026-10-29) — file tùy chỉnh
+**Luật cũ (tha cá), đã thay từ 13/11:** xem mục "Giỏ cá thành màn phòng thủ" ở cuối file.
 Chưa màn gốc nào có giỏ cá. Muốn thử: cất file `%LOCALAPPDATA%\DesktopPet\battle.json` của bạn (nếu có), chép `docs/examples/battle-m20.json` vào chỗ đó, mở Phiêu lưu (chương "Thử giỏ cá" thay chương 1 khi file còn đó; không lưu tiến trình/kỷ lục); xong thì xóa file (hoặc trả file cũ). Ảnh đã xem qua render UiChecks nền sáng/tối; chưa xem trong trận thật, chưa thử chuột thật, DPI thật.
 - [ ] Không có file: Phiêu lưu chương 1, Trận tự do, Vô tận, Viễn chinh như cũ (không có giỏ, HUD không có "Cá").
 - [ ] Màn "Giữ giỏ cá": giỏ mây giữa dải trận, cá đứng trong giỏ; HUD "Cá 5/5"; bản đồ ghi "· giữ giỏ 5 cá". Cứ con slime thứ hai đi thẳng tới giỏ, vòng vàng đầy rồi giơ cá trên đầu chạy ra mép xa (banner "Slime tha cá!…"); mèo tự đuổi con đó trước.
@@ -1747,3 +1748,15 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Gặp Slime nhạc trưởng lần đầu: hướng dẫn nói "mất máu và đánh hụt một lúc" (vi/en/ja vừa khung).
 - [ ] (Lần hai) Mũi tên ‹ › nằm giữa nút. Trong Sổ tay quái, slime lính có cỡ như bản 1.5.1 trước #78; ảnh thường và tinh anh cùng cỡ; ảnh trùm nằm giữa khối ảnh, chữ sát cạnh khối.
 - [ ] (#79) Trận có Slime nhanh đứng sau slime khác: gồng xong lao xuyên qua đồng minh, đi hết vạch đỏ và trúng mèo đứng dưới sàn; Slime Nén lăn qua quái nhỏ không bị chậm hay dừng sớm.
+
+## Giỏ cá thành màn phòng thủ (2026-11-13)
+Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh tuyến 2 (Thùng cá, Cướp cá, tinh anh Vụ trộm cá). Đã kiểm bằng test và mô phỏng; ảnh giỏ mới chỉ xem qua render UiChecks (`basket.png`, `basket-low.png`), **chưa chơi thật, chưa xem trên desktop**.
+- [ ] Giỏ đứng giữa dải trận, có thanh máu xanh trên đầu; HUD "Giỏ 100%"; bản đồ/bảng chuẩn bị ghi "· bảo vệ giỏ cá". Slime ra từ cả hai mép và đi thẳng tới giỏ, không đánh mèo.
+- [ ] Slime đánh giỏ: giỏ nháy đỏ, rung nhẹ, hiện số máu mất, HUD giảm; banner đầu tiên "Slime đánh giỏ cá! Đánh trúng nó để nó quay sang mèo". Dưới 50% có vết nứt, cá thò lên ít dần; ≤ 30% thanh máu đổi đỏ ấm và banner "Giỏ cá sắp vỡ!" một lần.
+- [ ] Mèo đánh trúng một slime: nó có dấu "!" đỏ trên đầu, quay sang đánh mèo; đánh tiếp thì "!" còn mãi; để yên ~4 giây thì "!" mất và nó quay về giỏ. Bom len, app, độc trúng slime thì nó KHÔNG quay sang mèo.
+- [ ] Từng loại đánh giỏ bằng đòn riêng: slime nhanh lao qua giỏ; slime phun phun giọt vào giỏ; slime bom châm ngòi cạnh giỏ rồi nổ (mèo đứng trong vòng nổ vẫn bị trúng); slime nhanh chở bom ném bom vào giỏ; slime đào hang nứt dưới giỏ rồi trồi lên; slime bay bắn đạn dính vào giỏ. Slime trộm, thảo dược, đá vẫn làm việc cũ với mèo.
+- [ ] Nhấc mèo lên giữ lâu: slime vẫn đánh giỏ. Pause/menu/hướng dẫn đứng hình: slime, giỏ, đồng hồ "!" đứng yên.
+- [ ] Giỏ vỡ: thua ngay dù mèo còn máu, tiêu đề "Thua rồi… giỏ cá bị phá · giỏ còn 0%". Thắng: kết quả ghi "· giỏ còn N%"; kỷ lục lần đầu "Kỷ lục mới của màn: giỏ cá còn nhiều máu nhất!"; bản đồ ghi "· giỏ còn nhiều nhất N%". Thắng với giỏ ≥ 75% mở thành tựu "Giỏ cá đầy ắp".
+- [ ] Hướng dẫn chương 2 màn 3: bước giới thiệu giỏ (câu mới có "thanh máu"), lần đầu giỏ trúng đòn có bước "Slime đang đánh giỏ!…" (nút Hiểu rồi); không còn bước "Cá rơi rồi!".
+- [ ] Cảm giác độ khó (ghi vào Nhật ký chơi thử): mô phỏng Thường bot đơn giản thắng 60/60, giỏ còn ~57–67%; mèo còn nhiều máu hơn trước (93–97%). Giỏ 150 máu có quá cứng/quá giòn không.
+- [ ] DPI 100/150/200%, màn hình phụ: giỏ đúng giữa dải trận, thanh máu và "!" không bị cắt; chữ vi/en/ja đúng.

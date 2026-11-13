@@ -959,8 +959,8 @@
   // "threatGrowth" (threat added per minute held out) and "upgradeAt" (card offers at those seconds
   // of the clock instead of after waves). eliteChance: an enemy a wave or stream sends with an "elite"
   // affix is elite with this chance (not on Easy; maxElites alive at once). budget (a wave's or a
-  // stream's): the most its enemies may cost ("cost"), elites included. basket (1.5 M20): a fish basket
-  // to keep, { "fish", "at", "every", "grab", "carry", "back" } (every fish carried off loses the stage).
+  // stream's): the most its enemies may cost ("cost"), elites included. basket (1.5 M20, defence since
+  // 2026-11-13): a fish basket to defend, { "hp", "at", "damage", "aggro" } (broken, the stage is lost).
   // See docs/BATTLE-DATA.md.
   "campaign": {
     "chapters": [
@@ -1081,14 +1081,14 @@
             "id": "c2_fish_basket", "nameVi": "Giữ giỏ cá", "nameEn": "Keep the fish basket",
             "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
             "lesson": "battery",
-            "goalVi": "Giữ giỏ cá 75 giây trước slime trộm, cưỡi bom, đào hang và bay. Học cắm sạc khi Pin yếu. Màn này cho mượn Kẹp gắp.",
-            "goalEn": "Guard the basket for 75 s against thieves, bomb riders, burrowers and flyers. Plug in a low battery. This stage lends the Grabber.",
-            "tipVi": "Bạn sẽ học: hạ slime đang tha cá trước, click cá rơi để trả về giỏ (mất hết cá là thua); Kẹp gắp click một slime nhỏ rồi click chỗ đập nó xuống (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
-            "tipEn": "You learn: to beat a fish carrier first and click a dropped fish back into the basket (lose every fish and the stage is lost); the Grabber: click a small slime, then click where to slam it (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
+            "goalVi": "Bảo vệ giỏ cá 75 giây trước slime hai bên, cả cưỡi bom, đào hang và bay. Học cắm sạc khi Pin yếu. Màn này cho mượn Kẹp gắp.",
+            "goalEn": "Defend the fish basket for 75 s from slimes on both sides: bomb riders, burrowers, flyers too. Plug in a low battery. This stage lends the Grabber.",
+            "tipVi": "Bạn sẽ học: giỏ cá có máu, giỏ vỡ là thua; mèo đánh trúng slime nào thì con đó bỏ giỏ quay sang mèo một lúc rồi lại về giỏ; Kẹp gắp click một slime nhỏ rồi click chỗ đập nó xuống (kéo được slime bay xuống, lôi slime đào hang lên); hạ ngựa của slime bom giữa đường; nhấc mèo khi vòng nứt hiện dưới chân. Slime trộm lấy năng lượng icon: hạ nó trước khi nó trốn.",
+            "tipEn": "You learn: the basket has HP and the stage is lost if it breaks; each slime the cat hits leaves the basket for the cat a while, then goes back; the Grabber: click a small slime, then click where to slam it (it pulls a flyer down and a burrower up); to take a bomb's mount down on the way; to lift the cat when a crack shows under it. A thief slime takes an icon's charge: beat it before it gets away.",
             "objective": "survive", "surviveSeconds": 75, "maxAlive": 6, "upgrades": true, "maxUpgrades": 3, "upgradeAt": [ 20, 40, 60 ],
-            "threatGrowth": 0.8, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 3, "reward": "FolderHat",
+            "threatGrowth": 0.8, "threat": 2.2, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 4, "reward": "FolderHat",
             "unlocksSkill": "grabber", "suggestSkills": [ "grabber", "push", "heal" ],
-            "basket": { "fish": 5, "every": 3, "at": 0.3 },
+            "basket": { "hp": 150, "at": 0.5 },
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 3 }, { "enemy": "runner", "count": 1 } ] },
               { "groups": [ { "enemy": "burrower", "count": 1 }, { "enemy": "slime", "count": 2 }, { "enemy": "thief", "count": 1 } ] },
@@ -1380,7 +1380,7 @@
     "routes": [
       {
         "id": "dump_trail", "nameVi": "Lối Bãi rác", "nameEn": "The Dump Trail",
-        "rulesVersion": 19, "keepRuns": [ 1, 2, 3, 4, 17, 18 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
+        "rulesVersion": 20, "keepRuns": [ 1, 2, 3, 4, 17, 18, 19 ], "unlockAfter": "c2_zip_slime", "scene": "dump",
         "kindGacha": { "steps": 6, "minLanes": 2, "maxLanes": 3, "weights": { "fight": 45, "event": 18, "elite": 20, "rest": 12, "shop": 14 }, "rerollCost": 0.08 },
         "zones": [
           { "id": "swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp", "steps": 2, "fights": [ "y_puddles", "y_ice_pond", "y_split_bog" ], "elites": [ "y_mother_nest" ] },
@@ -1417,9 +1417,9 @@
           },
           {
             "id": "y_fish_crates", "nameVi": "Thùng cá", "nameEn": "Fish crates",
-            "goalVi": "Giữ giỏ cá: slime tha cá ra mép, slime trộm lẻn vào.", "goalEn": "Keep the basket: slimes carry fish off, a thief sneaks in.",
+            "goalVi": "Bảo vệ giỏ cá: slime hai bên kéo tới đánh giỏ, slime trộm lẻn vào.", "goalEn": "Defend the basket: slimes from both sides hit it, a thief sneaks in.",
             "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
-            "basket": { "fish": 5, "every": 3, "at": 0.5 },
+            "basket": { "hp": 150 },
             "waves": [
               { "groups": [ { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
               { "groups": [ { "formation": { "alarm": 1 } }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] }
@@ -1427,9 +1427,9 @@
           },
           {
             "id": "y_fish_raid", "nameVi": "Cướp cá", "nameEn": "Fish raid",
-            "goalVi": "Giữ giỏ cá trước bom cưỡi slime và slime bay.", "goalEn": "Keep the basket from riding bombs and flyers.",
+            "goalVi": "Bảo vệ giỏ cá trước bom cưỡi slime và slime bay.", "goalEn": "Defend the basket from riding bombs and flyers.",
             "upgrades": true, "maxAlive": 5, "threat": 1.6, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
-            "basket": { "fish": 5, "every": 3, "at": 0.5 },
+            "basket": { "hp": 150 },
             "waves": [
               { "groups": [ { "enemy": "bomber", "count": 1 }, { "pick": { "slime": 1, "runner": 1 }, "count": 2 } ] },
               { "groups": [ { "enemy": "flyer", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] }
@@ -1484,9 +1484,9 @@
           },
           {
             "id": "y_fish_heist", "nameVi": "Vụ trộm cá", "nameEn": "The fish heist",
-            "goalVi": "Tinh anh: giữ giỏ cá trước cả một băng slime.", "goalEn": "Elite: keep the basket from a whole slime gang.",
+            "goalVi": "Tinh anh: bảo vệ giỏ cá trước cả một băng slime.", "goalEn": "Elite: defend the basket from a whole slime gang.",
             "upgrades": true, "maxAlive": 6, "threat": 1.7, "eliteChance": 0.5, "maxMalware": 4, "newAppsFrom": 1, "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery"],
-            "basket": { "fish": 6, "every": 3, "at": 0.5 },
+            "basket": { "hp": 180 },
             "waves": [
               { "groups": [ { "enemy": "thief", "count": 1 }, { "pick": { "slime": 2, "runner": 1 }, "count": 3 } ] },
               { "groups": [ { "formation": { "kamikaze": 1 } }, { "enemy": "burrower", "count": 1 } ] },

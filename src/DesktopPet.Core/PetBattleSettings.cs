@@ -786,10 +786,10 @@ public sealed class Slime
     public double CordLeft, CordCooldown, NestLeft, BroodJumpLeft, GooArmor;
     public double BroodJumpRadius = 42;
     public bool BroodNest, LastBrood, SpecialHitOnce;
-    // 1.5 M20 (PetBattle.Basket.cs): it goes for the fish basket rather than the cat; it carries a fish
-    // (running for its FleeSide edge); seconds it has spent taking one.
-    public bool FishTaker, CarriesFish;
-    public double FishClock;
+    // 1.5 M20, defence 2026-11-13 (PetBattle.Basket.cs): it goes for the fish basket this step; seconds it
+    // still goes for the cat that hit it; a burrower's cracks are under the basket.
+    public bool OnBasket, CrackBasket;
+    public double AggroLeft;
     public bool Targetable => State is not (SlimeState.Spawning or SlimeState.Defeated);
     public void Set(SlimeState state)
     {
@@ -908,9 +908,9 @@ public enum BattleEventKind
     // 1.5 M19 (PetBattle.Drops.cs): a drop fell on the floor, faded away (Value: its id), was picked up
     // (Value: its BattleDropKind).
     DropAppeared, DropFaded, DropPicked,
-    // 1.5 M20 (PetBattle.Basket.cs): a slime took a fish (Value: its id), dropped one (Value: the fish's id),
-    // a fish went back to the basket (Value: 1 clicked, 0 by itself), a fish was carried away (Value: fish left).
-    FishTaken, FishDropped, FishReturned, FishLost,
+    // 1.5 M20, defence 2026-11-13 (PetBattle.Basket.cs): the basket was hit (Value: its HP left in percent),
+    // broken; a slime the cat hit turned on it (Value: its id).
+    BasketHurt, BasketBroken, EnemyAggroed,
     // 1.5 M24 (PetBattle.Mutations.cs): an Infinity stretch began (Value: its index in EndlessSpec.Eras); a
     // mutation was picked, was seen through and paid (Value: its index in MutationRules.List).
     EraStarted, MutationStarted, MutationEnded,
@@ -945,6 +945,8 @@ public sealed class BattleGoo
     public string? Tint;
     // A wall climber's spike (1.5 M15): straight down from FromHeight over the floor, no puddle.
     public bool Spike;
+    // 1.5 M20 defence: spat at the fish basket (it hurts the basket, never the cat).
+    public bool Basket;
     public double FromHeight;
     // A boss's goo rain (1.5 M18): straight down from FromHeight over the floor, as a spike falls.
     public bool Rain;
@@ -958,6 +960,8 @@ public sealed class BattleShot
     public int OwnerId;
     public double X, Height, VX, VY, Remaining, Damage, Radius, Slow, SlowSeconds;
     public string? Tint;
+    // 1.5 M20 defence: shot at the fish basket (it hurts the basket, never the cat).
+    public bool Basket;
     // ZIP paper: curves until LockIn expires, then pursues at Speed with a bounded turn rate.
     public bool Paper;
     public double LockIn, Speed;

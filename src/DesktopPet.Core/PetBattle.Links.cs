@@ -148,7 +148,11 @@ public sealed partial class BattleSim
                     slime.Facing = mount.Facing;
                     slime.KnockVelocity = 0;
                     slime.RideHeight = mount.Height * 0.8;
-                    double gap = Math.Abs(mount.X - catX);
+                    // 1.5 M20 defence: a rider going for the fish basket is thrown at it, whatever the cat does.
+                    bool basket = slime.OnBasket && double.IsFinite(BasketX);
+                    double aim = basket ? BasketX : catX;
+                    bool aimHeld = !basket && catHeld;
+                    double gap = Math.Abs(mount.X - aim);
                     // Winding up a throw (2026-10-31): the rider rises over the mount; spoiled, it falls.
                     if (slime.ThrowClock > 0)
                     {
@@ -162,7 +166,7 @@ public sealed partial class BattleSim
                         slime.ThrowClock = Math.Max(0, slime.ThrowClock - dt * mount.ChillFactor);
                         // The ring follows the cat while it winds up and is fixed when it throws.
                         double half = slime.Width / 2;
-                        if (!catHeld) slime.ThrowToX = Math.Clamp(catX, Left + half, Math.Max(Left + half, Right - half));
+                        if (!aimHeld) slime.ThrowToX = Math.Clamp(aim, Left + half, Math.Max(Left + half, Right - half));
                         mount.Facing = slime.ThrowToX < mount.X ? -1 : 1;
                         double k = 1 - slime.ThrowClock / link.ThrowWindup;
                         slime.RideHeight += 16 * k;
@@ -171,10 +175,10 @@ public sealed partial class BattleSim
                         break;
                     }
                     // Far enough for a throw (not too close: then it hops off as before).
-                    if (link.ThrowRange > 0 && slime.Type.Fuse != null && gap <= link.ThrowRange && gap > link.DropRange && !catHeld && Grace <= 0
+                    if (link.ThrowRange > 0 && slime.Type.Fuse != null && gap <= link.ThrowRange && gap > link.DropRange && !aimHeld && (basket || Grace <= 0)
                         && mount.State == SlimeState.Moving && !mount.Handled && !mount.Stuck && mount.ThrowHold <= 0)
                     {
-                        StartThrow(slime, mount, link, catX);
+                        StartThrow(slime, mount, link, aim);
                         break;
                     }
                     if (gap <= link.DropRange) Fall(slime, 0);

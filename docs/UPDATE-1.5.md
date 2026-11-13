@@ -147,7 +147,7 @@ M3 (bục tự vẽ) đã bỏ.
 
 | Mã | Nội dung |
 |---|---|
-| T1 | Bảo vệ giỏ cá: slime tha cá đi; mất hết cá thì thua dù mèo còn máu |
+| T1 | Bảo vệ giỏ cá: slime tha cá đi; mất hết cá thì thua dù mèo còn máu (13/11 đổi thành màn phòng thủ: giỏ có máu, slime đánh giỏ, bị mèo đánh mới aggro; xem docs/BATTLE-DATA.md) |
 | C1 | Chương 2 "Bãi rác Tải về", mở khi thắng Vua Slime: Cổng tải về (Quạt/Screenshot), Thư mục ma (Laser/CAPTCHA), Giữ giỏ cá (Kẹp gắp/Pin yếu, 75 s), Đầm nhầy (Kéo cắt/Đơ con trỏ), Slime Nén (Bình xịt). Không có Slime Mẹ. Chi tiết: [rà nội dung #69](CONTENT-1.5-REVIEW-2026-11-07.md) |
 | C2 | Tranh, bản đồ, phông trận riêng (`scene` "dump") |
 | C3 | Phần thưởng: phụ kiện Mũ thư mục, kỷ vật Thú bông Slime Nén (physics như kệ kỷ vật) |

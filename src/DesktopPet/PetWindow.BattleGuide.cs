@@ -35,7 +35,7 @@ public sealed partial class PetWindow
         StageSlimeSwamp = "c2_slime_swamp", StageZipSlime = "c2_zip_slime";
     public const string GuideSpitter = "spitter", GuideSpringer = "springer", GuideFuser = "fuser", GuideDrops = "drops",
         GuidePhantom = "phantom", GuideMirage = "mirage", GuideDrummer = "drummer", GuideFlag = "flag",
-        GuideBasket = "basket", GuideFishBack = "fish_back", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
+        GuideBasket = "basket", GuideAggro = "basket_aggro", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
         GuideHedgehog = "hedgehog", GuideIcy = "icy", GuideChain = "chain", GuideSplitter = "splitter", GuideMother = "mother",
         GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePress = "press", GuideZipBomb = "zipbomb", GuideZipLock = "ziplock";
     // 1.5 M26 apps: steps for any guided stage that has the newer apps (newAppsFrom: chapter 2).
@@ -258,12 +258,12 @@ public sealed partial class PetWindow
                     "A flag slime cannot be hurt until its first flag is down, then it plants a second. In the ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it, knock them down to panic the band, or use the Scissors.")),
         // 3 · The fish basket.
         See(GuideBasket, StageFishBasket, () => TourDue(), () => Spots(FieldSpot(battleView?.BasketBounds())),
-            () => L("Giỏ cá của mèo. Slime sẽ tha cá chạy ra mép màn hình; mất hết cá là thua dù mèo còn máu.",
-                    "The cat's fish basket. Slimes will carry fish off to the screen's edge; lose every fish and the stage is lost, HP or not.")),
-        new(GuideFishBack, StageFishBasket, true, true, 1,
-            () => { var fish = battle!.StrayFish.FirstOrDefault(f => f.Age >= 0.3); guideRef = fish?.Id ?? 0; return fish != null && !BattleHoldsOff; },
-            () => battle!.FindFish(guideRef) == null, () => Spots(FieldSpot(battleView?.FishBounds(guideRef), 4)),
-            () => L("Cá rơi rồi! Click con cá để trả về giỏ trước khi slime khác nhặt.", "A fish was dropped! Click it to put it back in the basket before another slime grabs it.")),
+            () => L("Giỏ cá của mèo, có thanh máu. Slime hai bên sẽ kéo tới đánh giỏ; giỏ vỡ là thua dù mèo còn máu.",
+                    "The cat's fish basket, with its own HP. Slimes from both sides come to hit it; if it breaks the stage is lost, HP or not.")),
+        new(GuideAggro, StageFishBasket, false, true, 1,
+            () => battle!.BasketHits > 0 && !BattleHoldsOff, () => false, () => Spots(FieldSpot(battleView?.BasketBounds())),
+            () => L("Slime đang đánh giỏ! Mèo đánh trúng con nào thì con đó bỏ giỏ, quay sang đánh mèo một lúc (dấu ! đỏ) rồi lại về giỏ.",
+                    "A slime is hitting the basket! Each slime the cat hits leaves the basket and goes for the cat a while (red !), then comes back to it.")),
         Meet(GuideBomber, StageFishBasket, s => s.Type.Fuse != null,
             () => L("Slime bom cưỡi slime nhanh lao tới, tới gần mèo thì châm ngòi rồi nổ. Hạ con ngựa giữa đường để bom rơi xuống nổ tại chỗ.",
                     "A bomb slime rides a quick slime in, lights its fuse near the cat and blows up. Take the mount down on the way and the bomb drops and goes off there.")),

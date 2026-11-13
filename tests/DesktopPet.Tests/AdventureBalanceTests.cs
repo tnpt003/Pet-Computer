@@ -25,7 +25,7 @@ internal static class AdventureBalanceTests
     // QuietAfter s or more (QuietShare), the cat's target changes a minute, stuns that come right
     // after the last one's immunity (StunChains).
     public readonly record struct Outcome(bool Won, double Seconds, double Hp, int Stuns, int Synergies, Dictionary<string, int> Build, int Blocks = 0, double ShieldSeconds = 0, double HpShare = 0, int Elites = 0,
-        int Warded = 0, int HealsCast = 0, int HealsLanded = 0, double QuietShare = 0, double Switches = 0, int StunChains = 0, int SweepHits = 0, int Launches = 0, int Fish = -1);
+        int Warded = 0, int HealsCast = 0, int HealsLanded = 0, double QuietShare = 0, double Switches = 0, int StunChains = 0, int SweepHits = 0, int Launches = 0, int Fish = -1); // Fish: a basket stage's basket HP left in percent (-1: no basket).
     private const double QuietAfter = 2;
 
     // Order cards are liked in when the build gives no lead (fish when hurt).
@@ -92,7 +92,7 @@ internal static class AdventureBalanceTests
             else sinceDamage = 0;
         }
         return new(sim.Phase == BattlePhase.Won, sim.FightSeconds, sim.CatHp, sim.StunsTaken, sim.Synergies.Count, sim.Build(), sim.BlocksMade, sim.BossShieldSeconds, sim.CatHp / sim.CatMaxHp, sim.ElitesSpawned,
-            sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains, sim.SweepHits, sim.WeaponLaunches, sim.Basket != null ? sim.FishInBasket : -1);
+            sim.WardedHits, healsCast, healsLanded, fighting > 0 ? quiet / fighting : 0, sim.FightSeconds > 0 ? switches * 60 / sim.FightSeconds : 0, chains, sim.SweepHits, sim.WeaponLaunches, sim.Basket != null ? sim.BasketPercent : -1);
     }
 
     // 1.5 M24: an Infinity run (fish and potions drop) with the same player, cards picked the same way and
@@ -146,8 +146,7 @@ internal static class AdventureBalanceTests
         // A bubble near the cat is clicked about three times a second.
         if (now - hands.LastPoke >= 0.3 && sim.Slimes.FirstOrDefault(s => s.Bubbled && s.Targetable && Math.Abs(s.X - cat) <= 500 && reflex.Notices(s, now)) is Slime bubble)
         { sim.Poke(bubble.Id); hands.LastPoke = now; }
-        // A dropped fish goes back to the basket, a drop is picked up (once noticed).
-        foreach (var fish in sim.StrayFish.ToList()) if (reflex.NoticesAge(fish.Age)) sim.PickUpFish(fish.Id);
+        // A drop is picked up (once noticed).
         foreach (var drop in sim.Drops.ToList()) if (reflex.NoticesAge(drop.Age)) sim.PickUp(drop.Id);
         // A flag slime with a flag down (2026-11-05): beaten first, as the banner says (its flags stand till then).
         if (sim.SelectedId == null && sim.Slimes.FirstOrDefault(s => s.Type.Plant != null && s.Targetable && !s.FlagGuard && reflex.Notices(s, now)) is Slime bearer) sim.Select(bearer.Id);
@@ -298,7 +297,7 @@ internal static class AdventureBalanceTests
                             list.Add(run);
                         }
                     }
-        Console.WriteLine($"Adventure chapter 2 balance (simulation, not real play): stage | weapon | level | player | wins/{ChapterTwoSeeds} | avg s (wins) | HP % left (wins) | stuns/run | fish kept (wins)");
+        Console.WriteLine($"Adventure chapter 2 balance (simulation, not real play): stage | weapon | level | player | wins/{ChapterTwoSeeds} | avg s (wins) | HP % left (wins) | stuns/run | basket % left (wins)");
         var table = new Dictionary<(int, string, BattleDifficulty, Player), (double Wins, double Seconds, double HpShare)>();
         for (int i = 1; i <= stages.Length; i++)
             foreach (var weapon in weapons)
@@ -308,7 +307,7 @@ internal static class AdventureBalanceTests
                         var runs = played[(i, weapon, level, player)];
                         var wins = runs.Where(r => r.Won).ToList();
                         table[(i, weapon, level, player)] = ((double)wins.Count / ChapterTwoSeeds, wins.Count > 0 ? wins.Average(r => r.Seconds) : 0, wins.Count > 0 ? wins.Average(r => r.HpShare) : 0);
-                        string fish = stages[i - 1].Basket != null && wins.Count > 0 ? wins.Average(r => r.Fish).ToString("0.0") : "-";
+                        string fish = stages[i - 1].Basket != null && wins.Count > 0 ? wins.Average(r => r.Fish).ToString("0") : "-";
                         Console.WriteLine($"  {i} | {weapon,-6} | {level,-6} | {Name(player),-6} | {wins.Count,2}/{ChapterTwoSeeds} | {(wins.Count > 0 ? wins.Average(r => r.Seconds) : 0),6:0} | {(wins.Count > 0 ? wins.Average(r => r.HpShare) : 0),4:P0} | {runs.Average(r => r.Stuns),4:0.0} | {fish}");
                     }
         foreach (var weapon in weapons)
@@ -329,6 +328,15 @@ internal static class AdventureBalanceTests
                 // Stage 3 allows 95 % too (2026-11-04, docs/GOPY-C-2026-11-04.md D2/D3): the cat now rages by
                 // itself (this bot never clicked the rage) and the Ground quake dazes; its threat moved 2.2 → 2.6
                 // only swung Hard to 45 % for the sword while Normal stayed at 90–94 %.
+                // Stage 3 since 2026-11-13 is a defence (the fish basket has HP): the slimes go for the basket, so
+                // the pressure is on it rather than on the cat; there the basket must end ≤ 90 % instead.
+                if (stages[i - 1].Basket != null)
+                {
+                    var basketWins = played[(i, weapon, BattleDifficulty.Normal, Player.Simple)].Where(r => r.Won).ToList();
+                    double basket = basketWins.Count > 0 ? basketWins.Average(r => r.Fish) / 100 : 0;
+                    check(basket <= 0.9, $"Chapter 2 balance: stage {i}, {weapon}, Normal, the simple player ends with the basket ≤ 90 % ({basket:P0})");
+                    continue;
+                }
                 double most = i is 2 or 3 ? 0.95 : 0.9;
                 check(simple.HpShare <= most, $"Chapter 2 balance: stage {i}, {weapon}, Normal, the simple player ends with ≤ {most:P0} HP ({simple.HpShare:P0})");
             }
@@ -412,7 +420,7 @@ internal static class AdventureBalanceTests
                 flow &= adventure.IsUnlocked(stages[i].Id) && (i + 1 >= stages.Length || !adventure.IsUnlocked(stages[i + 1].Id));
                 if (adventure.Lent(stages[i]) is BattleSkill lent) lentOrder.Add(lent); else flow = false;
                 var run = Play(data, stages[i], BattleWeapon.Sword, BattleDifficulty.Easy, 2, Player.Simple, adventure.StartBuild(stages[i]), skills: HintedLoadout(stages[i]), loot: BattleLoot.Items);
-                adventure.Apply("c2-" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Easy, 1, run.Seconds, run.Build, fishKept: run.Fish);
+                adventure.Apply("c2-" + i, stages[i], true, run.Won, BattleWeapon.Sword, BattleDifficulty.Easy, 1, run.Seconds, run.Build, basketKept: run.Fish);
                 flow &= run.Won && adventure.Lent(stages[i]) == null && adventure.SkillOpen(lentOrder[^1]) && adventure.Progress.Save(file);
             }
             var done = new Adventure(campaign, AdventureProgress.Load(file));

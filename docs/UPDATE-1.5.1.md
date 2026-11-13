@@ -13,6 +13,22 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 | 5. Kinh tế farm | Kho, bán lấy xu nông trại riêng, mua hạt, mở ô, bù nhìn | Xong (4d4330e), còn test tay |
 | 6. Nối các phần | Nấu món cho mèo ăn, mưa tự tưới, nắng cho cây lớn nhanh hơn một chút | Xong (cadeb1c), còn test tay |
 
+### Phạm vi mở rộng (người dùng chọn 14/11: gộp `dev-1.6` vào 1.5.1)
+
+Nhánh `dev-1.6` tách từ `main` ngày 09/11 (34f5379) để làm kế hoạch 1.6 mà không lẫn vào bản 1.5.1 đang chờ test tay. Ngày 14/11 người dùng chọn gộp: `main` fast-forward lên `dev-1.6`, mọi thứ dưới đây thuộc 1.5.1 và số hiệu giữ 1.5.1. Danh sách cho người chơi ở CHANGELOG.md → 1.5.1.
+
+| Phần | Nội dung | Luật |
+|---|---|---|
+| Đợt 1 Chơi cùng sen | Giỏ đồ chơi, Thùng carton, ném nhặt Bóng len, Cần câu lông vũ, Chuột dây cót, chuyền bóng, phản ứng ngắn, hiệu ứng lấy ra/cất | docs/TOY-PLAY.md |
+| Đợt 2 Góc sống | Trụ cào, Chậu cây, mèo thò đầu trong hộp, Mốc thân thiết, Món yêu thích, Gọi mèo, Dạy động tác | docs/LIVING-CORNER.md |
+| Đợt 3 Mini-game và sự kiện | Úp cốc tìm cá, Trốn tìm, Bắt đom đóm, Khách ghé thăm, Săn kho báu | docs/MINI-GAMES.md |
+| Người mới, menu | Màn mở đầu M2a, Chào mừng rút gọn và hướng dẫn mèo dẫn M2b, menu 9 dòng, menu riêng của đồ vật | docs/APPROVED-EXCEPTIONS.md → Hành vi mèo, Cổng phép |
+| Nông trại góp ý 13/11 | Chong chóng, cá nhảy, mèo thu trứng, kéo xe hàng, "Cho xe đi" | docs/FARM-GAME.md → Góp ý 13/11 |
+| Battle Mode | Giỏ cá phòng thủ (chương 2 màn 3, Kho cá Viễn chinh tuyến 2), chương 2 bắt buộc mang "Gợi ý mang", lời khuyên theo kỹ năng đang mang, Slime dỗi/hẹn giờ ở chương 2, banner "Quái mới", lao/lăn xuyên đồng minh (#79), Sổ tay quái (#78) | docs/BATTLE-DATA.md, docs/APPROVED-EXCEPTIONS.md → Battle Mode |
+| Sửa lỗi | #76–#86 | Issue_fixxed.md |
+
+Chưa thuộc 1.5.1: Đợt 4–6 của kế hoạch 1.6 (Chiến lợi phẩm, Học viện chống slime, Cá nhân hóa), Chơi chung qua Internet (mới có docs/MULTIPLAYER.md và bản thử `tools/EosProbe/`, chưa code vào app), M3 mở khóa dần.
+
 ### Portal (mốc 1)
 
 - Tự xuất hiện trên sàn cạnh mèo mỗi 20–40 phút; chờ bấm 30 giây rồi tự đóng, không mất gì. Mèo Surprised và nhìn về phía cổng.
@@ -82,7 +98,7 @@ Mục tiêu: mèo ngoài trận đa dạng và thú vị hơn. Ba tính năng ch
 
 # Kho ý tưởng mở rộng
 
-Cập nhật: 2026-10-27 (Asia/Saigon).
+Cập nhật: 2026-10-27 (Asia/Saigon). Ghi chú 14/11: các ý ở mục 1, 3, 4 và một phần 2, 5 đã thành Đợt 1–3 và đã vào 1.5.1 (bảng "Phạm vi mở rộng" ở đầu file); phần còn lại vẫn là ứng viên.
 
 Người dùng yêu cầu lưu toàn bộ ý tưởng đã trao đổi cho bản 1.5.1. Đây là **kho ý tưởng ứng viên**, chưa chốt thiết kế, chưa duyệt triển khai tất cả và chưa đặt tên chính thức cho bản cập nhật. Các ý gần nhau được gom chung nhưng giữ lại những cách chơi đã nêu.
 

@@ -4,7 +4,7 @@
 
 ### Tiếng Việt
 
-Bản này tập trung vào cuộc sống của mèo ngoài trận. Battle Mode không đổi luật, nông trại không cộng sức mạnh trong trận.
+Bản này tập trung vào cuộc sống của mèo ngoài trận: nông trại, đồ chơi, góc sống, mini-game. Nông trại không cộng sức mạnh trong trận. Battle Mode có vài thay đổi luật ở chương 2 và Viễn chinh (cuối danh sách).
 
 - **Cổng phép:** cổng thỉnh thoảng tự hiện cạnh mèo, hoặc chọn "Niệm phép cổng" ở menu chuột phải. Chỉ khi bạn bấm cổng mới vào Sảnh, cổng không tự bắt đầu trận.
 - **Thời tiết quanh mèo:** nắng, mưa, tuyết, hoàng hôn, phấn hoa, đêm sao, chọn theo màu hình nền Windows. Chỉ đọc màu từ ảnh thu nhỏ, không lưu ảnh, không gửi đi đâu. Tắt được trong Cài đặt → Thói quen.
@@ -17,12 +17,28 @@ Bản này tập trung vào cuộc sống của mèo ngoài trận. Battle Mode 
 - **Mèo làm vườn cùng bạn:** mèo tự tưới, gặt, gieo lại, nấu ăn, câu cá và đuổi chim, bật/tắt trong Cài đặt → Thói quen. Mèo không làm khi đang ngủ, bị bế hay ở chế độ Yên lặng.
 - **Thời tiết giúp ruộng:** mưa tự tưới, nắng làm cây lớn nhanh hơn một chút.
 - **Giờ tập trung:** phiên 25 hoặc 50 phút ở menu chuột phải; mèo giữ yên lặng, hết giờ có chuông rồi nghỉ. Mỗi phiên hoàn thành cho hạt Hoa tập trung.
-- Nhật ký có thêm thẻ Nông trại và thành tích nông trại. Lần đầu dùng có nhãn chỉ bước kế tiếp.
-- Điểm còn biết khi phát hành: giá, thời gian và XP nông trại là ước tính, chưa qua chơi thử dài. Chưa nghiệm thu đầy đủ DPI khác và nhiều màn hình.
+- Nhật ký có thêm thẻ Nông trại và thành tích nông trại. Lần đầu dùng có nhãn chỉ bước kế tiếp. Mèo tự thu trứng khi ghé chuồng; kéo được xe hàng (bánh xe quay) và có nút "Cho xe đi"; chong chóng quay theo gió, cá nhảy ở ao.
+- **Đồ chơi trên desktop:** "Giỏ đồ chơi" có Bóng len, Thùng carton, Cần câu lông vũ, Chuột dây cót, để ra tối đa 3 món; bạn cầm, ném, đồ vẫn nằm lại sau khi mở lại app. Đồ không chạm mèo, không gây choáng hay cảm xúc, không đánh thức mèo ngủ.
+  - Mèo ngủ hoặc ngồi thò đầu trong thùng carton; ném bóng len thì mèo nhặt về, thỉnh thoảng tự tha bóng tới rủ chơi; đuổi và vồ cần câu, chuột dây cót khi bạn đang chơi; vỗ trả bóng bạn chuyền tới.
+  - Lấy ra và cất đồ có hiệu ứng phình và khói.
+- **Góc sống:** Trụ cào và Chậu cây (tối đa 2 món), mèo tự tới cào và ghé cây, cây lớn dần.
+  - **Mốc thân thiết** (cần AI bật): càng chơi lâu càng mở thêm hành vi như ngó chào, ra đón, ngủ tựa đồ vật.
+  - **Món yêu thích** (cần AI bật): mèo nhớ món bạn hay chơi cùng, ghé món đó và rủ chơi bằng món đó.
+  - **Gọi mèo** ở menu khay: mèo đi tới con trỏ. **Dạy động tác:** Xoay vòng, Ngồi xin, Đập tay; dạy đủ buổi thì động tác vào menu "Động tác".
+- **Chơi cùng mèo:** ba mini-game ở menu "Chơi": Úp cốc tìm cá, Trốn tìm, Bắt đom đóm. Mèo đang ngủ thì không bắt đầu.
+- **Sự kiện tự đến** (tắt được trong Cài đặt → Thói quen): Khách ghé thăm (bướm giấy, slime hiền), Săn kho báu (mèo tìm thấy bản đồ, bạn cùng lần theo dấu chân tới rương, mẩu chuyện lưu vào Nhật ký).
+- **Người mới:** mỗi lần mở app có màn mở đầu ngắn qua cổng phép (click để bỏ qua). Phiếu Chào mừng gọn hơn, mèo dẫn bạn đi một vòng 6 bước; xem lại ở Cài đặt → Chung hoặc menu khay → "Hướng dẫn".
+- **Menu gọn hơn:** menu mèo còn 9 dòng, "Làm ngay" đổi tên thành "Động tác"; Cho ăn, Cảm xúc, Yên lặng nằm trong menu tên mèo. Mỗi đồ vật có menu chuột phải riêng (ngủ trong hộp, cào móng ở đây, ngủ trên đệm, cất vào giỏ).
+- **Battle Mode:**
+  - Chương 2: màn 3 thành màn bảo vệ giỏ cá (giỏ có máu, slime kéo tới đánh giỏ, đánh con nào thì con đó quay sang mèo). Các trận Kho cá ở Viễn chinh tuyến 2 cũng vậy. Mỗi màn bắt buộc mang các kỹ năng "Gợi ý mang", lời khuyên chỉ nhắc kỹ năng đang mang. Màn 1 có thêm Slime dỗi, màn 4 có Slime hẹn giờ.
+  - Slime nhanh lao và boss lăn đi xuyên qua slime đồng minh (khó hơn một chút).
+  - Vô tận và Viễn chinh báo "Quái mới" khi gặp loại chưa có trong Sổ tay quái. Sổ tay quái có ảnh gọn hơn, nút chương ‹ › rõ hơn.
+- Sửa lỗi: mèo chỉ giật mình vì con trỏ khi đang rảnh; nhãn nông trại không bị cắt khi bay lên; các cốc đều bấm được; trốn tìm không còn sót bụi cây; cần câu không bị cắt; giỏ có dòng "Cất giỏ".
+- Điểm còn biết khi phát hành: giá, thời gian và XP nông trại là ước tính, chưa qua chơi thử dài. Chưa nghiệm thu đầy đủ DPI khác và nhiều màn hình. Câu tiếng Nhật mới chưa có người bản ngữ duyệt.
 
 ### English
 
-This release is about the pet's life outside battle. Battle Mode rules are unchanged, and the farm gives no combat power.
+This release is about the pet's life outside battle: a farm, toys, a living corner and mini-games. The farm gives no combat power. Battle Mode has a few rule changes in chapter 2 and the Expedition (end of the list).
 
 - **Magic portal:** a portal now and then appears beside the pet, or choose "Cast portal spell" from the right-click menu. Only your click opens the battle hub; a portal never starts a battle by itself.
 - **Weather around the pet:** sun, rain, snow, sunset, pollen and starry nights, chosen from your Windows wallpaper's colors. Only the colors of a tiny thumbnail are read; nothing is saved or sent anywhere. Turn it off in Settings → Habits.
@@ -35,12 +51,28 @@ This release is about the pet's life outside battle. Battle Mode rules are uncha
 - **Your pet helps out:** it waters, harvests, sows again, cooks, fishes and chases birds; switch these in Settings → Habits. It does nothing while asleep, held or in Quiet mode.
 - **Weather helps the field:** rain waters it, and sunshine makes crops grow a little faster.
 - **Focus time:** 25 or 50 minute sessions from the right-click menu; the pet keeps quiet, a bell rings at the end, then a break. Every finished session gives Focus bloom seeds.
-- The Diary has a Farm card and farm achievements. First-time hints show the next step.
-- Known at release: farm prices, times and XP are estimates, not yet tested over long play. Other DPI settings and multiple monitors have not been fully checked.
+- The Diary has a Farm card and farm achievements. First-time hints show the next step. The pet collects eggs when it visits the coop; you can drag the cart (its wheels roll) and "Send it off"; the pinwheel spins in the wind and fish jump in the pond.
+- **Toys on the desktop:** the "Toy basket" holds a Yarn ball, a Cardboard box, a Feather wand and a Wind-up mouse, up to 3 out at once; pick them up and throw them, and they stay where they were after a restart. Toys never touch the pet, never stun it or change its mood, and never wake it.
+  - The pet naps or peeks out of the cardboard box; throw the yarn ball and it fetches, and now and then it brings the ball over to ask for a game; it chases and pounces on the wand and the mouse while you play; it bats back a ball you roll to it.
+  - Taking things out and putting them away comes with a little pop and a puff of smoke.
+- **Living corner:** a Scratching post and a Plant pot (up to 2); the pet goes to scratch and visits the plant, which grows over time.
+  - **Bond milestones** (needs AI on): the more you play, the more it does, such as peeking to greet you, coming to meet you, napping against its things.
+  - **Favorite toy** (needs AI on): the pet remembers what you play with most, visits it and asks for a game with it.
+  - **Call the cat** from the tray: the pet walks to your cursor. **Teach a trick:** Spin around, Sit up and beg, High five; once learned, a trick joins the "Actions" menu.
+- **Play with the cat:** three mini-games under "Play": Find the fish, Hide and seek, Catch fireflies. They do not start while the pet sleeps.
+- **Things that happen by themselves** (switch off in Settings → Habits): Visitors (a paper butterfly, a gentle slime) and Treasure hunt (the pet finds a map, you follow pawprints together to a chest, and a short story goes into the Diary).
+- **New users:** each launch opens with a short intro through the portal (click to skip). The Welcome card is shorter, and the pet leads a 6-step tour; replay it from Settings → General or the tray → "Guide".
+- **A tidier menu:** the pet menu has 9 rows, "Do now" is now "Actions", and Feed, Emotions and Quiet live under the pet's name. Every desktop thing has its own right-click menu (nap in the box, scratch here, nap on the cushion, put back in the basket).
+- **Battle Mode:**
+  - Chapter 2: stage 3 is now a fish basket defense (the basket has health, slimes come to hit it, and whichever one the pet hits turns on the pet). The Fish store fights on Expedition route 2 work the same way. Every stage requires its "Suggested" skills, and the advice only names skills the pet carries. Stage 1 adds the sulky slime, stage 4 the timer slime.
+  - Quick slimes' dash and the boss roll pass through allied slimes (a little harder).
+  - Infinity and the Expedition announce a "New foe" the first time you meet one not yet in the Monster Book. The Monster Book has tidier portraits and clearer ‹ › chapter buttons.
+- Fixes: the cursor only startles the pet while it is free; farm labels are no longer cut off as they rise; every cup can be clicked; hide-and-seek no longer leaves a bush behind; the feather wand is no longer clipped; the basket menu has "Put the basket away".
+- Known at release: farm prices, times and XP are estimates, not yet tested over long play. Other DPI settings and multiple monitors have not been fully checked. New Japanese text has not been reviewed by a native speaker.
 
 ### 日本語
 
-今回はバトルの外でのペットの暮らしを広げるアップデートです。バトルモードのルールは変わらず、農場は戦闘力に影響しません。
+今回はバトルの外でのペットの暮らし(農場、おもちゃ、くらしのコーナー、ミニゲーム)を広げるアップデートです。農場は戦闘力に影響しません。バトルモードは第2章と遠征でルールが少し変わりました(一覧の最後)。
 
 - **魔法のポータル:** ときどきペットのそばに現れます。右クリックメニューから呼び出すこともできます。クリックしたときだけバトルロビーが開き、勝手にバトルは始まりません。
 - **ペットのまわりの天気:** 晴れ、雨、雪、夕焼け、花粉、星空を Windows の壁紙の色から選びます。読み取るのは縮小画像の色だけで、保存も送信もしません。設定 → 習慣でオフにできます。
@@ -53,8 +85,24 @@ This release is about the pet's life outside battle. Battle Mode rules are uncha
 - **ペットもお手伝い:** 水やり、収穫、種まき直し、料理、釣り、鳥追いをします。設定 → 習慣で切り替えられます。寝ているとき、持ち上げられているとき、静かモードのときは何もしません。
 - **天気が畑を助けます:** 雨は水やりになり、晴れると作物が少し早く育ちます。
 - **集中タイム:** 右クリックメニューから25分または50分。ペットは静かにして、終わるとベルが鳴り、休憩に入ります。セッションを終えるたびに集中の花の種がもらえます。
-- 日記に農場カードと農場の実績が加わりました。初めてのときは次の手順を案内します。
-- リリース時点の注意: 農場の価格、時間、経験値は見積もりで、長時間のプレイでは未確認です。他の DPI 設定や複数モニターの確認は完了していません。
+- 日記に農場カードと農場の実績が加わりました。初めてのときは次の手順を案内します。ペットは鶏小屋に寄ると卵を集めます。屋台は引っぱって動かせ(車輪が回ります)、「屋台を見送る」ボタンもあります。風車は風で回り、池では魚がはねます。
+- **デスクトップのおもちゃ:** 「おもちゃかご」に毛糸玉、段ボール箱、羽根のねこじゃらし、ぜんまいネズミが入っていて、同時に3つまで出せます。持ち上げて投げられ、アプリを開き直しても同じ場所に残ります。おもちゃはペットに当たらず、気絶や気分の変化を起こさず、寝ているペットを起こしません。
+  - 段ボール箱で昼寝したり顔を出したりします。毛糸玉を投げると取ってきて、ときどき自分から持ってきて遊びに誘います。遊んでいる間はねこじゃらしやネズミを追いかけて飛びつき、転がしたボールは打ち返します。
+  - 出し入れのときに、ふくらむ演出と煙が出ます。
+- **くらしのコーナー:** 爪とぎポールと植木鉢(2つまで)。ペットが自分で爪をとぎに行き、植木鉢に寄ります。植物は少しずつ育ちます。
+  - **なかよし段階**(AI オン時): 長く遊ぶほど、あいさつにのぞく、出迎える、物にもたれて寝るなどの行動が増えます。
+  - **お気に入りのおもちゃ**(AI オン時): よく一緒に遊ぶおもちゃを覚えて、そばに行ったり、それで遊びに誘ったりします。
+  - トレイの**ねこを呼ぶ**: カーソルまで歩いてきます。**芸を教える:** くるりんターン、ちんちん、ハイタッチ。覚えた芸は「動作」メニューに入ります。
+- **ねこと遊ぶ:** 「遊ぶ」メニューに3つのミニゲーム: お魚さがし、かくれんぼ、ホタルつかまえ。ペットが寝ているときは始まりません。
+- **自然に起きること**(設定 → 習慣でオフにできます): おきゃくさん(紙のちょうちょ、おとなしいスライム)、宝さがし(ペットが地図を見つけ、一緒に足あとをたどって宝箱へ。小さなお話が日記に残ります)。
+- **はじめての人へ:** 起動するたびにポータルからの短いオープニングがあります(クリックでスキップ)。ようこそカードは短くなり、ペットが6ステップで案内します。設定 → 一般、またはトレイ → 「ガイド」からもう一度見られます。
+- **すっきりしたメニュー:** ペットのメニューは9行になり、「今すぐ」は「動作」に名前が変わりました。ごはん、気分、静かモードはペットの名前のメニューの中です。デスクトップの物にはそれぞれ右クリックメニューがあります(箱で昼寝、ここで爪とぎ、クッションで昼寝、かごに戻す)。
+- **バトルモード:**
+  - 第2章: ステージ3は魚かごを守るステージになりました(かごに体力があり、スライムがかごを攻撃しに来ます。ペットが攻撃したスライムはペットに向かってきます)。遠征ルート2の魚倉庫の戦いも同じです。各ステージでは「おすすめ」のスキルを必ず持っていきます。アドバイスは持っているスキルだけを挙げます。ステージ1にすねスライム、ステージ4にタイマースライムが加わりました。
+  - すばやいスライムの突進とボスの転がりは、味方のスライムをすり抜けます(少し難しくなりました)。
+  - 無限モードと遠征では、モンスター図鑑にまだない敵に初めて会うと「新しい敵」と表示します。モンスター図鑑の絵が見やすくなり、章の ‹ › ボタンがはっきりしました。
+- 修正: カーソルで驚くのはペットが手すきのときだけ。農場のラベルが上がるときに切れなくなりました。どのカップもクリックできます。かくれんぼで茂みが残らなくなりました。ねこじゃらしが切れて見えなくなりました。かごのメニューに「かごを片づける」があります。
+- リリース時点の注意: 農場の価格、時間、経験値は見積もりで、長時間のプレイでは未確認です。他の DPI 設定や複数モニターの確認は完了していません。新しい日本語の文はネイティブの確認がまだです。
 
 ## 1.5.0 — Slime phản công (2026-11-07)
 

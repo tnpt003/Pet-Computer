@@ -1491,9 +1491,9 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Mèo đang ngủ: bấm biển không đánh thức; Pause thì không gập/mở được; app toàn màn hình và vào trận thì biển ẩn, ra lại đúng trạng thái
 - [ ] DPI 125/150%, nền sáng/tối: nhãn trên biển không bị cắt, tiếng Nhật/Anh dài vẫn đọc được
 
-## 1.5.1 — Test tay rút gọn trước khi phát hành (21 mục)
+## 1.5.1 — Test tay rút gọn trước khi phát hành (31 mục)
 
-Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại phía trên. Mục nào lỗi thì mở mục chi tiết cùng tên để soi kỹ. Nên chơi trên dữ liệu thật của bạn; muốn thử mức cao hoặc chuồng gà ngay thì dùng `PET_DATA_DIRECTORY` riêng.
+Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, Chơi cùng sen, Góc sống, Mini-game và các mục sửa lỗi phía dưới (từ 14/11 các phần đó cũng thuộc 1.5.1). Mục nào lỗi thì mở mục chi tiết cùng tên để soi kỹ. Nên chơi trên dữ liệu thật của bạn; muốn thử mức cao hoặc chuồng gà ngay thì dùng `PET_DATA_DIRECTORY` riêng.
 
 **Bất biến**
 - [ ] Mèo đang ngủ: bấm ruộng, biển, xe hàng, mưa, cổng tự đóng đều không đánh thức. Click trái thức ngay và vẫn kéo được; click phải thức ngay và mở menu
@@ -1519,12 +1519,26 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Nhật ký có thẻ Nông trại, thành tích không báo dồn, phần thưởng cấp 8–10 (dùng dữ liệu riêng), câu thoại lên cấp hiện đúng
 - [ ] Giờ tập trung trọn một phiên 25 phút: nhãn đếm, chuông vừa tai, vươn vai, hạt Hoa tập trung, hoa lớn và gặt được
 
+**Đồ chơi, góc sống, mini-game (gộp 14/11)**
+- [ ] Giỏ đồ chơi: lấy ra/cất có phình và khói, tối đa 3 món; cầm, ném, mở lại app đồ nằm đúng chỗ; đồ không chạm mèo, không đánh thức mèo ngủ
+- [ ] Thùng carton (ngủ, thò đầu), ném nhặt Bóng len, cần câu và chuột dây cót, chuyền bóng: mèo phản ứng đúng; click/kéo mèo thì nhả bóng
+- [ ] Trụ cào, Chậu cây; menu chuột phải của từng đồ (ngủ trong hộp, cào ở đây, ngủ trên đệm, cất vào giỏ) không đánh thức mèo
+- [ ] Bật AI vài ngày: Mốc thân thiết, Món yêu thích; tắt Python thì không có hai phần này mà mèo vẫn chạy
+- [ ] Gọi mèo (menu khay), Dạy động tác đủ buổi rồi gọi từ "Động tác"
+- [ ] Úp cốc, Trốn tìm, Bắt đom đóm: bấm chuột thật, mèo ngủ thì không bắt đầu, click phải mèo kết thúc ván
+- [ ] Khách ghé thăm, Săn kho báu (chờ hẹn giờ thật hoặc dùng dữ liệu riêng): mèo đi tới đúng dưới dấu chân, mẩu chuyện vào Nhật ký; tắt được trong Thói quen
+
+**Người mới, menu, Battle (gộp 14/11)**
+- [ ] Mở app: màn mở đầu qua cổng, click bỏ qua; dữ liệu riêng mới tinh: phiếu Chào mừng rồi hướng dẫn 6 bước
+- [ ] Menu mèo 9 dòng, menu tên mèo, menu khay đọc dễ; chuột phải vào mèo đang ngủ thì thức và mở menu
+- [ ] Chương 2: màn 3 bảo vệ giỏ cá, bảng chuẩn bị khóa kỹ năng "Gợi ý mang"; màn 1 Slime dỗi, màn 4 Slime hẹn giờ; Vô tận/Viễn chinh báo "Quái mới"
+
 **Chung**
 - [ ] Chơi vài ngày rồi góp ý giá, thời gian, XP: mọi con số nông trại mới là ước tính
 - [ ] DPI 125/150/200%, nhiều màn hình, vi/en/ja: nhãn, bảng, biển không tràn hay bị cắt. Câu tiếng Nhật mới chưa ai duyệt
 - [ ] Mở bản 1.5.1 trên dữ liệu 1.5.0 thật (không có farm.json): không mất gì, cổng và ruộng hiện đúng; nếu cài Setup thì thử nhận cập nhật khi đã phát hành
 
-## Chơi cùng sen M1 — Giỏ đồ chơi và bóng nằm lại (09/11, chỉ bản 1.6)
+## Chơi cùng sen M1 — Giỏ đồ chơi và bóng nằm lại (09/11)
 
 - [ ] Mới cập nhật: chưa thấy giỏ trên desktop. Chuột phải mèo → Chơi → "Giỏ đồ chơi": giỏ hiện trên sàn, có bóng len thò lên.
 - [ ] Bấm giỏ: danh sách mở ở ngay giỏ, chọn "Bóng len": bóng nhảy ra, lăn rồi nằm yên; giỏ không còn bóng.
@@ -1539,7 +1553,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Hai màn hình, DPI khác nhau: kéo bóng qua màn khác không nhảy vị trí; rút màn hình thì bóng về màn chính; bóng ở màn khác mèo rồi "Chơi bóng" thì bóng về cạnh mèo.
 - [ ] Đọc nhãn tiếng Nhật trong menu và danh sách giỏ (chưa ai duyệt).
 
-## Chơi cùng sen M2 — Thùng carton (11/11, chỉ bản 1.6)
+## Chơi cùng sen M2 — Thùng carton (11/11)
 
 - [ ] Bấm giỏ → "Thùng carton": hộp nhảy ra, nằm trên sàn, nắp mở hai bên. Có bóng và hộp thì đếm là 2 món; đủ 3 thì món còn lại mờ.
 - [ ] Bấm hộp: chỉ rung nhẹ tại chỗ. Kéo quá một đoạn ngắn mới cầm; ném thì rơi, nảy thấp, trượt ngắn, không lăn, không xoay. Thả đè lên vùng đất: tự trượt sang chỗ trống.
@@ -1553,7 +1567,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Mèo đang đi tới hộp mà nhấc hộp lên: chuyến đi hủy, mèo đứng lại, không có gì khác.
 - [ ] Đọc nhãn tiếng Nhật "段ボール箱", "箱で寝る" (chưa ai duyệt).
 
-## Chơi cùng sen M3 — Ném nhặt và mèo tha bóng (11/11, chỉ bản 1.6)
+## Chơi cùng sen M3 — Ném nhặt và mèo tha bóng (11/11)
 
 - [ ] Bóng nằm ngoài, mèo thức đứng trên sàn: kéo bóng ném mạnh. Mèo nhìn theo, bóng chạm sàn chậm lại thì chạy tới, ngậm bóng, mang về dưới con trỏ, nhả bóng rồi ngồi chờ. Ném nhẹ, đặt xuống, bấm cho lăn: mèo không đi nhặt.
 - [ ] Nhìn bóng ở miệng khi đi trái, đi phải, ngồi, lúc nhả: bóng ở đúng miệng, không lệch, không chớp; cửa sổ bóng trên sàn biến mất lúc ngậm.
@@ -1568,7 +1582,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] DPI 125 %/150 % và màn hình phụ: bóng nhả ra đúng ở miệng, không nhảy chỗ; ném bóng sang màn khác mèo thì mèo không đi nhặt.
 - [ ] Đọc nhãn tiếng Nhật "猫がくわえています" (chưa ai duyệt).
 
-## Chơi cùng sen M4 — Cần câu lông vũ và chuột dây cót (11/11, chỉ bản 1.6)
+## Chơi cùng sen M4 — Cần câu lông vũ và chuột dây cót (11/11)
 
 - [ ] Giỏ có 4 hàng: Bóng len, Thùng carton, Cần câu lông vũ, Chuột dây cót. Lấy đủ 3 món thì món thứ tư mờ, ghi "tối đa 3 món".
 - [ ] Cần câu nằm ngang trên sàn, lông vũ cạnh đầu cần; ném thì rơi, trượt ngắn, không lăn. Bấm không kéo: cần rung nhẹ.
@@ -1586,7 +1600,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] DPI 125 %/150 % và màn hình phụ: lông vũ treo đúng dưới đầu cần, chuột chạy đúng trên sàn.
 - [ ] Đọc nhãn tiếng Nhật "羽根のねこじゃらし", "ぜんまいネズミ" (chưa ai duyệt).
 
-## Chơi cùng sen M5 — Chuyền bóng và phản ứng (11/11, chỉ bản 1.6)
+## Chơi cùng sen M5 — Chuyền bóng và phản ứng (11/11)
 - [ ] Bóng len nằm ngoài, mèo thức, đứng trên sàn: bấm phía xa của bóng cho bóng lăn về phía mèo, hoặc ném nhẹ về phía mèo. Mèo quay về phía bóng, hạ người, bước tới đón; bóng tới chân thì vỗ trả về phía con trỏ, bóng dừng gần chỗ con trỏ trên sàn.
 - [ ] Chuyền qua lại: từ lượt 2 có số nhỏ cạnh bóng khoảng 1,5 giây, click xuyên qua được. Bóng tự lăn về (dội mép màn hình) không tính lượt.
 - [ ] Để bóng nằm yên khoảng 6 giây: chuỗi hết. Chuỗi từ 5 lượt vượt kỷ lục: nhãn "Kỷ lục mới!". Giỏ ghi "Bóng len (kỷ lục chuyền N)", hàng không mờ.
@@ -1601,7 +1615,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] DPI 125 %/150 % và màn hình phụ: số đếm hiện đúng trên bóng.
 - [ ] Đọc nhãn tiếng Nhật "パス最高記録", "新記録！" (chưa ai duyệt).
 
-## Góc sống M1 — Trụ cào (11/11, chỉ bản 1.6)
+## Góc sống M1 — Trụ cào (11/11)
 - [ ] Giỏ có đường kẻ rồi hàng "Trụ cào". Lấy đủ 3 đồ chơi: hàng trụ vẫn lấy được; Chuột dây cót mờ "tối đa 3 món". Trụ đứng trên sàn, mèo luôn ở trước trụ; nhìn rõ trên nền sáng và nền tối.
 - [ ] Bấm trụ không kéo: quả bông đung đưa rồi đứng yên, trụ không dịch. Kéo/ném: rơi nảy thấp, không lăn, không xoay; thả vào giỏ là cất. Đồ đè lên vùng đất thì tự trượt sang chỗ trống.
 - [ ] Đợi 6–10 phút (mèo thức, đứng trên sàn cùng màn hình, không Quiet): mèo tự đi tới, quay chân trước vào cột, cào khoảng 2,4 giây (dây thừng rung, vài sợi xơ rơi), rồi vươn vai và đi chơi tiếp. Không có âm thanh mới.
@@ -1612,7 +1626,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Tắt app rồi mở lại: trụ ở chỗ cũ. DPI 125 %/150 % và màn hình phụ: trụ đúng chỗ, mèo đứng sát cột khi cào.
 - [ ] Đọc nhãn tiếng Nhật "爪とぎポール", "コーナー用品は2個まで" (chưa ai duyệt).
 
-## Góc sống M2 — Chậu cây và hộp thêm trạng thái (11/11, chỉ bản 1.6)
+## Góc sống M2 — Chậu cây và hộp thêm trạng thái (11/11)
 - [ ] Giỏ có hàng "Chậu cây (mầm)". Lấy được cả trụ cào và chậu cùng 3 đồ chơi; có trụ và chậu rồi thì nhóm góc sống đủ. Chậu nhìn rõ trên nền sáng và nền tối.
 - [ ] Bấm chậu không kéo: lá rung rồi đứng yên. Kéo/ném: rơi nảy thấp, không lăn, không vỡ, không đổ đất.
 - [ ] Đợi 8–12 phút (mèo thức, trên sàn, không Quiet): mèo tự tới chậu, ngồi cạnh và ngửi lá, vỗ lá (lá rung) hoặc ngồi nhìn cây khoảng 4 giây; hai lần liền nhau không giống nhau.
@@ -1626,7 +1640,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] DPI 125 %/150 %, màn hình phụ: chậu và mèo trong hộp đúng chỗ.
 - [ ] Đọc nhãn tiếng Nhật "植木鉢", "芽", "小さな木", "葉がしげった", "花が咲いた" (chưa ai duyệt).
 
-## Góc sống M3 — Mốc thân thiết (12/11, chỉ bản 1.6, cần bật AI)
+## Góc sống M3 — Mốc thân thiết (12/11, cần bật AI)
 - [ ] Nhật ký → thẻ độ thân thiết có "Mốc thân thiết: … ●●○○○", các dòng ✓ hành vi đã mở và "Mốc kế: … (còn N điểm) · mở: …". Tắt AI: thẻ như cũ, không có mốc.
 - [ ] Mốc Quen mặt trở lên: rời máy hơn 10 phút rồi quay lại, mèo (sau khi thức nếu đang away nap) quay đầu nhìn về phía con trỏ khoảng 1,5 giây. Rời máy 5 phút: không chào. Quay lại lần nữa trong 30 phút: không chào lại.
 - [ ] Mốc Rất thân (sửa `bond`/`bond_peak` trong `ai-memory.json` của dữ liệu thử, không phải dữ liệu thật): quay lại sau 10 phút, mèo đi về phía con trỏ rồi vẫy chân. Click giữa chừng: dừng, kéo như thường.
@@ -1636,7 +1650,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Quiet, Giờ tập trung, app toàn màn hình, trong trận: không có Ngó chào, Ra đón, chuỗi sau khi chơi.
 - [ ] Đọc tên mốc tiếng Nhật "はじめまして", "顔なじみ", "なかよし", "大のなかよし", "心の友" và câu `bond_up` tiếng Nhật (chưa ai duyệt).
 
-## Góc sống M4 — Món yêu thích (12/11, chỉ bản 1.6, cần bật AI)
+## Góc sống M4 — Món yêu thích (12/11, cần bật AI)
 - [ ] Chơi với một món (ví dụ Cần câu) ít nhất 5 lượt, nhiều hơn hẳn hai món kia: Nhật ký → thẻ "Món yêu thích" hiện tên món và số lượt ba món; mèo nói một câu "… thích món này nhất" (nếu bật câu nói). Tắt AI: không có thẻ này.
 - [ ] Món yêu thích nằm ngoài desktop cùng màn hình: khoảng 10–15 phút mèo tự đi tới, ngửi hoặc vỗ chân rồi ngồi cạnh ~5 giây; món không nhúc nhích.
 - [ ] Món yêu thích là Cần câu hoặc Chuột: tới lượt rủ chơi (8–15 phút), mèo ngồi cạnh món, nhìn về con trỏ, thỉnh thoảng vỗ món, chờ 20 giây. Cầm cần câu vẩy hoặc click lên dây chuột trong lúc đó: mèo vào trò đuổi như thường. Không chơi: mèo đi việc khác. Món yêu thích là Bóng len hoặc chưa có: mèo tha bóng như M3.
@@ -1645,7 +1659,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Đang ghé/rủ: click trái dừng và kéo như thường, click phải mở menu; Quiet, Giờ tập trung, app toàn màn hình, trận, mèo ngủ: không ghé, không rủ.
 - [ ] Đọc câu `favorite_toy` và chữ thẻ Nhật ký tiếng Nhật (chưa ai duyệt).
 
-## Góc sống M5 — Gọi mèo và dạy động tác (12/11, chỉ bản 1.6)
+## Góc sống M5 — Gọi mèo và dạy động tác (12/11)
 - [ ] Menu khay → "Gọi mèo", rồi đưa chuột ra giữa màn hình: mèo quay đầu, đi theo con trỏ trên sàn, tới gần thì ngồi ngước nhìn ~3 giây. Bật Quiet vẫn gọi được. Click mèo giữa chừng: dừng, kéo như thường.
 - [ ] Mèo đứng trên mép cửa sổ: gọi thì đi dọc mép, tới đầu mép thì dừng ngồi, không tự nhảy xuống.
 - [ ] Mèo đang ngủ: gọi thì mèo ngủ tiếp (không thức), tự thức trong 30 giây thì mới tới. Pause, trong trận, app toàn màn hình: dòng "Gọi mèo" mờ.
@@ -1655,7 +1669,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Đóng mở lại mèo: tiến độ và động tác đã thuộc còn nguyên. Mèo không bao giờ tự làm ba động tác này.
 - [ ] Đọc chữ menu và câu "覚えた" tiếng Nhật (chưa ai duyệt).
 
-## Mini-game M1 — Úp cốc tìm cá (12/11, chỉ bản 1.6)
+## Mini-game M1 — Úp cốc tìm cá (12/11)
 - [ ] Menu chuột phải → "Chơi cùng mèo" → "Úp cốc tìm cá" (và menu khay → "Chơi cùng mèo"): 3 cốc hiện cạnh mèo trên sàn, cá khô trước cốc giữa, cốc úp xuống, tráo theo vòng cung mắt theo kịp. Vòng 1 chậm, vòng 2 nhanh hơn, từ vòng 3 nhanh nhất.
 - [ ] Hiện "Cá ở cốc nào?"; rê chuột lên cốc có viền sáng, con trỏ bàn tay. Chọn cốc: mèo đi sau hàng cốc tới cốc đó, cúi ngửi, hất cốc trượt sang bên. Đúng: mèo ngậm cá, "+1", vòng mới. Sai: mèo nghiêng đầu, cốc có cá lật ra, nhãn "n vòng" (từ 3 vòng có "Kỷ lục mới!").
 - [ ] Click chỗ trống giữa hai cốc hoặc quanh cốc: click xuyên xuống cửa sổ bên dưới (không chặn chuột). Click cốc không tính là click mèo.
@@ -1665,7 +1679,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Trong lúc chơi mèo không tự đi, không ngủ, không đổi cảm xúc; xong trò mèo về bình thường. Mở lại app: kỷ lục còn trên dòng menu và trong Nhật ký (thẻ "Mini-game", cả khi tắt AI).
 - [ ] Mèo đứng trên mép cửa sổ: cốc bày trên mép đó; mép quá hẹp hoặc kẹt giữa vùng đất nông trại/đồ chơi: mèo đi ra chỗ rộng, không có thì báo "Không đủ chỗ bày cốc". Thử nền sáng/tối, DPI 125–150%, đo FPS lúc tráo nhanh nhất.
 
-## Mini-game M2 — Trốn tìm (12/11, chỉ bản 1.6)
+## Mini-game M2 — Trốn tìm (12/11)
 - [ ] "Chơi cùng mèo" → "Trốn tìm" (menu chuột phải và khay): nhãn "Nhắm mắt nhé! 3… 2… 1…" ở chỗ mèo, bụi cây mọc lên, mèo biến trong làn khói. Dòng "Úp cốc tìm cá" mờ trong lúc chơi.
 - [ ] Mèo nấp: nhìn không thấy tai, đuôi, ria; vài giây một lần chóp tai ló lên rồi thụt xuống; bụi cây khác thỉnh thoảng rung để đánh lừa. Không có câu nói hay bong bóng nào trên chỗ mèo nấp.
 - [ ] Bày thùng carton trên sàn rồi chơi vài ván: hộp là một chỗ nấp, mèo nấp trong hộp chỉ ló chóp tai; click hộp là một lượt đoán; nhấc hộp lên thì trò kết thúc, mèo hiện lại.
@@ -1674,7 +1688,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Esc, click ra ngoài, chọn lại dòng menu: dừng. Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức; Pause đóng băng; app toàn màn hình, đổi màn hình/DPI: dừng. Mèo đang trên mép cửa sổ: vẫn nấp trên sàn.
 - [ ] Nhật ký → thẻ "Mini-game" có dòng Trốn tìm; dòng menu ghi số lần tìm thấy. Nền sáng/tối, DPI 125–150%, đo FPS.
 
-## Mini-game M3 — Bắt đom đóm (12/11, chỉ bản 1.6)
+## Mini-game M3 — Bắt đom đóm (12/11)
 - [ ] "Chơi cùng mèo" → "Bắt đom đóm" (menu chuột phải và khay): nhãn "Bắt đom đóm nào! 3… 2… 1…", rồi 3–5 đom đóm bay quanh mèo, nhãn hiện số giây còn lại và số đốm. Hai dòng mini-game kia mờ trong lúc chơi.
 - [ ] Đom đóm rõ trên nền sáng và tối, to và ấm màu hơn đom đóm thời tiết; không bao giờ bay vào thân mèo; mỗi con nhấp nháy rồi tự tắt sau vài giây, luôn còn 3–5 con; từ giây 15 bay nhanh hơn một chút.
 - [ ] Click trúng đom đóm (dễ trúng, vùng ~28 DIP): tan thành hạt sáng, "+1". Click trượt chỗ trống trong vùng chơi: click xuyên xuống cửa sổ bên dưới, trò không dừng. Click đom đóm không bao giờ tính là click mèo.
@@ -1683,7 +1697,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Esc, click ra ngoài vùng chơi, chọn lại dòng menu, click hoặc kéo mèo: dừng, đom đóm biến mất; kéo mèo vẫn nhấc mượt, dangling, ném như thường. Click phải mèo: dừng, mở menu.
 - [ ] Quiet/Giờ tập trung vẫn chơi được; mèo ngủ thì chờ tự thức (không đánh thức); Pause đóng băng đom đóm và đồng hồ; app toàn màn hình, đổi màn hình/DPI: dừng, không tính ván. Màn hình hẹp hoặc kẹt giữa vùng đất/đồ chơi: mèo đi ra chỗ rộng, không có thì "Không đủ chỗ". DPI 125–150%, đo FPS khi có 5 đốm và hạt tan.
 
-## Mini-game M4 — Khách ghé thăm (12/11, chỉ bản 1.6)
+## Mini-game M4 — Khách ghé thăm (12/11)
 - [ ] Để mèo chạy tự do (không Yên lặng, không Giờ tập trung, có chạm máy): khoảng 40–90 phút sau khi mở app có một khách. Không có dòng menu gọi khách; muốn thử nhanh phải dùng UiChecks.
 - [ ] Bướm giấy: bay từ một mép màn hình sang mép kia, ngang trên đầu mèo, khoảng 8–15 giây; rõ trên nền sáng và tối; không bao giờ đè vào thân mèo. Mèo quay đầu nhìn theo; có lúc đi theo một đoạn ngắn (≤ ~150 DIP, ≤ 3 giây) rồi vồ một cú tại chỗ, đáp lại đúng chỗ.
 - [ ] Slime hiền (xanh bạc hà, mầm lá trên đầu, khác slime trong trận): bò trên sàn, dừng cách mèo ~80 DIP, nhún chào ~1,5 giây. Mèo đứng dưới sàn: slime quay lại đi ra đúng mép nó đến (không bò xuyên qua mèo). Mèo đứng trên mép cửa sổ: slime bò tiếp ra mép bên kia.
@@ -1692,7 +1706,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Mèo ngủ, mở app toàn màn hình, vào trận/mở Sảnh, đổi DPI, rút màn hình: khách mờ rồi mất ngay, không đánh thức mèo. Pause: khách đứng yên. Yên lặng, Giờ tập trung, người dùng vắng: không có khách.
 - [ ] Tùy chỉnh → Thói quen → "Khách ghé thăm": tắt thì khách đang có biến mất và không đến nữa; bật lại sau đó khách đến lại. Nhật ký → thẻ "Mini-game" có dòng "Khách đã ghé: n". DPI 125–150%, nhiều màn hình (khách ở màn hình của mèo), đo FPS khi khách bay.
 
-## Mini-game M5 — Săn kho báu (12/11, chỉ bản 1.6)
+## Mini-game M5 — Săn kho báu (12/11)
 - [ ] Để mèo chạy tự do (không Yên lặng, không Giờ tập trung, có chạm máy): khoảng 60–120 phút sau khi mở app mèo ngồi xuống ngậm cuộn giấy có dấu X, ngước nhìn ~2 giây, rồi trên đầu có biểu tượng bản đồ nhỏ. Tối đa 3 lần mỗi ngày. Muốn thử nhanh phải dùng UiChecks.
 - [ ] Biểu tượng bản đồ: nằm ngay trên đầu mèo, đi theo mèo, ẩn khi kéo mèo/toàn màn hình/trong trận; click vào là bắt đầu săn và không tính là click mèo (mèo không bị nhấc, không phản ứng). Để yên 10 phút thì mờ dần rồi mất. Pause thì 10 phút đứng lại.
 - [ ] Menu chuột phải và menu khay → "Chơi cùng mèo" → "Săn kho báu": chưa có bản đồ thì mờ, ghi "chưa có bản đồ"; có bản đồ thì bắt đầu được; đang chơi thì thành "Dừng Săn kho báu". Mini-game khác mờ khi đang săn.
@@ -1712,7 +1726,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 ## Nhãn nông trại không bị cắt (Issue #77, 12/11)
 - [ ] Gập ruộng rồi thu hoạch hoặc lên cấp: nhãn hiện trên biển bay lên và mờ dần, chữ không bị cắt phần trên (cả nhãn hai dòng). Ruộng đang mở có cây cao: nhãn thu hoạch cũng không bị cắt.
 
-## Sắp xếp menu, đồ vật có menu riêng (12/11, chỉ bản 1.6)
+## Sắp xếp menu, đồ vật có menu riêng (12/11)
 - [ ] Chuột phải mèo: 9 dòng (Niệm phép cổng có icon lấp lánh, Chơi, Động tác | Giờ tập trung, Âm thanh | tên mèo, Vị trí, Cài đặt | Thoát). Icon lấp lánh hiện đúng (máy Windows 10 không có Segoe Fluent Icons thì có thể ra ô vuông: báo lại). Rê chuột lên Giờ tập trung thấy câu "Mèo ngồi đếm ngược cùng bạn…". Chơi › có 3 dòng đồ chơi, một đường kẻ, rồi 4 mini-game; Động tác kết thúc bằng đường kẻ và "Dạy động tác ›". Tên mèo ›: Cho {tên} ăn, Cảm xúc ›, Chế độ yên lặng (tick), kẻ, Trạng thái, Nhật ký, kẻ, Tùy chỉnh…. Cài đặt → Chung cuối trang có thẻ "Giới thiệu Desktop Pet" (phiên bản, thư mục dữ liệu chọn/copy được, trạng thái AI, nút "Xem debug hành vi" mở/đóng cửa sổ debug). Menu khay vẫn có "Chơi cùng mèo". Xem cả tiếng Việt, Anh, Nhật không tràn.
 - [ ] Chuột phải lên hộp: "Ngủ trong hộp", đường kẻ, "Cất vào giỏ". Gần thì mèo đi vào ngủ (cả khi Quiet); xa thì mờ, rê thấy "Mèo ở xa hộp quá"; mèo đang ngủ chỗ khác thì mờ "Mèo đang ngủ hoặc đang bận" và mèo KHÔNG thức. Mèo đang trong hộp, hộp đang làm chỗ nấp Trốn tìm, đang cầm hộp, Pause: không có menu.
 - [ ] Chuột phải lên trụ cào: "Cào móng ở đây" (gần thì đi tới cào, xa thì mờ "Mèo ở xa trụ quá"), "Cất vào giỏ". Chậu cây, cần câu, chuột: chỉ "Cất vào giỏ"; bóng len: "Cất bóng"; mèo đang ngậm bóng thì không có menu.
@@ -1720,7 +1734,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Chơi bóng 45 giây: chuột phải lên quả bóng → "Cất bóng" cất được, mèo không bị chạm. Mở menu đồ vật không làm mèo quay nhìn, không tính vuốt/click.
 - [ ] Phiếu Chào mừng (xóa preferences trên máy thử, không phải máy thật) có dòng "Chuột phải vào đồ vật…", vi/en/ja không tràn. Câu tiếng Nhật mới chưa ai duyệt.
 
-## M2a Màn mở đầu (12/11, chỉ bản 1.6)
+## M2a Màn mở đầu (12/11)
 - [ ] Thoát rồi mở lại mèo: cổng phép mở ở chỗ mèo được lưu, mèo bị quăng ra, đáp và nảy như thả thường; KHÔNG Angry/Dizzy/Surprised, không câu nói. Lưu mèo trên mép cửa sổ: cổng ở sàn cùng cột.
 - [ ] Biển nông trại trồi từ đất lên có rung, đất vụn, lấp lánh; ruộng/bếp/hồ/chuồng gà hiện như cũ. Kỷ vật, giỏ, đồ chơi hiện lần lượt có khói và lấp lánh; cả màn ~3 giây rồi không còn cửa sổ thừa.
 - [ ] Click mèo đang bay: hiện hết ngay và vẫn bắt/kéo được; click cổng: hiện hết ngay, KHÔNG mở Sảnh; chuột phải mèo: hiện hết và mở menu.
@@ -1728,7 +1742,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Âm thanh: cue lấp lánh và tiếng đáp, tắt Âm thanh thì im. Người dùng mới (máy thử): phiếu Chào mừng hiện sau màn mở đầu.
 - [ ] Nhìn trên nền sáng/tối, DPI khác, đồ vật ở màn hình khác: khói/đất vụn đúng chỗ.
 
-## M2b Chào mừng rút gọn và hướng dẫn mèo dẫn (12/11, chỉ bản 1.6)
+## M2b Chào mừng rút gọn và hướng dẫn mèo dẫn (12/11)
 - [ ] Máy thử (đặt `PET_DATA_DIRECTORY` tới thư mục trống, không dùng dữ liệu thật) cài bằng Setup: màn mở đầu xong mới hiện phiếu Chào mừng; không còn dòng mẹo; có ngôn ngữ, Khởi động cùng Windows, nhắc nghỉ, hai nút "Đi cùng mèo"/"Để sau"; đổi ngôn ngữ thì chữ đổi ngay; vi/en/ja không tràn.
 - [ ] "Đi cùng mèo": thẻ "Hướng dẫn · 1/6" trên đầu mèo, mèo ngồi chờ. Kéo thả mèo thật: đáp xong qua bước 2 (kéo/ném/Dizzy vẫn như thường). Chuột phải mèo: đóng menu thì qua bước tiếp.
 - [ ] Bước biển: mèo đi tới cạnh biển nông trại rồi ngồi quay về biển. Bước đồ vật: mèo đi tới kỷ vật (hoặc giỏ đồ chơi) cùng màn hình. Tắt nông trại / không trưng kỷ vật, giỏ: các bước đó không có, số bước giảm.

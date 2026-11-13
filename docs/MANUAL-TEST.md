@@ -1760,3 +1760,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Hướng dẫn chương 2 màn 3: bước giới thiệu giỏ (câu mới có "thanh máu"), lần đầu giỏ trúng đòn có bước "Slime đang đánh giỏ!…" (nút Hiểu rồi); không còn bước "Cá rơi rồi!".
 - [ ] Cảm giác độ khó (ghi vào Nhật ký chơi thử): mô phỏng Thường bot đơn giản thắng 60/60, giỏ còn ~57–67%; mèo còn nhiều máu hơn trước (93–97%). Giỏ 150 máu có quá cứng/quá giòn không.
 - [ ] DPI 100/150/200%, màn hình phụ: giỏ đúng giữa dải trận, thanh máu và "!" không bị cắt; chữ vi/en/ja đúng.
+
+## Góp ý nông trại 13/11
+Đã kiểm bằng UiChecks và ảnh render (`farm-pinwheel-gust.png`, `farm-pond-leap.png`), **chưa xem chuyển động trên desktop thật**.
+- [ ] Kho → hàng Đồ trang trí: cả 9 hình nằm giữa ô (món mờ cũng vậy).
+- [ ] Có Chong chóng: chờ tối đa ~1,5 phút thấy ba vệt gió lướt qua, chong chóng quay nhanh rồi chậm dần, dừng hẳn. Trời Phấn hoa/Hoàng hôn: quay đều liên tục. Pause: đứng yên. Nhấc ruộng lên: chong chóng vẫn đúng chỗ.
+- [ ] Ao: chờ tối đa ~1,5 phút thấy một con cá nhỏ nhảy vòng cung và gợn nước; lúc mèo đang câu thì không có cá nhảy. FPS khi chong chóng quay không giảm rõ.

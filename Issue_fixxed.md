@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #80 — Biểu tượng đồ trang trí không nằm giữa ô (13/11)
+- **Triệu chứng:** hàng "Đồ trang trí" trong Kho: hình hàng rào, đèn lồng, chong chóng… lệch khỏi giữa ô vuông.
+- **Nguyên nhân:** `DrawDecorIcon` căn giữa bằng kích thước nhập tay cho từng món (rộng, cao, tâm, đáy); các số này không khớp hình vẽ thật, ba món quà của mèo hàng xóm còn dùng số ước lượng.
+- **Sửa:** vẽ thử từng món vào `DrawingGroup` một lần, lấy khung bao thật (`Bounds`, có cả nét viền), rồi co và căn giữa theo khung đó (`PetFarmArt.Decor.cs`). Dùng chung cho Kho và Gian hàng.
+- **Kiểm chứng:** check mới trong `FarmChecks` (cả 9 món: tâm hình cách tâm ô < 0,6 DIP, cạnh dài bằng ô); xem ảnh render bảng Gian hàng.
+- [ ] Cần xem tay: hàng Đồ trang trí trong Kho ở DPI thật, cả món mờ (chưa có).
+
 ## #79 — Slime nhanh gồng xong bị slime phía trước chặn, không lao trúng mèo (13/11)
 - **Triệu chứng:** Slime nhanh gồng xong mà có slime khác đứng trước thì cú lao không đi qua được, dừng sớm và không trúng mèo.
 - **Nguyên nhân:** mỗi khung hình `Separate()` đẩy hai slime chồng nhau lùi mỗi con một nửa. Slime đang lao cũng bị đẩy, nhưng `DashLeft` vẫn trừ đủ, nên cú lao chỉ đi khoảng một nửa quãng (test: 230 → 136 DIP), con chắn bị kẹt thì gần như đứng yên. Cú lăn của boss (`roll`, Slime Nén) cùng trạng thái `Dashing` nên bị y hệt. Đã rà các kiểu di chuyển khác: Slime Mẹ lao và Slime biến dị đặt vị trí tuyệt đối theo đường đi nên không bị; boss nhảy, bom bay, đào hang, bay, bóng ma, trộm chạy, slime tha cá, hợp thể đã được miễn từ trước.

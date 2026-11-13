@@ -204,6 +204,12 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Hiệu ứng phép: mở 0,9 giây (vòng ký tự tím vàng trên sàn, đất trồi lên vượt cao một chút rồi nảy về, sao bay lên, tiếng "sparkle"), gập 0,6 giây là đảo ngược cảnh đó, đất chìm vào vòng sáng, sao bị hút xuống, tiếng "swoosh". Mở tất cả, Gập tất cả chạy lần lượt theo chiều từ trái sang, cách nhau 0,12 giây, một tiếng cho cả lượt. Vùng mở tạm cũng có phép. Mèo và các luật coi vùng đã mở/gập ngay từ lúc bấm, phép chỉ là phần hình. Khởi động app, thoát fullscreen, ra khỏi trận thì vùng hiện thẳng, không diễn. Pause giữ yên phép.
 - Nhãn của vùng gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển. Bấm biển không chạm vào mèo: không đánh thức, không phá kéo thả hay cảm xúc.
 
+### Góp ý 13/11 (duyệt 13/11)
+
+- Chong chóng (quà mèo hàng xóm) quay khi có gió: trời Phấn hoa hoặc Hoàng hôn thì quay đều; ở mọi thời tiết, cứ 30–90 giây có một cơn gió nhỏ (ba vệt gió lướt qua chỗ chong chóng, 1,6 giây) làm nó quay nhanh rồi chậm dần và dừng. Lúc đứng yên không vẽ lại; khi quay vẽ lại tối đa 30 lần/giây. Pause đứng yên. Không đổi gì trong game.
+- Ao cá: cứ 40–90 giây một con cá nhỏ nhảy lên khỏi mặt nước thành vòng cung rồi rơi xuống, có gợn nước chỗ nhảy và chỗ rơi, khoảng 1,1 giây. Không nhảy khi mèo đang câu hoặc ao đang nhấc; Pause đứng yên. Không có tiếng, không cho cá.
+- Biểu tượng đồ trang trí (Kho, Gian hàng) căn giữa theo khung bao thật của hình vẽ, đo một lần cho mỗi món (Issue #80).
+
 ## Giai đoạn 1
 
 Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức mạnh trong trận, không chạm vào mèo. Các gói chưa chọn: thêm cây và mùa vụ, công cụ và phân bón, vật nuôi, mở rộng và trang trí, chất lượng nông sản.

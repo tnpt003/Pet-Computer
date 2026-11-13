@@ -245,7 +245,8 @@ public sealed partial class PetWindow
     {
         bool fishing = farmChores.Phase == FarmChorePhase.Work && farmChores.Kind == FarmChoreKind.Fishing, was = farmPondBusy;
         farmPondBusy = fishing;
-        if (!fishing && !was) return false;
+        bool leaping = StepFarmLeap(dt, fishing);
+        if (!fishing && !was && !leaping) return false;
         farmPondTime += dt;
         return true;
     }
@@ -309,6 +310,9 @@ public sealed partial class PetWindow
             pond.FishSide = farmChores.FishSide;
             pond.CaughtFish = sinceBite >= 0 ? farmChores.Catch : null;
             pond.CaughtAge = Math.Clamp(sinceBite / (FarmChores.ReelSeconds + FarmChores.FishShowSeconds), 0, 1);
+            pond.LeapAge = farmLeapAge;
+            pond.LeapX = farmLeapX;
+            pond.LeapSide = farmLeapSide;
         }
         if (FarmCoop.Art is { } coop && farm != null)
         {

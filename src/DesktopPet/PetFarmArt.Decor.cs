@@ -39,6 +39,9 @@ public sealed partial class PetFarmArt
 
         // Which decorations are out, one bit each (PetFarm.DecorMask).
         public int Shown { get; private set; }
+        // The pinwheel's turn in degrees, and a puff of wind going past it from 0 to 1 (-1: none).
+        public double PinwheelTurn { get; private set; }
+        public double Gust { get; private set; } = -1;
 
         public DecorLayer(FarmDecorPlace place, double artWidth, double mid)
         {
@@ -58,6 +61,15 @@ public sealed partial class PetFarmArt
             InvalidateVisual();
         }
 
+        // The wind on the pinwheel: drawn again only when it moved.
+        public void Blow(double turn, double gust)
+        {
+            if (turn == PinwheelTurn && gust == Gust) return;
+            PinwheelTurn = turn;
+            Gust = gust;
+            if (Has(FarmDecor.Pinwheel)) InvalidateVisual();
+        }
+
         private bool Has(FarmDecor decor) => (Shown & (1 << (int)decor)) != 0;
 
         protected override void OnRender(DrawingContext dc)
@@ -73,7 +85,7 @@ public sealed partial class PetFarmArt
                 case FarmDecorPlace.FieldBack:
                     if (Has(FarmDecor.BambooFence)) At(dc, mid, SoilTop + 4, () => DrawBambooFence(dc, PlotWidth - 12));
                     if (Has(FarmDecor.Lantern)) At(dc, Side + 6, SoilTop + 1, () => DrawLantern(dc));
-                    if (Has(FarmDecor.Pinwheel)) At(dc, Side + PlotWidth - 34, SoilTop + 1, () => DrawPinwheel(dc));
+                    if (Has(FarmDecor.Pinwheel)) At(dc, Side + PlotWidth - 34, SoilTop + 1, () => { DrawPinwheel(dc, PinwheelTurn); if (Gust >= 0) DrawGust(dc, Gust); });
                     break;
                 case FarmDecorPlace.FieldFront:
                     if (Has(FarmDecor.FlowerBed)) At(dc, mid, Floor - 1, () => { for (int i = -5; i <= 5; i++) { dc.PushTransform(new TranslateTransform(i * 30, 0)); DrawFlowers(dc, i); dc.Pop(); } });
@@ -103,17 +115,39 @@ public sealed partial class PetFarmArt
     private static readonly Geometry PinwheelBlade = Parse("M0,0 L3,-14 L12,-11 Z");
 
     // The neighbour's gifts, still pictures like the rest.
-    private static void DrawPinwheel(DrawingContext dc)
+    private static void DrawPinwheel(DrawingContext dc, double turn = 0)
     {
         dc.DrawRoundedRectangle(Stake, InkThin, new Rect(-1.8, -46, 3.6, 46), 1.5, 1.5);
         dc.PushTransform(new TranslateTransform(0, -48));
         for (int i = 0; i < 4; i++)
         {
-            dc.PushTransform(new RotateTransform(i * 90 + 15));
+            dc.PushTransform(new RotateTransform(i * 90 + 15 + turn));
             dc.DrawGeometry(i % 2 == 0 ? PinRed : PinBlue, InkThin, PinwheelBlade);
             dc.Pop();
         }
         dc.DrawEllipse(PetalGold, InkThin, new Point(0, 0), 2.6, 2.6);
+        dc.Pop();
+    }
+
+    private static readonly Pen[] GustPens = { PetUi.FrozenPen(PetUi.Hex("#E8F2F4"), 1.6), PetUi.FrozenPen(PetUi.Hex("#7FA6B3"), 0.8) };
+
+    // Three wavy streaks of wind going past the pinwheel, left to right, fading in and out.
+    private static void DrawGust(DrawingContext dc, double age)
+    {
+        double fade = Math.Sin(Math.Clamp(age, 0, 1) * Math.PI);
+        dc.PushOpacity(0.85 * fade);
+        foreach (var (y, lag, length) in new[] { (-56.0, 0.0, 34.0), (-44.0, 0.12, 26.0), (-31.0, 0.05, 30.0) })
+        {
+            double x = -64 + (age - lag) * 110;
+            var figure = new StreamGeometry();
+            using (var g = figure.Open())
+            {
+                g.BeginFigure(new Point(x, y), false, false);
+                g.BezierTo(new Point(x + length * 0.3, y - 4), new Point(x + length * 0.6, y + 4), new Point(x + length, y), true, true);
+            }
+            figure.Freeze();
+            foreach (var pen in GustPens) dc.DrawGeometry(null, pen, figure);
+        }
         dc.Pop();
     }
 
@@ -225,24 +259,32 @@ public sealed partial class PetFarmArt
     }
 
     // In a shop's row: the same drawings, or a short piece of the long ones.
+    // Centred on what is really drawn (measured once per decoration), so each sits in the middle of its square.
     internal static void DrawDecorIcon(DrawingContext dc, FarmDecor decor, double size)
     {
-        var (width, height, centerX, bottom) = decor switch
-        {
-            FarmDecor.BambooFence => (52.0, 38.0, 0.0, 0.0),
-            FarmDecor.FlowerBed => (30.0, 18.0, 0.0, 0.0),
-            FarmDecor.WaterLily => (20.0, 16.0, 0.0, 3.0),
-            FarmDecor.Lantern => (22.0, 36.0, 9.0, -29.0),
-            FarmDecor.WoodBridge => (92.0, 44.0, 0.0, 5.0),
-            FarmDecor.Pinwheel => (34.0, 64.0, 0.0, 0.0),
-            FarmDecor.StoneFrog => (30.0, 24.0, 0.0, 0.0),
-            FarmDecor.TeaPot => (38.0, 26.0, 2.0, 0.0),
-            _ => (100.0, 86.0, 0.0, 0.0)
-        };
-        double scale = Math.Min(size / width, size / height);
-        dc.PushTransform(new TranslateTransform(size / 2, size / 2 + height * scale / 2));
+        var bounds = DecorIconBounds(decor);
+        double scale = Math.Min(size / bounds.Width, size / bounds.Height);
+        dc.PushTransform(new TranslateTransform(size / 2, size / 2));
         dc.PushTransform(new ScaleTransform(scale, scale));
-        dc.PushTransform(new TranslateTransform(-centerX, -bottom));
+        dc.PushTransform(new TranslateTransform(-(bounds.Left + bounds.Width / 2), -(bounds.Top + bounds.Height / 2)));
+        DrawDecorShape(dc, decor);
+        dc.Pop(); dc.Pop(); dc.Pop();
+    }
+
+    private static readonly System.Collections.Generic.Dictionary<FarmDecor, Rect> DecorBounds = new();
+
+    internal static Rect DecorIconBounds(FarmDecor decor)
+    {
+        if (DecorBounds.TryGetValue(decor, out var known)) return known;
+        var drawing = new DrawingGroup();
+        using (var context = drawing.Open()) DrawDecorShape(context, decor);
+        var bounds = drawing.Bounds;
+        if (bounds.IsEmpty || bounds.Width <= 0 || bounds.Height <= 0) bounds = new Rect(-15, -15, 30, 30);
+        return DecorBounds[decor] = bounds;
+    }
+
+    private static void DrawDecorShape(DrawingContext dc, FarmDecor decor)
+    {
         switch (decor)
         {
             case FarmDecor.BambooFence: DrawBambooFence(dc, 48); break;
@@ -255,7 +297,6 @@ public sealed partial class PetFarmArt
             case FarmDecor.TeaPot: DrawTeaPot(dc); break;
             default: DrawAwning(dc); break;
         }
-        dc.Pop(); dc.Pop(); dc.Pop();
     }
 }
 

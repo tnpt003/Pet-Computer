@@ -1258,10 +1258,54 @@ internal static class FarmChecks
         window.FarmHearth.Art!.Lift = 0;
         window.FarmHearth.Art!.InvalidateVisual();
 
+        Ambience(window, farm, back, check, frames);
+
         farm.Decors.Clear(); farm.DecorsHidden.Clear();
         farm.Coins = coins;
         Call(window, "FarmChanged");
         check(layers.All(layer => layer.Shown == 0) && window.FarmHearth.Decor!.Shown == 0, "Without them the land is bare again");
+    }
+
+    // Life that changes nothing (feedback 13/11): every icon centred in its square, the pinwheel in the wind,
+    // a fish jumping in the pond.
+    private static void Ambience(PetWindow window, PetFarm farm, PetFarmArt.DecorLayer back, Action<bool, string> check, Action<double> frames)
+    {
+        foreach (var decor in Enum.GetValues<FarmDecor>())
+        {
+            var drawing = new DrawingGroup();
+            using (var dc = drawing.Open()) PetFarmArt.DrawDecorIcon(dc, decor, 30);
+            var box = drawing.Bounds;
+            double midX = box.Left + box.Width / 2, midY = box.Top + box.Height / 2;
+            check(Math.Abs(midX - 15) < 0.6 && Math.Abs(midY - 15) < 0.6 && Math.Abs(Math.Max(box.Width, box.Height) - 30) < 0.6,
+                $"The {decor} icon sits in the middle of its square ({midX:F1}, {midY:F1}, {box.Width:F0}x{box.Height:F0})");
+        }
+
+        farm.Decors.Add(nameof(FarmDecor.Pinwheel));
+        Call(window, "FarmChanged");
+        SetField(window, "farmPinSpeed", 0.0);
+        SetField(window, "farmGustAge", -1.0);
+        SetField(window, "farmGustDue", 0.0);
+        frames(0.5);
+        check(back.Gust is > 0 and < 1 && back.PinwheelTurn > 0, "A puff of wind goes past and turns the pinwheel");
+        Backed(Field<Window>(window, "farmWindow"), Color.FromRgb(0xE9, 0xEE, 0xF2), "farm-pinwheel-gust.png");
+        double due = Field<double>(window, "farmGustDue");
+        check(due >= 29 && due <= 90, $"The next puff comes in 30–90 s ({due:F0} s)");
+        frames(10);
+        double turn = back.PinwheelTurn;
+        check(back.Gust < 0 && Field<double>(window, "farmPinSpeed") == 0, "Once the wind has gone it slows down and stops");
+        frames(1);
+        check(back.PinwheelTurn == turn, "At rest it is not drawn again");
+
+        var pond = window.FarmPond.Art!;
+        SetField(window, "farmLeapAge", -1.0);
+        SetField(window, "farmLeapDue", 0.0);
+        frames(0.5);
+        check(pond.LeapAge is > 0 and < 1, "Now and then a fish jumps in the pond");
+        Backed(window.FarmPond.Window!, Color.FromRgb(0xE9, 0xEE, 0xF2), "farm-pond-leap.png");
+        double leapDue = Field<double>(window, "farmLeapDue");
+        check(leapDue >= 39 && leapDue <= 90, $"The next jump in 40–90 s ({leapDue:F0} s)");
+        frames(1);
+        check(pond.LeapAge < 0, "...and is back in the water in about a second");
     }
 
     private static void Backed(Window source, Color color, string name)

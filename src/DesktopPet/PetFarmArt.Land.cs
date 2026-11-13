@@ -34,6 +34,10 @@ public sealed partial class PetFarmArt
         public int FishSide { get; set; } = 1;
         public FarmFish? CaughtFish { get; set; }
         public double CaughtAge { get; set; }
+        // A fish jumping for fun, 0 to 1 (-1: none), from where and which way.
+        public double LeapAge { get; set; } = -1;
+        public double LeapX { get; set; }
+        public int LeapSide { get; set; } = 1;
         // The coop: how many hens and eggs in the nest, the hens' clock, and 0 to 1 while they scatter, or -1.
         public int Hens { get; set; }
         public int NestEggs { get; set; }
@@ -153,6 +157,7 @@ public sealed partial class PetFarmArt
                     dc.Pop();
                 }
             }
+            if (LeapAge >= 0) DrawLeap(dc);
             if (CaughtFish is FarmFish fish)
             {
                 double age = Math.Clamp(CaughtAge, 0, 1);
@@ -165,6 +170,27 @@ public sealed partial class PetFarmArt
                 dc.Pop();
             }
             dc.Pop();
+        }
+
+        // Out of the water in an arc and back, a ring where it leaves and one where it lands.
+        private void DrawLeap(DrawingContext dc)
+        {
+            double age = Math.Clamp(LeapAge, 0, 1), start = LeapX - LeapSide * 12, end = LeapX + LeapSide * 12;
+            foreach (var (x, at) in new[] { (start, age), (end, age - 0.62) })
+            {
+                if (at < 0 || at >= 0.38) continue;
+                double k = at / 0.38;
+                dc.PushOpacity(1 - k);
+                dc.DrawEllipse(null, RipplePen, new Point(x, -3), 3 + k * 10, 1 + k * 2.4);
+                dc.Pop();
+            }
+            if (age <= 0.05 || age >= 0.68) return;
+            double t = (age - 0.05) / 0.63;
+            dc.PushTransform(new TranslateTransform(start + (end - start) * t, -4 - Math.Sin(t * Math.PI) * 24));
+            dc.PushTransform(new RotateTransform((t - 0.5) * 100 * LeapSide));
+            dc.PushTransform(new ScaleTransform(LeapSide * 0.7, 0.7));
+            DrawFish(dc, FarmFish.Minnow);
+            dc.Pop(); dc.Pop(); dc.Pop();
         }
 
         // Stones, logs, the fire under an iron pot; the stick rests in it while the cat is not stirring.

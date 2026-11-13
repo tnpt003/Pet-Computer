@@ -197,6 +197,7 @@ public sealed partial class PetWindow
         }
         StepFarmBird(dt);
         StepFarmPatches(dt);
+        StepFarmPinwheel(dt);
         bool redraw = lifted || farmLift.Busy || farmEffectsRunning || bird || basket;
         farmEffectsRunning = effects;
         if (redraw)

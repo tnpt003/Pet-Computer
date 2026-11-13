@@ -26,7 +26,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
   - Mũi tên ‹ › chưa nằm giữa nút: ký tự font ngồi lệch, StackPanel bám đỉnh nút. Sửa: vẽ mũi tên bằng vector, đặt giữa nút.
   - Ảnh tinh anh nhỏ hơn ảnh thường, slime lính bị phóng to: do cắt sát theo hình (chữ "ĐÁNH NHANH" và ngôi sao làm khung tinh anh to hơn). Sửa: slime lính quay lại khung theo kích thước như cũ, dùng chung cho bản thường và tinh anh; chỉ trùm cắt sát.
   - Ảnh trùm chưa nằm giữa khối ảnh: chữ có `MaxWidth` nên WPF tự đặt vào giữa phần còn lại, tạo khoảng trống cạnh ảnh. Sửa: khối ảnh rộng cố định 192 DIP, ảnh nằm giữa khối, chữ canh trái sát khối.
-  - Commit: (điền sau publish).
+  - Commit: `e7da27d`, ZIP `artifacts/DesktopPet-1.5.1-e7da27d-win-x64.zip`, smoke 3/3 PASS.
   - Kiểm chứng: script đầy đủ một lần: Python 67 + i18n 5, C# 4940, WPF 3229 đều đạt. Check mới:
     - mũi tên lệch 0,0 DIP so với tâm nút;
     - mọi slime lính giữ khung theo kích thước, ảnh thường và tinh anh cùng cỡ;

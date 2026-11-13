@@ -138,7 +138,7 @@ public partial class App : Application
             guide.Enabled = pet.TourMenuEnabled;
             toys.Text = pet.ToyBasketMenuLabel;
             toys.Enabled = pet.ToyBasketMenuEnabled;
-            games.Text = pet.L("Chơi cùng mèo", "Play with the cat");
+            games.Text = pet.L("Chơi", "Play"); // Same name as the pet menu's "Play" (14/11).
             cups.Text = pet.CupGameActive ? pet.L("Dừng Úp cốc tìm cá", "Stop Find the fish") : pet.CupGameMenuLabel;
             cups.Enabled = pet.CupGameMenuEnabled;
             cups.ToolTipText = pet.CupGameMenuNote;

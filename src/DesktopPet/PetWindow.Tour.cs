@@ -144,8 +144,8 @@ public sealed partial class PetWindow
                            "This is the farm sign: click a board to open or fold a plot. Right-click a plot to use it."),
         TourStep.Thing => L("Chuột phải vào đồ vật (kỷ vật, giỏ, hộp, trụ cào…) để dùng nó, kéo để dời chỗ.",
                             "Right-click a thing (keepsake, basket, box, post…) to use it; drag it to move it."),
-        TourStep.Tray => L("Biểu tượng mèo ở khay, góc phải dưới ↘: Cài đặt, Tạm dừng, Chơi cùng mèo, Kiểm tra cập nhật.",
-                           "My tray icon, bottom right ↘: Settings, Pause, Play with the cat, Check for updates."),
+        TourStep.Tray => L("Biểu tượng mèo ở khay, góc phải dưới ↘: Cài đặt, Tạm dừng, Chơi, Kiểm tra cập nhật.",
+                           "My tray icon, bottom right ↘: Settings, Pause, Play, Check for updates."),
         _ => L("Xong rồi! Muốn xem lại thì vào Cài đặt → Chung → Xem lại hướng dẫn.", "All done! To see this again: Settings → General → Replay the guide.")
     };
 

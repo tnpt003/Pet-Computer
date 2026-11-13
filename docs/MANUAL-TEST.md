@@ -1526,7 +1526,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Bật AI vài ngày: Mốc thân thiết, Món yêu thích; tắt Python thì không có hai phần này mà mèo vẫn chạy
 - [ ] Gọi mèo (menu khay), Dạy động tác đủ buổi rồi gọi từ "Động tác"
 - [ ] Úp cốc, Trốn tìm, Bắt đom đóm: bấm chuột thật, mèo ngủ thì không bắt đầu, click phải mèo kết thúc ván
-- [ ] Khách ghé thăm (chờ hẹn giờ thật), Săn kho báu (menu chuột phải "Chơi" hoặc menu khay "Chơi cùng mèo" → "Săn kho báu" chơi ngay, không cần chờ bản đồ): mèo đi tới đúng dưới dấu chân, mẩu chuyện vào Nhật ký; tắt được trong Thói quen
+- [ ] Khách ghé thăm (chờ hẹn giờ thật), Săn kho báu (menu chuột phải "Chơi" hoặc menu khay "Chơi" → "Săn kho báu" chơi ngay, không cần chờ bản đồ): mèo đi tới đúng dưới dấu chân, mẩu chuyện vào Nhật ký; tắt được trong Thói quen
 
 **Người mới, menu, Battle (gộp 14/11)**
 - [ ] Mở app: màn mở đầu qua cổng, click bỏ qua; dữ liệu riêng mới tinh: phiếu Chào mừng rồi hướng dẫn 6 bước
@@ -1670,7 +1670,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Đọc chữ menu và câu "覚えた" tiếng Nhật (chưa ai duyệt).
 
 ## Mini-game M1 — Úp cốc tìm cá (12/11)
-- [ ] Menu chuột phải → "Chơi cùng mèo" → "Úp cốc tìm cá" (và menu khay → "Chơi cùng mèo"): 3 cốc hiện cạnh mèo trên sàn, cá khô trước cốc giữa, cốc úp xuống, tráo theo vòng cung mắt theo kịp. Vòng 1 chậm, vòng 2 nhanh hơn, từ vòng 3 nhanh nhất.
+- [ ] Menu chuột phải → "Chơi cùng mèo" → "Úp cốc tìm cá" (và menu khay → "Chơi"; trước 14/11 tên là "Chơi cùng mèo"): 3 cốc hiện cạnh mèo trên sàn, cá khô trước cốc giữa, cốc úp xuống, tráo theo vòng cung mắt theo kịp. Vòng 1 chậm, vòng 2 nhanh hơn, từ vòng 3 nhanh nhất.
 - [ ] Hiện "Cá ở cốc nào?"; rê chuột lên cốc có viền sáng, con trỏ bàn tay. Chọn cốc: mèo đi sau hàng cốc tới cốc đó, cúi ngửi, hất cốc trượt sang bên. Đúng: mèo ngậm cá, "+1", vòng mới. Sai: mèo nghiêng đầu, cốc có cá lật ra, nhãn "n vòng" (từ 3 vòng có "Kỷ lục mới!").
 - [ ] Click chỗ trống giữa hai cốc hoặc quanh cốc: click xuyên xuống cửa sổ bên dưới (không chặn chuột). Click cốc không tính là click mèo.
 - [ ] Esc, click ra ngoài, chọn lại dòng menu (ghi "Dừng Úp cốc tìm cá"), click hoặc kéo mèo: trò dừng, cốc biến mất. Kéo mèo vẫn kéo bình thường.
@@ -1709,7 +1709,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 ## Mini-game M5 — Săn kho báu (12/11)
 - [ ] Để mèo chạy tự do (không Yên lặng, không Giờ tập trung, có chạm máy): khoảng 60–120 phút sau khi mở app mèo ngồi xuống ngậm cuộn giấy có dấu X, ngước nhìn ~2 giây, rồi trên đầu có biểu tượng bản đồ nhỏ. Tối đa 3 lần mỗi ngày. Muốn thử nhanh phải dùng UiChecks.
 - [ ] Biểu tượng bản đồ: nằm ngay trên đầu mèo, đi theo mèo, ẩn khi kéo mèo/toàn màn hình/trong trận; click vào là bắt đầu săn và không tính là click mèo (mèo không bị nhấc, không phản ứng). Để yên 10 phút thì mờ dần rồi mất. Pause thì 10 phút đứng lại.
-- [ ] Menu chuột phải → "Chơi" và menu khay → "Chơi cùng mèo" → "Săn kho báu": chưa có bản đồ vẫn bấm được (từ 14/11), mèo ngồi ngậm bản đồ ~2 s rồi vào săn; có bản đồ thì bắt đầu ngay; đang chơi thì thành "Dừng Săn kho báu". Mini-game khác mờ khi đang săn.
+- [ ] Menu chuột phải → "Chơi" và menu khay → "Chơi" → "Săn kho báu": chưa có bản đồ vẫn bấm được (từ 14/11), mèo ngồi ngậm bản đồ ~2 s rồi vào săn; có bản đồ thì bắt đầu ngay; đang chơi thì thành "Dừng Săn kho báu". Mini-game khác mờ khi đang săn.
 - [ ] Ba dấu chân mờ (~20 %) quanh mèo, trong khoảng ±400 DIP ngang, tới 300 DIP trên sàn; không đè lên mèo, nông trại, xe hàng, đồ chơi, đồ góc sống. Đưa con trỏ lại gần thì sáng dần. Rõ trên nền sáng và tối. Chỗ trống click xuyên xuống cửa sổ dưới; không lấy focus của cửa sổ đang gõ; click chỗ trống không thoát ván.
 - [ ] Click trúng dấu: dấu sáng hẳn, nhãn "1/3"/"2/3"/"3/3" trên đầu mèo, mèo đi tới dưới dấu trên đúng sàn/mép đang đứng (không nhảy khỏi mép) và đánh hơi ~1 giây.
 - [ ] 20 giây không tìm thêm: mèo quay đầu về dấu gần nhất. 40 giây: mèo đi tới gần dấu đó, dấu sáng hơn một chút. Hết 3 phút: các dấu còn lại tự sáng, mèo dẫn tới rương (không thua).

@@ -536,7 +536,7 @@ game has **Put ball away** (it was a row on the cat's main menu while the ball w
 thing's menu never touches or wakes the cat and is not an interaction; a row that asks the cat is
 greyed out with the reason when the cat is far ("too far from the box"), asleep or busy, or in a
 battle. A thing being held, used in a mini-game, in the cat's mouth or with the cat in it shows no
-menu, and Pause shows none. The farm plots keep their own menus. The tray keeps **Play with the cat**.
+menu, and Pause shows none. The farm plots keep their own menus. The tray keeps the mini-games under **Play** (named like the pet menu's Play since 14/11; it was "Play with the cat").
 
 Bring the pet to the main screen (this menu and the tray, 2026-10-23): the cat vanishes in a puff
 where it is, pops up in the middle of the main screen with another puff and sparkles, drops a
@@ -566,7 +566,7 @@ the bottom; a page scrolls on its own on a small screen. The tray menu holds the
 controls: Pause, **Smart pet (AI)** / **Mèo thông minh (AI)**, **Customize…**, **Settings…**,
 Bring the pet to the main screen, Call the cat, **Guide** (starts the cat-led guide; greyed while
 paused, fullscreen, in a battle or while the guide runs; a sleeping cat gets a note and stays
-asleep), the toy basket, Play with the cat, updates, Exit.
+asleep), the toy basket, Play (mini-games), updates, Exit.
 
 The right-click menu (not the tray menu, which is a WinForms menu) has its own look
 (`PetMenuStyle.cs`, 2026-10-16): a rounded white panel with a soft shadow, rounded hover

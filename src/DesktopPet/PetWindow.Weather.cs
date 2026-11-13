@@ -112,7 +112,8 @@ public sealed partial class PetWindow
     {
         if (weatherWindow == null || weatherArt == null) return;
         double width = weatherArt.Width, height = weatherArt.Height;
-        double catX = pet.X + settings.Width / 2, catY = pet.Y + settings.Height / 2;
+        var anchor = SeekWeatherAnchor;
+        double catX = anchor?.X ?? pet.X + settings.Width / 2, catY = anchor?.Y ?? pet.Y + settings.Height / 2;
         double left = Math.Clamp(catX - width / 2, bounds.Left, Math.Max(bounds.Left, bounds.Right - width));
         double top = Math.Clamp(catY - height * 0.6, bounds.Top, Math.Max(bounds.Top, bounds.Bottom - height));
         bool moved = left != weatherArt.OriginX || top != weatherArt.OriginY;

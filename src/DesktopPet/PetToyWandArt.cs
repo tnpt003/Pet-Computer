@@ -10,7 +10,8 @@ namespace DesktopPet;
 // and the feather hangs on its string where the window puts it (FeatherString). Only what is drawn takes clicks.
 public sealed class ToyWandArt : FrameworkElement
 {
-    public const double ArtWidth = 300, ArtHeight = 240, CentreX = 150, CentreY = 120;
+    // Room for the feather swung anywhere on its string, plume and all: tip offset + string + plume ≈ 155 each way.
+    public const double ArtWidth = 340, ArtHeight = 340, CentreX = 170, CentreY = 170;
     // From the handle's centre to its tip while held (times Facing across, then up).
     public const double HeldTipX = 30, HeldTipY = 28;
 

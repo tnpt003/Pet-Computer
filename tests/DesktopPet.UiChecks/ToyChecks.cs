@@ -1164,7 +1164,12 @@ internal static class ToyChecks
         check(window.TakeToyOut(Post) && window.ToyIsOut(Post), "The post comes out with three toys out");
         Call(window, "FillToyBasketMenu");
         var basketMenu = Field<ContextMenu?>(window, "toyBasketMenu")!;
-        check(basketMenu.Items.OfType<Separator>().Count() == 1 && basketMenu.Items.IndexOf(basketMenu.Items.OfType<Separator>().Single()) == 4, "A line sets the living-corner things apart");
+        var lines = basketMenu.Items.OfType<Separator>().ToArray();
+        check(lines.Length == 2 && basketMenu.Items.IndexOf(lines[0]) == 4, "A line sets the living-corner things apart");
+        // Issue #81: the basket's own menu puts the basket away too, under a line at the end.
+        var away = basketMenu.Items[^1] as MenuItem;
+        check(basketMenu.Items.IndexOf(lines[1]) == basketMenu.Items.Count - 2 && away != null && (string)away.Header == "Put the basket away" && away.IsEnabled,
+            "The basket's menu ends with Put the basket away");
         window.StowToy(Ball); window.StowToy(Box); window.StowToy(DesktopToyRules.Wand);
         Tick(window);
         var motion = window.ToyMotionOf(Post)!;

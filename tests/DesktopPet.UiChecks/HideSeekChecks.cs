@@ -47,6 +47,9 @@ internal static class HideSeekChecks
         Snapshot(window, "seek-hidden", light: true);
         check(Until(() => window.HideSeekPhase == "Hide") && window.MiniLabel == "Where is the cat hiding?", "Then: \"Where is the cat hiding?\"");
         check(!(bool)Call(window, "SpeechAllowed", "greeting")!, "A hidden cat says nothing (no bubble gives it away)");
+        var anchor = (Point?)Call(window, "get_SeekWeatherAnchor");
+        check(anchor is Point held && Math.Abs(held.X - Field<double>(window, "seekStartX")) < 0.5,
+            "The weather stays where the game began, not over the hidden cat (Issue #83)");
         double hiddenSink = window.HideSeekSink;
         check(Until(() => window.HideSeekSink < hiddenSink - 5, 60 * 6), "Now and then its ear tips peek over");
         for (int i = 0; i < 14; i++) Frame(); // The peek at its highest.
@@ -64,6 +67,8 @@ internal static class HideSeekChecks
         Snapshot(window, "seek-out", light: true);
         check(Until(() => !window.HideSeekActive) && !pet.Emotions.Suspended && pet.Action == PetAction.Idle && window.HideSeekMenuLabel == "Hide and seek · found 1",
             "Then the bushes wither away and the cat is itself again; the row shows the finds");
+        check(!Application.Current.Windows.OfType<Window>().Any(w => w.Title == "Pet hide-and-seek bush" && w.IsVisible) && Call(window, "get_SeekWeatherAnchor") == null,
+            "No bush is left on the desktop and the weather follows the cat again (Issue #84)");
 
         // A press on the hidden cat: the right guess on the first try; the click goes on to the pop-out.
         Home();

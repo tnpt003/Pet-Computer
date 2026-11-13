@@ -124,10 +124,52 @@ internal static class CupGameChecks
         check(!window.CupGameActive && preferences.CupGamePlays == plays + 1, "Two minutes without a pick: the game ends (counted)");
         Free();
 
+        // Real clicks (Issue #85): each of the three cups takes a click through Windows' own hit test.
+        for (int slot = 0; slot < CupGameRules.Cups; slot++)
+        {
+            Free();
+            window.ToggleCupGame(); Until(() => window.CupGamePhase == "Choose");
+            Call(window, "Present", false);
+            Call(window, "PlaceCups");
+            Pump(300);
+            double x = RowLeft() + CupGameRules.SlotCentre(slot), y = Field<double>(window, "cupGround") - 18;
+            var at = new NativePoint { X = (int)Math.Round(x * scale), Y = (int)Math.Round(y * scale) };
+            var under = GetAncestor(WindowFromPoint(at), 2);
+            var title = new System.Text.StringBuilder(256); GetWindowText(under, title, 256);
+            GetCursorPos(out var was);
+            SetCursorPos(at.X, at.Y);
+            mouse_event(0x0002, 0, 0, 0, 0); mouse_event(0x0004, 0, 0, 0, 0);
+            Pump(300);
+            SetCursorPos(was.X, was.Y);
+            int chosen = Field<int>(window, "cupChosen");
+            check(window.CupGamePhase is "Go" or "Sniff" or "Lift" && chosen >= 0 && window.CupGameSlotOf(chosen) == slot,
+                $"A real click on cup {slot + 1} picks it (window under it: {title}, phase {window.CupGamePhase})");
+            if (window.CupGameActive) window.ToggleCupGame();
+        }
+        Free();
+
         preferences.CupGameBest = 0; preferences.CupGamePlays = 0;
         SetField(window, "cursorProbe", null);
         SetField(window, "keyProbe", null);
         window.Reset();
+    }
+
+    private struct NativePoint { public int X, Y; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr WindowFromPoint(NativePoint point);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+    [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, System.Text.StringBuilder text, int max);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+    [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern void mouse_event(uint flags, int dx, int dy, int data, IntPtr extra);
+
+    // Lets WPF draw and Windows deliver input for a while.
+    private static void Pump(int milliseconds)
+    {
+        var frame = new System.Windows.Threading.DispatcherFrame();
+        var wait = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(milliseconds) };
+        wait.Tick += (_, _) => { wait.Stop(); frame.Continue = false; };
+        wait.Start();
+        System.Windows.Threading.Dispatcher.PushFrame(frame);
     }
 
     // PET_RENDER_REVIEW=<folder>: the cat and the cups as they stand on the floor, on a light or dark desktop.

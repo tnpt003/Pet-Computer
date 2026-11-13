@@ -28,11 +28,14 @@ public sealed partial class PetWindow
     private SeekStep seekStep;
     private readonly List<SeekSpot> seekSpots = new();
     private int seekCat = -1, seekGuesses;
-    private double seekTime, seekSearch, seekSignal, seekPeek = -1, seekFloor, seekScale, seekStartX, seekOrderCheck;
+    private double seekTime, seekSearch, seekSignal, seekPeek = -1, seekFloor, seekScale, seekStartX, seekStartY, seekOrderCheck;
     private bool seekFound, seekFirstTry, seekSuspended, seekMoved;
     private string? seekMonitor;
 
     public bool HideSeekActive => seekStep != SeekStep.None;
+    // While the cat may be hiding, the weather stays centred where the game began: following the cat would
+    // show where it is (Issue #83).
+    private Point? SeekWeatherAnchor => seekStep is SeekStep.Count or SeekStep.Hide or SeekStep.Pop ? new Point(seekStartX, seekStartY) : null;
     public string HideSeekPhase => seekStep.ToString();
     public int HideSeekSpotCount => seekSpots.Count;
     public int HideSeekCatSpot => seekCat;
@@ -95,6 +98,7 @@ public sealed partial class PetWindow
         seekFound = seekFirstTry = seekMoved = false;
         seekTime = seekSearch = 0; seekPeek = -1; seekOrderCheck = 0;
         seekStartX = CatCenter;
+        seekStartY = pet.Y + settings.Height / 2;
         seekMonitor = here; seekScale = scale;
         ResetMiniGameKeys(); // The click that chose the menu row does not end it.
         seekStep = SeekStep.Count;
@@ -107,6 +111,8 @@ public sealed partial class PetWindow
 
     private void OpenBush(SeekSpot spot, double grow)
     {
+        // One window per hiding place: the one it had would be left behind on the desktop (Issue #84).
+        if (spot.Window is { } old) { spot.Window = null; spot.Art = null; old.Close(); }
         var art = new BushArt { Grow = grow, Cursor = System.Windows.Input.Cursors.Hand };
         var window = CreateOverlayWindow(art, "Pet hide-and-seek bush");
         window.Width = BushArt.ArtWidth; window.Height = BushArt.ArtHeight;

@@ -16,6 +16,8 @@ internal static class FarmChecks
     private static extern IntPtr GetWindowLongPtr(IntPtr window, int index);
     [DllImport("user32.dll")]
     private static extern IntPtr GetWindow(IntPtr window, uint command);
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
 
     private static void SetContext(PetWindow window, bool fullscreen, double idle) =>
         SetField(window, "contextProbe", new Func<(bool, double)>(() => (fullscreen, idle)));
@@ -1057,6 +1059,12 @@ internal static class FarmChecks
         check(window.FarmGroundAboveCat, "(Topmost again puts the land over the cat, which is the fault)");
         Call(window, "KeepFarmBelowCat");
         check(!window.FarmGroundAboveCat, "The cat is back in front of the land and the cart");
+        // Issue #86: land that lost "always on top" is made topmost again, still under the cat.
+        var groundHandle = new WindowInteropHelper(ground).Handle;
+        SetWindowPos(groundHandle, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010);
+        check((GetWindowLongPtr(groundHandle, -20).ToInt64() & 0x8) == 0, "(the field is no longer topmost)");
+        Call(window, "KeepFarmBelowCat");
+        check((GetWindowLongPtr(groundHandle, -20).ToInt64() & 0x8) != 0 && !window.FarmGroundAboveCat, "Land that lost always-on-top gets it back, under the cat");
         CartByHand(window, stall, area, check, frames, setCursor, Cart);
         ResetCart();
         void ResetCart() => Call(window, "ResetFarmCart");

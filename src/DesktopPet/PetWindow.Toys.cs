@@ -353,6 +353,13 @@ public sealed partial class PetWindow
             if (i > 0 && DesktopToyRules.IsLiving(DesktopToyRules.All[i]) && !DesktopToyRules.IsLiving(DesktopToyRules.All[i - 1])) toyBasketMenu.Items.Add(new Separator());
             toyBasketMenu.Items.Add(rows[i]);
         }
+        // The basket itself away, with everything out (as "Quick tidy" in the cat's and the tray's menu).
+        toyBasketMenu.Items.Add(new Separator());
+        var away = PetUi.MenuItem(PetUi.Ball);
+        away.Header = L("Cất giỏ", "Put the basket away");
+        away.IsEnabled = ToyBasketMenuEnabled;
+        away.Click += (_, _) => ToggleToyBasket();
+        toyBasketMenu.Items.Add(away);
     }
 
     // One row per toy: ticked while it is out; a click takes it out or puts it back.

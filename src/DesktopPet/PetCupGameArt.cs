@@ -19,6 +19,10 @@ public sealed class CupGameArt : FrameworkElement
     private static readonly Pen Outline = P(PetUi.ArtInk, 1.6), ShinePen = P(Shine, 2.2), HoverPen = P(YarnBallArt.Halo, 5);
     private static readonly Geometry Body = Geometry.Parse("M-20,0 L-15,-28 Q-14.5,-31 -11.5,-31 L11.5,-31 Q14.5,-31 15,-28 L20,0 Z");
     private static readonly Geometry Foot = Geometry.Parse("M-9,-31 L-8,-35 L8,-35 L9,-31 Z");
+    // The shade and the band cut to the body once, instead of a clip pushed for each cup: a pushed clip left
+    // every cup after the first drawn one without hit testing, so only one cup took clicks (Issue #85).
+    private static readonly Geometry BodyShade = Cut(new Rect(5, -32, 16, 34)), BodyBand = Cut(new Rect(-22, -19, 44, 6));
+    private static Geometry Cut(Rect rect) { var cut = Geometry.Combine(Body, new RectangleGeometry(rect), GeometryCombineMode.Intersect, null); cut.Freeze(); return cut; }
 
     public readonly double[] X = new double[CupGameRules.Cups], Rise = new double[CupGameRules.Cups], Lift = new double[CupGameRules.Cups];
     public readonly bool[] Front = new bool[CupGameRules.Cups];
@@ -61,10 +65,8 @@ public sealed class CupGameArt : FrameworkElement
         if (Lift[i] > 0) dc.PushTransform(new RotateTransform(28 * Lift[i] * Side, Side > 0 ? 20 : -20, 0));
         if (i == Hover) dc.DrawGeometry(null, HoverPen, Body);
         dc.DrawGeometry(Glaze, null, Body);
-        dc.PushClip(Body);
-        dc.DrawRectangle(GlazeShade, null, new Rect(5, -32, 16, 34));
-        dc.DrawRectangle(Band, null, new Rect(-22, -19, 44, 6));
-        dc.Pop();
+        dc.DrawGeometry(GlazeShade, null, BodyShade);
+        dc.DrawGeometry(Band, null, BodyBand);
         dc.DrawGeometry(Glaze, Outline, Foot);
         dc.DrawGeometry(null, Outline, Body);
         dc.DrawLine(ShinePen, new Point(-10, -26), new Point(-13, -9));

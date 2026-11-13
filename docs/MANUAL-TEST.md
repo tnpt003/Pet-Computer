@@ -1775,3 +1775,11 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Bản đồ chương 2: mỗi màn ghi "Bắt buộc mang: …" (3 kỹ năng) thay cho "Gợi ý mang".
 - [ ] Bảng chuẩn bị màn chương 2: 3 kỹ năng đó đã chọn sẵn, bấm vào không bỏ được (rê chuột ghi "Bắt buộc mang ở màn này"); chọn được 2 ô còn lại; vào trận HUD có đủ 5. Chơi lại màn đã thắng vẫn bị khóa.
 - [ ] Viễn chinh, Vô tận, trận tự do: chọn tự do như cũ; lựa chọn chung không bị đổi sau khi chơi màn chương 2.
+
+## Sửa lỗi 13/11 tối (Issue #81–#86)
+Đã kiểm bằng UiChecks (cả click chuột thật vào 3 cốc); chưa xem trên desktop thật.
+- [ ] Chuột phải giỏ đồ chơi: dòng cuối "Cất giỏ" cất mọi đồ và giỏ.
+- [ ] Vung cần câu lông vũ lên cao và sang hai bên: lông không bị cắt.
+- [ ] Úp cốc: bấm được cả cốc trái, giữa, phải.
+- [ ] Trốn tìm khi có thời tiết: vùng sao/tuyết không đi theo chỗ mèo nấp; hết ván không còn bụi nào.
+- [ ] Nông trại không bị khuất sau trình duyệt khi không có app toàn màn hình.

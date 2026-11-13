@@ -5,6 +5,45 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #85 — Úp cốc tìm cá: chỉ một cốc bấm chọn được (13/11)
+- **Triệu chứng:** đến lượt chọn, chỉ bấm được một cốc; hai cốc kia bấm không có tác dụng.
+- **Nguyên nhân:** `CupGameArt.DrawCup` tô bóng men và dải màu bằng `PushClip(Body)`. Sau lớp clip đó, hit-test của WPF chỉ còn nhận cốc vẽ đầu tiên (cốc số 0, đi theo nó qua các lần đổi chỗ); hai cốc vẽ sau vẫn hiện nhưng không nhận chuột. Test cũ gọi thẳng `PickCup(x)` nên không bắt được.
+- **Sửa:** cắt sẵn hình bóng men và dải màu theo thân cốc (`Geometry.Combine` một lần, frozen) rồi vẽ thẳng, không còn clip (`PetCupGameArt.cs`).
+- **Kiểm chứng:** check mới trong `CupGameChecks` bấm chuột thật của Windows (`SetCursorPos` + `mouse_event`) vào giữa từng cốc trong 3 ván: trước khi sửa chỉ 1/3 cốc chọn được (quét hit-test chỉ trúng [42–79]), sau khi sửa cả 3.
+- [ ] Cần xem tay: chơi vài vòng, bấm cả cốc trái, giữa, phải.
+
+## #86 — Nông trại nằm sau cửa sổ ứng dụng khác (13/11)
+- **Triệu chứng:** không thấy nông trại, như bị khuất sau trang web.
+- **Nguyên nhân (chưa tái hiện được trên máy):** lúc kiểm tra, mọi cửa sổ nông trại của mèo đang chạy vẫn "luôn ở trên". Log có nhiều lần "Fullscreen app detected" vài giây; khi đó nông trại tự ẩn theo thiết kế (mèo vẫn hiện) nên ảnh chụp lúc đó không có nông trại. Khả năng còn lại: Windows bỏ cờ "luôn ở trên" khi một cửa sổ được xếp ngay sau một cửa sổ không "luôn ở trên".
+- **Sửa phòng hờ:** `KeepFarmBelowCat` thấy cửa sổ đất, xe hàng hay mèo khách nào mất cờ `WS_EX_TOPMOST` thì đặt lại rồi mới xếp dưới mèo (`PetWindow.Farm.cs`).
+- **Kiểm chứng:** check mới trong `FarmChecks` bỏ cờ của ruộng bằng `HWND_NOTOPMOST`; sau một lượt kiểm tra ruộng lại "luôn ở trên" và vẫn dưới mèo.
+- [ ] Cần xem tay: nếu còn thấy nông trại sau trang web khi không có app toàn màn hình thì báo kèm giờ để đọc log.
+
+## #84 — Trốn tìm xong vẫn còn bụi (13/11)
+- **Triệu chứng:** ván trốn tìm kết thúc, một bụi cây vẫn nằm lại trên desktop.
+- **Nguyên nhân:** lúc mèo chui ra, `OpenBush` mở cửa sổ bụi mới cho chỗ nấp của mèo mà không đóng cửa sổ bụi cũ; cửa sổ cũ mất tham chiếu nên `StopHideSeek` không đóng được. Đã thấy một cửa sổ "Pet hide-and-seek bush" sót lại trên mèo đang chạy.
+- **Sửa:** `OpenBush` đóng cửa sổ cũ của chỗ đó trước (`PetWindow.HideSeek.cs`).
+- **Kiểm chứng:** check mới trong `HideSeekChecks`: hết ván không còn cửa sổ bụi nào.
+
+## #83 — Trốn tìm: thời tiết làm lộ chỗ mèo nấp (13/11)
+- **Triệu chứng:** vùng sao, tuyết của thời tiết đi theo mèo nên nhìn là biết mèo nấp ở bụi nào.
+- **Nguyên nhân:** lớp thời tiết là một vùng tròn luôn lấy tâm ở mèo (`UpdateWeather`).
+- **Sửa:** từ lúc đếm tới lúc mèo chui ra, tâm thời tiết đứng ở chỗ mèo đứng khi bắt đầu ván (`SeekWeatherAnchor`), hết ván lại theo mèo.
+- **Kiểm chứng:** check mới trong `HideSeekChecks`.
+- [ ] Cần xem tay: trốn tìm khi có thời tiết (đêm, tuyết), vùng sao không nhảy theo chỗ nấp.
+
+## #82 — Cần câu lông vũ bị cắt mất lông khi vung lên cao (13/11)
+- **Triệu chứng:** lông vũ ở đỉnh vòng vung bị cắt ngang.
+- **Nguyên nhân:** cửa sổ cần câu 300 × 240 DIP, tâm (150, 120); đầu cần + dây 90 DIP + lông ~34 DIP vượt mép trên và hai bên.
+- **Sửa:** cửa sổ 340 × 340 DIP, tâm (170, 170) (`PetToyWandArt.cs`); mọi chỗ đặt cửa sổ tính theo tâm nên không đổi gì khác.
+- **Kiểm chứng:** check cần câu sẵn có trong `ToyChecks` đạt. Chưa xem ảnh lúc vung.
+- [ ] Cần xem tay: vung cần câu thật cao và sang hai bên, lông vũ không bị cắt.
+
+## #81 — Menu chuột phải của giỏ đồ chơi không có "Cất giỏ" (13/11)
+- **Triệu chứng:** muốn cất giỏ phải vào menu mèo hoặc khay.
+- **Sửa:** cuối menu của giỏ có đường kẻ và "Cất giỏ", làm như "Cất nhanh" (cất mọi đồ và giỏ) (`PetWindow.Toys.cs`).
+- **Kiểm chứng:** check mới trong `ToyChecks`.
+
 ## #80 — Biểu tượng đồ trang trí không nằm giữa ô (13/11)
 - **Triệu chứng:** hàng "Đồ trang trí" trong Kho: hình hàng rào, đèn lồng, chong chóng… lệch khỏi giữa ô vuông.
 - **Nguyên nhân:** `DrawDecorIcon` căn giữa bằng kích thước nhập tay cho từng món (rộng, cao, tâm, đáy); các số này không khớp hình vẽ thật, ba món quà của mèo hàng xóm còn dùng số ước lượng.

@@ -41,7 +41,7 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 
 ### Cất nhanh
 
-- Một lệnh trên menu chuột phải và khay: cất mọi đồ, ẩn giỏ, dừng trò đang chơi; mèo vẫn ở lại.
+- Một lệnh trên menu chuột phải và khay: cất mọi đồ, ẩn giỏ, dừng trò đang chơi; mèo vẫn ở lại. Từ 13/11 menu chuột phải của chính giỏ cũng có dòng "Cất giỏ" ở cuối, làm y như vậy.
 - Không đụng kỷ vật và nông trại, hai phần này đã có công tắc và biển riêng.
 
 ### Khi code cần kiểm tra

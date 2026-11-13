@@ -432,7 +432,17 @@ public sealed partial class PetWindow
         KeepToysInOrder();
         var above = WindowsAbove(new WindowInteropHelper(GroundAnchor).Handle);
         foreach (var window in FarmGroundWindows())
-            if (above.Contains(new WindowInteropHelper(window).Handle)) PlaceBelowCat(window);
+        {
+            var handle = new WindowInteropHelper(window).Handle;
+            // Issue #86: land that lost "always on top" (placed after a window that was not) would sink behind
+            // other apps' windows; it is made topmost again first, then put back under the cat.
+            if (handle != IntPtr.Zero && (GetWindowLongPtr(handle, -20).ToInt64() & 0x8) == 0)
+            {
+                SetWindowPos(handle, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010);
+                PlaceBelowCat(window);
+            }
+            else if (above.Contains(handle)) PlaceBelowCat(window);
+        }
     }
 
     private void PlaceBelowCat(Window window)

@@ -827,6 +827,30 @@ internal static class FarmChoreChecks
             check(Field<double>(window, "farmHenScatter") >= 0 && pet.BatRemaining > 0, "It pounces and they scatter");
             Features(FarmChores.HenSeconds);
             check(window.FarmChoreNow == FarmChoreKind.None && pet.PlayCrouch == 0, "Then it is over");
+
+            // Eggs in the nest: the visit picks them up instead (feedback 13/11).
+            Free(); Clear(field);
+            int stock = field.EggStock, xp = field.Xp;
+            field.EggsInCoop = 2;
+            SetField(window, "farmHenScatter", -1.0); // The last pounce's flutter is over.
+            chores.ScheduleHen(0);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Eggs, "With eggs in the nest the cat goes to collect them");
+            pet.X = window.FarmChoreSpot;
+            Features(Frame * 2);
+            check(window.FarmChorePhaseNow == FarmChorePhase.Work && pet.Action == PetAction.Idle, "There it bends down to the nest");
+            Features(FarmChores.EggsHit + Frame);
+            check(field.EggsInCoop == 0 && field.EggStock == stock + 2 && field.Xp == xp + 2 * PetFarm.EggXp, "The eggs go to the store, with their XP");
+            check(Field<double>(window, "farmHenScatter") < 0, "...without scaring the hens");
+            Features(FarmChores.EggsSeconds);
+            check(window.FarmChoreNow == FarmChoreKind.None && pet.PlayCrouch == 0, "Then it is over");
+            Free(); Clear(field);
+            field.EggsInCoop = 1;
+            chores.ScheduleHen(0);
+            check(window.TryFarmVisit() && window.FarmChoreNow == FarmChoreKind.Eggs, "Again with one egg");
+            field.CollectEggs();
+            Features(Frame * 2);
+            check(window.FarmChoreNow == FarmChoreKind.None, "Picked up by hand on the way: the cat stops");
+            field.EggStock = stock;
             Free(); Clear(field);
             chores.ScheduleHen(0);
             prefs.Quiet = true;

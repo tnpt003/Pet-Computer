@@ -1766,3 +1766,4 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Kho → hàng Đồ trang trí: cả 9 hình nằm giữa ô (món mờ cũng vậy).
 - [ ] Có Chong chóng: chờ tối đa ~1,5 phút thấy ba vệt gió lướt qua, chong chóng quay nhanh rồi chậm dần, dừng hẳn. Trời Phấn hoa/Hoàng hôn: quay đều liên tục. Pause: đứng yên. Nhấc ruộng lên: chong chóng vẫn đúng chỗ.
 - [ ] Ao: chờ tối đa ~1,5 phút thấy một con cá nhỏ nhảy vòng cung và gợn nước; lúc mèo đang câu thì không có cá nhảy. FPS khi chong chóng quay không giảm rõ.
+- [ ] Có chuồng và trứng trong tổ: chờ lượt mèo ghé chuồng (10–15 phút) thấy mèo đi tới tổ, cúi nhặt, nhãn "+n trứng", Kho tăng trứng; gà không bay tán loạn lượt đó. Tổ trống thì mèo vồ gà như cũ. Mèo ngủ/Quiet/Pause: không đi.

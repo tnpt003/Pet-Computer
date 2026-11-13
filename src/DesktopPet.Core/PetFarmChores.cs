@@ -2,7 +2,7 @@ using System;
 
 namespace DesktopPet;
 
-public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing, Hen }
+public enum FarmChoreKind { None, Water, Harvest, Bird, Till, Sow, Pour, Stir, Fishing, Hen, Eggs }
 
 // What the renderer puts in the cat's paws while it works (PetRenderer.Farm.cs).
 public enum FarmToolPose { None, Till, Sow, Harvest, Pour, Pounce, Carry, Drop }
@@ -27,6 +27,9 @@ public sealed class FarmChores
     public const double DropSeconds = 0.5, DropHit = 0.25;
     // Chasing the hens for fun, now and then (docs/FARM-GAME.md).
     public const double HenSeconds = 1.2, HenHit = 0.5, HenMinSeconds = 600, HenMaxSeconds = 900;
+    // On that same visit, eggs waiting in the nest are picked up instead (feedback 13/11).
+    public const double EggsSeconds = 1.4, EggsHit = 0.6;
+    public static bool AtCoop(FarmChoreKind kind) => kind is FarmChoreKind.Hen or FarmChoreKind.Eggs;
     public const double PounceSeconds = 1, PounceHit = 0.5;
     public const double TillSeconds = 1.2, TillHit = 0.6, SowSeconds = 1, SowHit = 0.5;
     // At the hearth (docs/FARM-GAME.md). The walk may be longer: the hearth can be a whole screen away.
@@ -66,11 +69,11 @@ public sealed class FarmChores
 
     public bool Active => Kind != FarmChoreKind.None;
     public bool Cooking => Kind is FarmChoreKind.Pour or FarmChoreKind.Stir;
-    public bool WalkedTooLong => Phase is FarmChorePhase.Walk or FarmChorePhase.Carry && Time >= (Cooking || Kind is FarmChoreKind.Fishing or FarmChoreKind.Hen ? CookWalkLimitSeconds : WalkLimitSeconds);
+    public bool WalkedTooLong => Phase is FarmChorePhase.Walk or FarmChorePhase.Carry && Time >= (Cooking || Kind is FarmChoreKind.Fishing or FarmChoreKind.Hen or FarmChoreKind.Eggs ? CookWalkLimitSeconds : WalkLimitSeconds);
     public bool Finished => Phase == FarmChorePhase.Work && Time >= WorkSeconds || Phase == FarmChorePhase.Drop && Time >= DropSeconds;
-    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, FarmChoreKind.Hen => HenSeconds, _ => PounceSeconds };
+    private double WorkSeconds => Kind switch { FarmChoreKind.Water => WaterSeconds, FarmChoreKind.Harvest => HarvestSeconds, FarmChoreKind.Till => TillSeconds, FarmChoreKind.Sow => SowSeconds, FarmChoreKind.Pour => PourSeconds, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds + FishShowSeconds, FarmChoreKind.Hen => HenSeconds, FarmChoreKind.Eggs => EggsSeconds, _ => PounceSeconds };
     public double WorkLength => Phase == FarmChorePhase.Drop ? DropSeconds : WorkSeconds;
-    public double HitTime => Phase == FarmChorePhase.Drop ? DropHit : Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, FarmChoreKind.Hen => HenHit, _ => PounceHit };
+    public double HitTime => Phase == FarmChorePhase.Drop ? DropHit : Kind switch { FarmChoreKind.Water => WaterHit, FarmChoreKind.Harvest => HarvestHit, FarmChoreKind.Till => TillHit, FarmChoreKind.Sow => SowHit, FarmChoreKind.Pour => PourHit, FarmChoreKind.Stir => StirSeconds, FarmChoreKind.Fishing => BiteAt + ReelSeconds, FarmChoreKind.Hen => HenHit, FarmChoreKind.Eggs => EggsHit, _ => PounceHit };
 
     // The wait after a look for work. It counts only while no trip is on, so a rest begins when the trip ends.
     public void ScheduleAfterLook(bool went, Random random)

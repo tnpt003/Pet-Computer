@@ -41,7 +41,7 @@ public sealed partial class PetWindow
     private bool FarmHearthReady => FarmHearthUsable && FarmHearth.Fold.Showing;
     private bool FarmPondReady => FarmPondUsable && FarmPond.Fold.Showing;
     private bool FarmCoopReady => FarmCoopUsable && FarmCoop.Fold.Showing;
-    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : farmChores.Kind == FarmChoreKind.Hen ? FarmCoopReady : FarmFieldReady;
+    private bool FarmChoreLandDown => farmChores.Cooking ? FarmHearthReady : farmChores.Kind == FarmChoreKind.Fishing ? FarmPondReady : FarmChores.AtCoop(farmChores.Kind) ? FarmCoopReady : FarmFieldReady;
     private bool FarmHelpOn => preferences.FarmHelper && FarmAtHand;
 
     // Everything that starts a trip stops one, except the trip itself owning the cat. What the user
@@ -91,7 +91,7 @@ public sealed partial class PetWindow
         if (FarmCoopUsable && farmChores.HenDue <= 0)
         {
             BorrowFarmLand(FarmLandSlot.Coop, quiet: true);
-            farmChores.Begin(FarmChoreKind.Hen, -1, FarmSpotBeside(FarmCoopMid));
+            farmChores.Begin(farm!.EggsInCoop > 0 ? FarmChoreKind.Eggs : FarmChoreKind.Hen, -1, FarmSpotBeside(FarmCoopMid));
             farmChores.ScheduleHen(FarmChores.NextHen(featureRandom));
             return true;
         }
@@ -162,7 +162,7 @@ public sealed partial class PetWindow
             return false;
         }
         bool hit = farmChores.Step(dt);
-        int facing = (farmChores.Cooking ? FarmHearthMid : kind == FarmChoreKind.Fishing ? FarmPondMid : kind == FarmChoreKind.Hen ? FarmCoopMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
+        int facing = (farmChores.Cooking ? FarmHearthMid : kind == FarmChoreKind.Fishing ? FarmPondMid : FarmChores.AtCoop(kind) ? FarmCoopMid : FarmTileMid(tile)) < CatCenter ? -1 : 1;
         switch (farmChores.Phase)
         {
             case FarmChorePhase.Notice:
@@ -189,6 +189,7 @@ public sealed partial class PetWindow
         FarmChoreKind.Stir => farm!.PotDish != null,
         FarmChoreKind.Fishing => true,
         FarmChoreKind.Hen => farm!.HasCoop,
+        FarmChoreKind.Eggs => farm!.HasCoop && farm.EggsInCoop > 0, // Picked up by hand meanwhile: nothing to go for.
         _ => farm!.Next(tile) == FarmChores.StepOf(kind)
     };
 
@@ -250,7 +251,7 @@ public sealed partial class PetWindow
         farmCatHands = !farmChores.ByUser;
         ShowFarmTool(kind, tile);
         DoFarmWorkStep(kind, tile, facing, hit);
-        if (kind is FarmChoreKind.Till or FarmChoreKind.Harvest) pet.PlayCrouch = FarmLeanDown * Math.Max(0, 1 - Math.Abs(farmChores.Time - farmChores.HitTime) / 0.25); // Into the blow, and up again.
+        if (kind is FarmChoreKind.Till or FarmChoreKind.Harvest or FarmChoreKind.Eggs) pet.PlayCrouch = FarmLeanDown * Math.Max(0, 1 - Math.Abs(farmChores.Time - farmChores.HitTime) / 0.25); // Into the blow, and up again.
         farmCatHands = false;
     }
 
@@ -344,6 +345,10 @@ public sealed partial class PetWindow
                     FarmClick(tile);
                     farmCropInPaws = true;
                 }
+                break;
+            case FarmChoreKind.Eggs:
+                HoldStill(PetAction.Idle, facing);
+                if (hit) CollectFarmEggs(byCat: true);
                 break;
             case FarmChoreKind.Hen:
                 HoldStill(PetAction.Sitting, facing);

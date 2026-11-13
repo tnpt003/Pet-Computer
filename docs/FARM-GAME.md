@@ -208,6 +208,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 
 - Chong chóng (quà mèo hàng xóm) quay khi có gió: trời Phấn hoa hoặc Hoàng hôn thì quay đều; ở mọi thời tiết, cứ 30–90 giây có một cơn gió nhỏ (ba vệt gió lướt qua chỗ chong chóng, 1,6 giây) làm nó quay nhanh rồi chậm dần và dừng. Lúc đứng yên không vẽ lại; khi quay vẽ lại tối đa 30 lần/giây. Pause đứng yên. Không đổi gì trong game.
 - Ao cá: cứ 40–90 giây một con cá nhỏ nhảy lên khỏi mặt nước thành vòng cung rồi rơi xuống, có gợn nước chỗ nhảy và chỗ rơi, khoảng 1,1 giây. Không nhảy khi mèo đang câu hoặc ao đang nhấc; Pause đứng yên. Không có tiếng, không cho cá.
+- Mèo tự thu trứng: lượt mèo ghé chuồng (mỗi 10–15 phút, Luật Mốc 3) mà trong tổ có trứng thì mèo đi tới tổ, cúi nhặt (1,4 giây), toàn bộ trứng vào kho với XP như khi bạn tự thu, nhãn "+n trứng", tiếng "pop" theo khoảng cách tiếng việc vườn; lượt đó không vồ gà. Tổ trống thì vồ gà như cũ. Bạn thu tay trong lúc mèo đang đi thì mèo thôi. Chịu mọi khóa của việc làm vườn (ngủ, Quiet, Pause, nhấc đất, khác màn hình, công tắc "Mèo làm vườn cùng"). Menu "Thu trứng" giữ nguyên.
 - Biểu tượng đồ trang trí (Kho, Gian hàng) căn giữa theo khung bao thật của hình vẽ, đo một lần cho mỗi món (Issue #80).
 
 ## Giai đoạn 1

@@ -345,13 +345,17 @@ public sealed partial class PetWindow
 
     private void ShowFarmFishGain(FarmFish fish) => ShowFarmPatchLabel(FarmPond, "+1 " + FarmFishName(fish), FarmGainSeconds);
 
-    public int FarmCollectEggs()
+    public int FarmCollectEggs() => CollectFarmEggs(byCat: false);
+
+    // By the user from a menu, or by the cat on its visit to the coop (the cat's sound keeps the chores' spacing).
+    private int CollectFarmEggs(bool byCat)
     {
         if (farm == null || paused) return 0;
         int eggs = farm.CollectEggs();
         if (eggs <= 0) return 0;
         ShowFarmPatchLabel(FarmCoop, LF($"+{eggs} trứng", $"+{eggs} eggs"), FarmGainSeconds);
-        PlayPetSound("pop");
+        if (byCat) PlayFarmSound("pop");
+        else PlayPetSound("pop");
         FarmChanged();
         DrawFarmPatch(FarmCoop);
         return eggs;

@@ -82,7 +82,7 @@ public sealed partial class PetWindow
     // A dish is eaten beside the hearth: the job is over when the bowl is empty.
     private bool FarmLandWorking(FarmLandSlot slot) => (slot == FarmLandSlot.Hearth && pet.TreatRemaining > 0)
         || (farmChores.Active && slot == (farmChores.Cooking ? FarmLandSlot.Hearth
-            : farmChores.Kind == FarmChoreKind.Fishing ? FarmLandSlot.Pond : farmChores.Kind == FarmChoreKind.Hen ? FarmLandSlot.Coop : FarmLandSlot.Field));
+            : farmChores.Kind == FarmChoreKind.Fishing ? FarmLandSlot.Pond : FarmChores.AtCoop(farmChores.Kind) ? FarmLandSlot.Coop : FarmLandSlot.Field));
 
     private void StepFarmDock(double dt)
     {

@@ -335,7 +335,8 @@ public sealed partial class PetWindow
         // 1.5 M21: what the stage lends and suggests carrying.
         string? skills = adventure.Lent(chosen) is BattleSkill lent ? LF($"Màn này cho mượn {SkillName(lent)}: thắng là mở hẳn.", $"This stage lends {SkillName(lent)}: win it to keep it.")
             : BattleSkills.Parse(chosen.UnlocksSkill) is BattleSkill opens && adventure.IsCompleted(chosen.Id) ? LF($"Đã mở kỹ năng {SkillName(opens)}.", $"Skill opened: {SkillName(opens)}.") : null;
-        string? suggest = chosen.SuggestSkills is { Length: > 0 } ids ? SuggestLine(ids) : null;
+        string? suggest = adventure.Required(chosen) is { Count: > 0 } required ? RequiredLine(required)
+            : chosen.SuggestSkills is { Length: > 0 } ids ? SuggestLine(ids) : null;
         Show(mapRecord, string.Join("\n", new[] { suggest, skills, record, prize }.Where(t => t != null)));
         mapEnterText!.Text = L("Vào màn", "Play stage");
         mapCloseText!.Text = L("‹ Sảnh", "‹ Hub");

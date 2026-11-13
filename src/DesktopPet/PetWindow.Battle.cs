@@ -267,11 +267,14 @@ public sealed partial class PetWindow
         var prepared = lentLoadout;
         lentLoadout = null;
         if (!StageSkillChoice(stage)) return BattleSkills.Default;
-        // A stage that lends a skill carries it (Play again too, which skips the setup panel).
-        var lent = stage is { Endless: false, Custom: false } ? AdventureOf(BattleTuning)?.Lent(stage) : null;
+        // A stage's required skills (its lent one among them) are carried, Play again too, which skips the setup panel.
+        var required = stage is { Endless: false, Custom: false } ? AdventureOf(BattleTuning)?.Required(stage) ?? Array.Empty<BattleSkill>() : Array.Empty<BattleSkill>();
         // A Custom Fight carries the free battle's choice (1.5 M29a).
-        return global::DesktopPet.Adventure.WithLent(prepared != null && lent != null && prepared.Contains(lent.Value) ? prepared : LoadoutChoice(stage is null or { Custom: true }), lent);
+        return global::DesktopPet.Adventure.WithRequired(prepared != null && required.Count > 0 && required.All(prepared.Contains) ? prepared : LoadoutChoice(stage is null or { Custom: true }), required);
     }
+    // "Must bring: Fan, Push, Yarn bomb" (feedback 13/11: a chapter 2 stage's suggestSkills are required).
+    private string RequiredLine(IEnumerable<BattleSkill> skills) => L("Bắt buộc mang: ", "Must bring: ") + string.Join(", ", skills.Select(SkillName)) + ".";
+
     // "Suggested: Fan, Push" (1.5 M21: a chapter 2 stage's suggestSkills).
     private string SuggestLine(IEnumerable<string> ids) => L("Gợi ý mang: ", "Suggested: ")
         + string.Join(", ", ids.Select(BattleSkills.Parse).OfType<BattleSkill>().Select(SkillName)) + ".";

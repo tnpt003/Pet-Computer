@@ -137,6 +137,26 @@ public sealed class Adventure
         return BattleSkills.Order(loadout.Take(loadout.Count - 1).Append(skill)) ?? loadout;
     }
 
+    // Feedback 13/11: in a chapter with the skill choice, a stage's suggested skills (its lent one among
+    // them) must be carried every time: they take slots of the five, the user picks the rest. HUD order.
+    public IReadOnlyList<BattleSkill> Required(StageSpec? stage)
+    {
+        if (stage == null) return Array.Empty<BattleSkill>();
+        var lent = Lent(stage);
+        var ids = SkillChoice(stage) ? stage.SuggestSkills ?? Array.Empty<string>() : Array.Empty<string>();
+        var wanted = ids.Select(BattleSkills.Parse).OfType<BattleSkill>().Where(skill => skill == lent || SkillOpen(skill)).ToHashSet();
+        if (lent is BattleSkill always) wanted.Add(always);
+        return BattleSkills.All.Select(info => info.Skill).Where(wanted.Contains).Take(BattleSkills.Carry).ToArray();
+    }
+
+    // A loadout holding every required skill: the user's other skills fill what is left, in their order.
+    public static IReadOnlyList<BattleSkill> WithRequired(IReadOnlyList<BattleSkill> loadout, IReadOnlyList<BattleSkill> required)
+    {
+        if (required.Count == 0 || loadout.Count == 0) return loadout;
+        var rest = loadout.Where(skill => !required.Contains(skill)).Take(Math.Max(0, loadout.Count - required.Count));
+        return BattleSkills.Order(required.Concat(rest)) ?? loadout;
+    }
+
     // The setup panel's skill choice for this stage: only in a chapter that allows it (chapter 1 keeps
     // the five first skills, BattleSkills.Default).
     public bool SkillChoice(StageSpec stage) => Locate(stage.Id) is { } at && at.Chapter.SkillChoice;

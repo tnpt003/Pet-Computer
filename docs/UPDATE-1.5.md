@@ -117,7 +117,7 @@ Trong trận cảm xúc tự động vẫn bị chặn: S1, S4 không gây cảm
 
 - HUD giữ 5 ô. Bảng chuẩn bị chọn 5 trong 10, nhớ lựa chọn. Mặc định là 5 kỹ năng cũ. Chương 1 không có mục chọn.
 - Viễn chinh chọn lúc bắt đầu chuyến, đổi miễn phí ở điểm nghỉ. Vô tận chọn lúc bắt đầu. Trận tự chọn mang ngay cả 10.
-- Mỗi màn chương 2 **cho mượn** một kỹ năng tới khi thắng thì mở hẳn, có dòng "Gợi ý mang".
+- Mỗi màn chương 2 **cho mượn** một kỹ năng tới khi thắng thì mở hẳn. Từ góp ý 13/11, 3 kỹ năng "Gợi ý mang" của màn (có kỹ năng cho mượn) là **bắt buộc mang** mỗi lần vào màn, kể cả chơi lại: khóa trong bộ 5 ô, người chơi chọn 2 ô còn lại; bộ đó không ghi thành lựa chọn chung (docs/BATTLE-DATA.md → `suggestSkills`).
 - Thẻ gắn với kỹ năng chỉ ra khi kỹ năng đó có trong bộ mang theo.
 - Sát thương kỹ năng không bị đá chặn, có Kết liễu, quái chết tính là mèo hạ; boss nhận 50%.
 

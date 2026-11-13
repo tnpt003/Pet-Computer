@@ -103,6 +103,9 @@ public sealed partial class PetWindow
     // 1.5 M21: the skill the prepared stage lends (null: none).
     private BattleSkill? PrepLent => prepStage != null ? Adventure?.Lent(prepStage) : null;
     public BattleSkill? BattlePrepLent => battlePreparing ? PrepLent : null;
+    // Feedback 13/11: the skills the prepared stage makes compulsory (empty: none).
+    private IReadOnlyList<BattleSkill> PrepRequired => prepStage != null && Adventure is { } adventure ? adventure.Required(prepStage) : Array.Empty<BattleSkill>();
+    public IReadOnlyList<BattleSkill> BattlePrepRequired => battlePreparing ? PrepRequired : Array.Empty<BattleSkill>();
     public bool BattlePrepVisible => battlePrepWindow?.IsVisible == true;
     public bool BattlePrepReadyEnabled => prepReady?.IsEnabled == true;
     public int BattlePrepCards => prepCards.Count;
@@ -163,8 +166,8 @@ public sealed partial class PetWindow
         prepGuide = preferences.AdventureGuide;
         prepSkills.Clear();
         prepSkills.UnionWith(LoadoutChoice(PrepFree));
-        // 1.5 M21: the stage that opens a skill lends it (it takes the last slot when not chosen).
-        if (PrepLent is BattleSkill lent) { var with = global::DesktopPet.Adventure.WithLent(LoadoutChoice(PrepFree), lent); prepSkills.Clear(); prepSkills.UnionWith(with); }
+        // The stage's required skills (its lent one among them) take their slots; the rest are the user's choice.
+        if (PrepRequired is { Count: > 0 } required) { var with = global::DesktopPet.Adventure.WithRequired(LoadoutChoice(PrepFree), required); prepSkills.Clear(); prepSkills.UnionWith(with); }
         prepSkillHover = null;
         prepAppHover = null;
         battlePreparing = true;
@@ -218,7 +221,7 @@ public sealed partial class PetWindow
         if (!BattlePrepHasSkillChoice) return false;
         prepSkillHover = skill;
         prepAppHover = null;
-        if (skill == PrepLent) { UpdateBattlePrep(); return false; } // A lent skill stays for its stage.
+        if (PrepRequired.Contains(skill)) { UpdateBattlePrep(); return false; } // A required (or lent) skill stays for its stage.
         bool changed = prepSkills.Remove(skill) || (BattleSkillOpen(skill, PrepFree) && prepSkills.Count < BattleSkills.Carry && prepSkills.Add(skill));
         UpdateBattlePrep();
         return changed;
@@ -239,9 +242,9 @@ public sealed partial class PetWindow
         if (PrepFightRefusal() is string fight) { UpdateBattlePrep(); return fight; }
         if (fightBuilderWindow != null) CloseFightBuilder();
         SetBattleWeapon(prepWeapon);
-        // A loadout with a lent skill is not kept as the choice (that skill is not open yet): it goes
-        // to this battle only.
-        if (BattlePrepHasSkillChoice && PrepLent != null) lentLoadout = BattleSkills.Order(prepSkills);
+        // A loadout with required skills is not kept as the choice (a lent one is not open yet, and the
+        // stage's needs should not become the other modes' default): it goes to this battle only.
+        if (BattlePrepHasSkillChoice && PrepRequired.Count > 0) lentLoadout = BattleSkills.Order(prepSkills);
         else if (BattlePrepHasSkillChoice) SetBattleLoadout(prepSkills.ToArray(), PrepFree);
         SetBattleDifficulty(prepDifficulty);
         if (PrepHasApps)
@@ -690,6 +693,7 @@ public sealed partial class PetWindow
             prepSkillsLabel!.Visibility = prepSkillsGrid.Visibility = prepSkillsHint!.Visibility = shown;
             prepSkillsLabel.Text = LF($"Kỹ năng mang theo ({prepSkills.Count}/{BattleSkills.Carry})", $"Skills to bring ({prepSkills.Count}/{BattleSkills.Carry})");
             var lentSkill = PrepLent;
+            var required = PrepRequired;
             foreach (var (skill, chip, mark) in prepSkillChips)
             {
                 bool open = BattleSkillOpen(skill, PrepFree) || skill == lentSkill, carried = prepSkills.Contains(skill);
@@ -698,10 +702,12 @@ public sealed partial class PetWindow
                 chip.Opacity = open || carried ? 1 : 0.5;
             }
             string lentNote = lentSkill is BattleSkill lent ? LF($"Màn này cho mượn {SkillName(lent)}: thắng màn là mở hẳn. ", $"This stage lends {SkillName(lent)}: win it to keep it. ") : "";
-            string suggest = prepStage?.SuggestSkills is { Length: > 0 } ids ? SuggestLine(ids) + " " : "";
+            string suggest = required.Count > 0 ? RequiredLine(required) + " " + L("Không bỏ được ở màn này. ", "They stay for this stage. ")
+                : prepStage?.SuggestSkills is { Length: > 0 } ids ? SuggestLine(ids) + " " : "";
             prepSkillsHint.Text = prepSkillHover is BattleSkill hover
                 ? BattleSkills.Get(hover).Describe(BattleTuning, preferences.Language)
-                    + (hover == lentSkill ? " " + L("(Mượn trong màn này.)", "(Lent for this stage.)")
+                    + (hover == lentSkill ? " " + L("(Mượn trong màn này, bắt buộc mang.)", "(Lent for this stage, must be brought.)")
+                        : required.Contains(hover) ? " " + L("(Bắt buộc mang ở màn này.)", "(Must be brought to this stage.)")
                         : BattleSkillOpen(hover, PrepFree) || prepSkills.Contains(hover) ? ""
                         : " " + (BattleSkills.Get(hover).Working ? L("(Chưa mở.)", "(Not open yet.)") : L("(Chưa mở: có trong bản cập nhật sau.)", "(Not open yet: coming in a later update.)")))
                 : prepSkills.Count < BattleSkills.Carry ? LF($"Chọn thêm {BattleSkills.Carry - prepSkills.Count} kỹ năng. Rê chuột lên ô để xem tác dụng.", $"Choose {BattleSkills.Carry - prepSkills.Count} more. Point at a skill to see what it does.")

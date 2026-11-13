@@ -1769,3 +1769,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Có chuồng và trứng trong tổ: chờ lượt mèo ghé chuồng (10–15 phút) thấy mèo đi tới tổ, cúi nhặt, nhãn "+n trứng", Kho tăng trứng; gà không bay tán loạn lượt đó. Tổ trống thì mèo vồ gà như cũ. Mèo ngủ/Quiet/Pause: không đi.
 - [ ] Xe hàng đang đứng: kéo xe sang trái/phải, xe trượt theo chuột mượt, nhả ra không mở bảng; thả lên ruộng/bếp/hồ thì xe trượt ra chỗ trống. Bấm nhẹ (không kéo) vẫn mở bảng. Lượt xe sau đứng chỗ đã kéo. Pause: không kéo được. DPI 125/150%: xe bám đúng chuột.
 - [ ] Bảng Gian hàng có nút "Cho xe đi" bên trái: bấm thì bảng đóng, xe lăn đi, nghe "swoosh"; Pause thì nút mờ.
+
+## Chương 2 bắt buộc mang kỹ năng (góp ý 13/11)
+Đã kiểm bằng test (ChapterTwoTests, TutorialChecks); mô phỏng cân bằng vốn đã dùng bộ gợi ý nên số liệu không đổi. **Chưa xem bảng thật.**
+- [ ] Bản đồ chương 2: mỗi màn ghi "Bắt buộc mang: …" (3 kỹ năng) thay cho "Gợi ý mang".
+- [ ] Bảng chuẩn bị màn chương 2: 3 kỹ năng đó đã chọn sẵn, bấm vào không bỏ được (rê chuột ghi "Bắt buộc mang ở màn này"); chọn được 2 ô còn lại; vào trận HUD có đủ 5. Chơi lại màn đã thắng vẫn bị khóa.
+- [ ] Viễn chinh, Vô tận, trận tự do: chọn tự do như cũ; lựa chọn chung không bị đổi sau khi chơi màn chương 2.

@@ -72,7 +72,19 @@ internal static class ChapterTwoTests
         var chosen = new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Bomb, BattleSkill.Shield, BattleSkill.Fan };
         check(Adventure.WithLent(chosen, BattleSkill.Fan).SequenceEqual(chosen) && Adventure.WithLent(chosen, null).SequenceEqual(chosen),
             "A loadout that already has the lent skill (or no lent skill) stays as chosen");
+        // Feedback 13/11: a chapter 2 stage's suggested skills are required, every time.
+        check(adventure.Required(campaign.Chapters[0].Stages[1]).Count == 0, "A chapter 1 stage requires nothing");
+        var required = adventure.Required(two.Stages[0]);
+        check(required.ToHashSet().SetEquals(new[] { BattleSkill.Fan, BattleSkill.Push, BattleSkill.Bomb }), "Chapter 2 stage 1 requires its three suggested skills");
+        var withRequired = Adventure.WithRequired(BattleSkills.Default, required);
+        check(withRequired.SequenceEqual(new[] { BattleSkill.Push, BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Bomb, BattleSkill.Fan }),
+            "The required ones take their slots; the user's other skills fill the rest in their order");
+        var other = new[] { BattleSkill.Heal, BattleSkill.Cheer, BattleSkill.Shield, BattleSkill.Laser, BattleSkill.Grabber };
+        var forced = Adventure.WithRequired(other, required);
+        check(forced.Count == BattleSkills.Carry && required.All(forced.Contains) && forced.Contains(BattleSkill.Heal) && forced.Contains(BattleSkill.Cheer),
+            "With none of them chosen, three of the user's five make room (the first two stay)");
         adventure.Progress.Completed.Add(two.Stages[0].Id);
+        check(adventure.Required(two.Stages[0]).ToHashSet().SetEquals(required), "Once won, they are still required when the stage is played again");
         check(adventure.Lent(two.Stages[0]) == null && adventure.SkillOpen(BattleSkill.Fan) && adventure.Lent(two.Stages[1]) == BattleSkill.Laser,
             "Once stage 1 is won the Fan is open for good and lent no more; stage 2 lends the Laser");
         // The lent skill really works in the stage's battle.

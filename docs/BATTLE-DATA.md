@@ -911,7 +911,7 @@ C1 của docs/UPDATE-1.5.md. Dữ liệu: chương `download_dump` trong `campai
 
 **Khóa mới**
 - Chương: `"unlockAfter": "<id màn>"`: màn đầu của chương chỉ mở khi đã thắng màn đó (phải là màn của chương **trước**; sai thì cả file bị bỏ). `"drops": true`: slime trong chương rơi cá và bình (không có xu; số liệu ở khóa `drops` chung).
-- Màn: `"maxMalware": 1–4` (chỉ màn có malware): số loại app độc cùng lúc thay cho `apps.maxMalware` (chương 2: 4, chương 1 giữ 2). `"suggestSkills": [ … ]` (1–5 id khác nhau): dòng "Gợi ý mang: …" trên bản đồ và bảng chuẩn bị.
+- Màn: `"maxMalware": 1–4` (chỉ màn có malware): số loại app độc cùng lúc thay cho `apps.maxMalware` (chương 2: 4, chương 1 giữ 2). `"suggestSkills": [ … ]` (1–5 id khác nhau): ở chương có mục chọn kỹ năng (chương 2) là các kỹ năng **bắt buộc mang** mỗi lần vào màn (góp ý 13/11): khóa sẵn trong bộ 5 ô, không bỏ ra được, người chơi chọn các ô còn lại; dòng "Bắt buộc mang: …" trên bản đồ và bảng chuẩn bị. Kỹ năng chưa mở và không phải kỹ năng màn cho mượn thì bỏ qua. Bộ có kỹ năng bắt buộc chỉ dùng cho trận đó, không ghi thành lựa chọn chung. Chương không có mục chọn: chỉ là dòng "Gợi ý mang".
 
 **Luật**
 - Thắng Vua Slime (`c1_slime_king`) thì mở chương 2; khung kết quả ghi "Hoàn thành chương! Đã mở chương 2: …", nút chính thành "Chương tiếp". Màn đã thắng thì luôn mở. Chương 2 bắt đầu build rỗng (build chỉ mang trong một chương).

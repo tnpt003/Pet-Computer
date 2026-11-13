@@ -387,14 +387,19 @@ internal static class TutorialChecks
             $"With the Slime King beaten the map opens on chapter 2, its first stage chosen ({window.AdventureMapChapter}, {window.AdventureSelectedStage})");
         Call(window, "UpdateAdventureMap");
         string mapText = window.AdventureMapText;
-        check(mapText.Contains("Chapter 2: The Download Dump") && mapText.Contains("Suggested: Fan") && mapText.Contains("This stage lends Fan") && window.AdventureEnterEnabled,
+        check(mapText.Contains("Chapter 2: The Download Dump") && mapText.Contains("Must bring: ") && mapText.Contains("Fan") && mapText.Contains("This stage lends Fan") && window.AdventureEnterEnabled,
             $"The map names chapter 2 and what its stage lends and suggests ({mapText.Replace('\n', '|')})");
         check(window.AdventureShowChapter(-1) && window.AdventureMapChapter == "slime_invasion" && !window.AdventureShowChapter(-1) && window.AdventureShowChapter(1),
             "‹ › turn between the chapters (and stop at the ends)");
         check(window.AdventureEnterStage() == null && window.BattlePreparing && window.BattlePrepLent == BattleSkill.Fan && window.BattlePrepSkills.Contains(BattleSkill.Fan)
             && !window.BattlePrepSkills.Contains(BattleSkill.Shield) && !window.BattlePrepToggleSkill(BattleSkill.Fan) && window.BattlePrepSkills.Contains(BattleSkill.Fan),
             "The stage's setup carries the lent Fan in the Shield's slot, and it cannot be put back");
-        check(window.BattlePrepText.Contains("(Lent for this stage.)"), $"The setup panel says the Fan is lent ({window.BattlePrepText.Replace('\n', '|')})");
+        check(window.BattlePrepRequired.ToHashSet().SetEquals(new[] { BattleSkill.Fan, BattleSkill.Push, BattleSkill.Bomb }) && !window.BattlePrepToggleSkill(BattleSkill.Push)
+            && !window.BattlePrepToggleSkill(BattleSkill.Bomb) && window.BattlePrepSkills.Contains(BattleSkill.Push) && window.BattlePrepSkills.Contains(BattleSkill.Bomb),
+            "Feedback 13/11: the stage's three suggested skills are required and cannot be put back either");
+        check(window.BattlePrepText.Contains("(Must be brought to this stage.)"), $"Pointing at a required skill says so ({window.BattlePrepText.Replace('\n', '|')})");
+        window.BattlePrepToggleSkill(BattleSkill.Fan);
+        check(window.BattlePrepText.Contains("Lent for this stage"), $"The setup panel says the Fan is lent ({window.BattlePrepText.Replace('\n', '|')})");
         check(window.BattlePrepToggleSkill(BattleSkill.Heal) && window.BattlePrepToggleSkill(BattleSkill.Shield) && window.BattlePrepReady() == null
             && Sim().Carries(BattleSkill.Fan) && Sim().Carries(BattleSkill.Shield) && !Sim().Carries(BattleSkill.Heal) && Sim().Loot == BattleLoot.Items && prefs.BattleLoadout == null,
             "The other four may be changed: the battle carries that choice with the Fan, drops items, and the lent loadout is not kept as the choice");

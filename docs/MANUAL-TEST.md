@@ -1734,3 +1734,8 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Bước khay: thẻ ở góc phải dưới, cạnh khay. "Xong" đóng thẻ, mèo đi lại bình thường. "Bỏ qua" bất kỳ lúc nào: thẻ đóng ngay.
 - [ ] Trong lúc hướng dẫn: mèo không tự đi, không tự ngủ, không rủ chơi, cổng không tự hiện; Pause thì thẻ và mèo đứng yên; mở app toàn màn hình hoặc vào trận thì hướng dẫn tắt hẳn.
 - [ ] Cài đặt → Chung → "Xem lại hướng dẫn": chạy lại từ đầu; mèo đang ngủ thì báo "Mèo đang ngủ…" và mèo KHÔNG thức.
+
+## Lối vào hướng dẫn cho người dùng cũ (13/11)
+- [ ] Cài đặt → Chung: mục "Hướng dẫn" ở đầu trang, hai nút "Xem lại hướng dẫn" và "Mở lại phiếu Chào mừng"; vi/en/ja không tràn.
+- [ ] "Mở lại phiếu Chào mừng": Cài đặt đóng, phiếu hiện với ngôn ngữ, Khởi động cùng Windows, nhắc nghỉ ĐÚNG như đang dùng. "Để sau" hoặc đóng phiếu: không cài đặt nào đổi (mở lại Cài đặt kiểm tra). Đổi một ô rồi đóng: chỉ ô đó đổi. "Đi cùng mèo": hướng dẫn chạy; mèo đang ngủ thì báo, mèo KHÔNG thức.
+- [ ] Menu khay → "Hướng dẫn": hướng dẫn chạy; mờ khi Pause, app toàn màn hình, đang trận hoặc đang hướng dẫn; mèo ngủ thì hiện thông báo, mèo KHÔNG thức.

@@ -311,6 +311,10 @@ internal static class Program
         welcomeLanguage.SelectedIndex = 2; welcome.UpdateLayout();
         Check((string)welcomeLanguage.SelectedItem == "日本語" && PetWelcome.Chosen(welcomeLanguage) == "ja" && (string)welcomeGo.Content == "猫と一緒に見る"
               && (string)welcomeAutostart.Content == "Windows の起動時に開始", "The welcome offers 日本語 and rewrites itself in Japanese");
+        var replayCard = PetWelcome.Create("en", out var replayAutostart, out _, out var replayReminders, remindersOn: false, breakMinutes: 60, autostartOn: false);
+        Check(replayAutostart.IsChecked == false && replayReminders.IsChecked == false && ((string)replayReminders.Content).Contains("60"),
+            "The welcome opened again shows the current settings (startup off, reminders off), not a new user's ticks");
+        replayCard.Close();
         Check(PetWelcome.DefaultLanguage(false, "vi") == "vi" && PetWelcome.DefaultLanguage(false, "en") == "en" &&
               PetWelcome.DefaultLanguage(false, "ja") == "ja" &&
               PetWelcome.DefaultLanguage(true, "en") == (System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch { "vi" => "vi", "ja" => "ja", _ => "en" }),
@@ -720,6 +724,12 @@ internal static class Program
         Check(form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().Select(t => (string)t.Header).SequenceEqual(new[] { "Speech", "Sounds", "General" }) &&
               form.Coat == null && form.Name == null,
             "Settings hold the app's pages (Speech, Sounds, General); the cat's profile and look moved to Customize");
+        var guidePage = (FrameworkElement)form.Tabs.Items.OfType<System.Windows.Controls.TabItem>().Last().Content;
+        var guideTexts = Descendants<System.Windows.Controls.TextBlock>(guidePage).Select(t => t.Text).ToList();
+        Check(Descendants<System.Windows.Controls.Button>(guidePage).Contains(form.ReplayGuide) && Descendants<System.Windows.Controls.Button>(guidePage).Contains(form.ReplayWelcome) &&
+              (string)form.ReplayGuide.Content == "Replay the guide" && (string)form.ReplayWelcome.Content == "Open the welcome again" &&
+              guideTexts.IndexOf("Guide") >= 0 && guideTexts.IndexOf("Guide") < guideTexts.IndexOf("App"),
+            "Settings → General opens with a Guide card: replay the guide, open the welcome again");
         // Customize ({name} › Customize…): the cat's own cards in one scrolling page, its own Save and Cancel.
         window.ShowCustomize();
         var customizeWindow = Field<Window>(window, "customizeWindow");

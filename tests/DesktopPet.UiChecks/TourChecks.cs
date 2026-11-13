@@ -29,7 +29,9 @@ internal static class TourChecks
             pet.Emotions.Reset(); behavior.Reset(); pet.Action = PetAction.Idle;
             long interactions = Field<long>(window, "interactionCount");
 
+            check(window.TourMenuEnabled, "The tray Guide row is on while the cat is awake and free");
             check(window.StartTour() == null && window.TourActive && window.TourStepNow == TourStep.Drag && Card() != null, "The guide starts with a card by the cat: drag me");
+            check(!window.TourMenuEnabled, "...and greyed while the guide runs");
             check((bool)Call(window, "FeatureOwnsMovement")! && !(bool)Call(window, "MayAct", AutoKind.ToyInvite)! && !(bool)Call(window, "MayAct", AutoKind.PortalEvent)!,
                 "Nothing automatic runs during the guide");
             Tick(0.2);

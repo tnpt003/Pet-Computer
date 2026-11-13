@@ -24,7 +24,7 @@ public sealed class PetSettingsForm
     public Border KeepsakeSection = null!;
     public CheckBox HolidayAccessories = null!, ClimbWindows = null!, Weather = null!, Guests = null!, Treasure = null!, Farm = null!, FarmHelper = null!, FarmResow = null!, FarmAutoCook = null!, FarmAutoFish = null!, ShowTrophies = null!, Talks = null!, Autostart = null!, BreakReminders = null!, Sounds = null!, InteractionSounds = null!, EmotionSounds = null!, SleepSounds = null!, AutoUpdate = null!;
     public Slider Volume = null!;
-    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!, DebugView = null!;
+    public Button Save = null!, Cancel = null!, Tuning = null!, Forget = null!, Preview = null!, CheckUpdates = null!, Uninstall = null!, DebugView = null!, ReplayGuide = null!, ReplayWelcome = null!;
     public PetRenderer PetPreview = null!;
     public PetModel PreviewPet = null!;
     public System.Windows.Threading.DispatcherTimer PreviewTimer = null!;
@@ -336,14 +336,22 @@ public sealed partial class PetWindow
         form.DebugView.HorizontalAlignment = HorizontalAlignment.Left;
         form.DebugView.Click += (_, _) => ToggleDebug();
         // The cat-led guide again (M2b, PetWindow.Tour.cs); the settings stay open.
-        var replayGuide = PetUi.SecondaryButton(L("Xem lại hướng dẫn", "Replay the guide"));
-        replayGuide.HorizontalAlignment = HorizontalAlignment.Left;
-        replayGuide.Click += (_, _) =>
+        form.ReplayGuide = PetUi.SecondaryButton(L("Xem lại hướng dẫn", "Replay the guide"));
+        form.ReplayGuide.Click += (_, _) =>
         {
             if (StartTour() is string reason) PetDialog.Show(settingsWindow, "Desktop Pet", reason, "OK");
         };
+        // The first-run welcome card again: the settings close unsaved (the card writes the same settings).
+        form.ReplayWelcome = PetUi.SecondaryButton(L("Mở lại phiếu Chào mừng", "Open the welcome again"));
+        form.ReplayWelcome.Click += (_, _) => { settingsWindow?.Close(); ReplayWelcome(); };
+        var guideButtons = new WrapPanel();
+        foreach (var button in new[] { form.ReplayGuide, form.ReplayWelcome }) { button.Margin = new Thickness(0, 0, 8, 4); guideButtons.Children.Add(button); }
         var dataFolder = new TextBox { Text = PetPreferences.DataDirectory, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap };
         var generalTab = Page(
+            Section(L("Hướng dẫn", "Guide"), PetMotif.Book,
+                guideButtons,
+                PetUi.Hint(L("Mèo dẫn bạn đi xem một vòng: kéo mèo, menu, biển nông trại, đồ vật, khay. Cũng có ở menu khay.",
+                             "The pet shows you around: dragging, its menu, the farm sign, things, the tray. Also on the tray menu."))),
             Section(L("Ứng dụng", "App"), PetMotif.Gear,
                 Row("Language / Ngôn ngữ", form.Language),
                 form.Autostart,
@@ -366,7 +374,6 @@ public sealed partial class PetWindow
                 Row(L("Phiên bản", "Version"), new TextBlock { Text = PetLog.VersionLabel(PetLog.BuildVersion, preferences.Language), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap }),
                 Row(L("Dữ liệu và log", "Data and logs"), dataFolder),
                 PetUi.Hint(AiStatusText),
-                replayGuide,
                 form.DebugView));
 
         foreach (var pair in new[] { (speechTab, PetSceneKind.Speech), (soundsTab, PetSceneKind.Sound), (generalTab, PetSceneKind.Settings) })

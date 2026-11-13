@@ -24,7 +24,7 @@ public static class PetWelcome
     // The language id picked in the box (its Tag holds the ids, in order).
     public static string Chosen(ComboBox box) => ((string[])box.Tag)[Math.Max(0, box.SelectedIndex)];
 
-    public static Window Create(string language, out CheckBox autostart, out ComboBox languageBox, out CheckBox breakReminders, bool remindersOn = true, int breakMinutes = 45)
+    public static Window Create(string language, out CheckBox autostart, out ComboBox languageBox, out CheckBox breakReminders, bool remindersOn = true, int breakMinutes = 45, bool autostartOn = true)
     {
         var languages = PetLanguage.Choices(language);
         var choose = new ComboBox { ItemsSource = languages.Select(PetLanguage.DisplayName).ToArray(), SelectedIndex = Array.IndexOf(languages, language), Tag = languages, MinWidth = 150 };
@@ -32,7 +32,7 @@ public static class PetWelcome
         var label = new TextBlock { Text = "Language / Ngôn ngữ", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 10, 0) };
         DockPanel.SetDock(label, Dock.Left);
         row.Children.Add(label); row.Children.Add(choose);
-        var check = new CheckBox { IsChecked = true, Margin = new Thickness(0, 10, 0, 0) };
+        var check = new CheckBox { IsChecked = autostartOn, Margin = new Thickness(0, 10, 0, 0) };
         var reminders = new CheckBox { IsChecked = remindersOn, Margin = new Thickness(0, 8, 0, 0) };
         var extra = new StackPanel();
         extra.Children.Add(new PetScene(PetSceneKind.Home, 86));
@@ -74,5 +74,22 @@ public static class PetWelcome
         bool on = autostart.IsChecked == true;
         if (!startup.SetEnabled(on, exe)) System.Diagnostics.Trace.WriteLine("Welcome: Windows startup could not be changed.");
         else System.Diagnostics.Trace.WriteLine($"Welcome: start with Windows {(on ? "on" : "off")}.");
+    }
+
+    // Settings → General → "Open the welcome again": the same card, filled with the current settings
+    // (language, the Windows startup entry read fresh, break reminders), so "Later" changes nothing;
+    // only a box the user changed is written. Test windows never touch the startup entry.
+    public static void Replay(PetWindow pet, StartupRegistration startup, bool touchStartup)
+    {
+        string? exe = Environment.ProcessPath;
+        bool autostartWas = touchStartup && exe != null && startup.IsEnabled(exe);
+        var window = Create(pet.UiLanguage, out var autostart, out var language, out var reminders, pet.BreakRemindersOn, pet.BreakMinutes, autostartWas);
+        bool guide = window.ShowDialog() == true;
+        pet.SetLanguage(Chosen(language)); // No-ops when unchanged.
+        pet.SetBreakReminders(reminders.IsChecked == true);
+        bool on = autostart.IsChecked == true;
+        if (touchStartup && exe != null && on != autostartWas && !startup.SetEnabled(on, exe))
+            PetDialog.Show(null, "Desktop Pet", pet.L("Không đổi được cài đặt khởi động cùng Windows.", "Windows startup could not be changed."), "OK", glyph: PetDialog.WarningGlyph);
+        if (guide && pet.StartTour() is string reason) PetDialog.Show(null, "Desktop Pet", reason, "OK");
     }
 }

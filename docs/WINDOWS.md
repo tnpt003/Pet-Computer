@@ -554,14 +554,19 @@ keepsake card) is the cat's own window, one scrolling page of cards:
 **Settings…** (also in the tray menu) is the app, in three tabs:
 - **Speech:** talking on/off, how often (greyed out while off), link to forget what was learned.
 - **Sounds:** master switch, three kinds, volume, preview picker + Play.
-- **General:** Language / Ngôn ngữ, Start with Windows, updates, uninstall, break reminders,
+- **General:** a Guide card first (**Replay the guide**: the cat-led guide again; **Open the
+  welcome again**: Settings close unsaved and the first-run welcome opens filled with the current
+  language, Windows startup entry and break reminders, so "Later" changes nothing and only a changed
+  box is written), then Language / Ngôn ngữ, Start with Windows, updates, uninstall, break reminders,
   About Desktop Pet (version, data and logs folder, AI state, Behavior debug view).
 
 In both windows nothing changes until **Save**; **Cancel**, Esc or closing the window keeps the
 old values. Each saves only its own fields, so both can be open at once. Save and Cancel stay at
 the bottom; a page scrolls on its own on a small screen. The tray menu holds the app-level
 controls: Pause, **Smart pet (AI)** / **Mèo thông minh (AI)**, **Customize…**, **Settings…**,
-Bring the pet to the main screen, updates, Exit.
+Bring the pet to the main screen, Call the cat, **Guide** (starts the cat-led guide; greyed while
+paused, fullscreen, in a battle or while the guide runs; a sleeping cat gets a note and stays
+asleep), the toy basket, Play with the cat, updates, Exit.
 
 The right-click menu (not the tray menu, which is a WinForms menu) has its own look
 (`PetMenuStyle.cs`, 2026-10-16): a rounded white panel with a soft shadow, rounded hover

@@ -40,6 +40,16 @@ public sealed partial class PetWindow
         return null;
     }
 
+    // Tray "Guide": the same blocks as calling the cat; greyed while the guide runs.
+    public bool TourMenuEnabled => CallMenuEnabled && !tour.Active;
+
+    // Settings → General → "Open the welcome again" (PetWelcome.Replay).
+    public void ReplayWelcome()
+    {
+        if (closed) return;
+        PetWelcome.Replay(this, startup, persistPreferences);
+    }
+
     // The steps that need something on the cat's monitor.
     private bool TourAvailable(TourStep step) => step switch
     {

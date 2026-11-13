@@ -78,6 +78,12 @@ public partial class App : Application
         menu.Items.Add(reset);
         var callCat = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.CallCat()); // Living corner M5.
         menu.Items.Add(callCat);
+        // The cat-led guide (M2b), like Settings → General → Replay the guide.
+        var guide = new Forms.ToolStripMenuItem(null, null, (_, _) =>
+        {
+            if (pet.StartTour() is string reason) PetDialog.Show(null, "Desktop Pet", reason, "OK");
+        });
+        menu.Items.Add(guide);
         var toys = new Forms.ToolStripMenuItem(null, null, (_, _) => pet.ToggleToyBasket());
         menu.Items.Add(toys);
         // Mini-games (docs/MINI-GAMES.md): the same row again ends a game.
@@ -107,6 +113,7 @@ public partial class App : Application
         settings.Image = PetTrayMenuStyle.Icon(PetUi.Settings);
         reset.Image = PetTrayMenuStyle.Icon(PetUi.Home);
         callCat.Image = PetTrayMenuStyle.Icon(PetUi.Call);
+        guide.Image = PetTrayMenuStyle.Icon(PetUi.Place);
         toys.Image = PetTrayMenuStyle.Icon(PetUi.Ball);
         games.Image = PetTrayMenuStyle.Icon(PetUi.Play);
         cups.Image = PetTrayMenuStyle.Icon(PetUi.Treat);
@@ -127,6 +134,8 @@ public partial class App : Application
             reset.Text = pet.L("Gọi mèo về màn hình chính", "Bring the pet to the main screen");
             callCat.Text = pet.L("Gọi mèo", "Call the cat");
             callCat.Enabled = pet.CallMenuEnabled;
+            guide.Text = pet.L("Hướng dẫn", "Guide");
+            guide.Enabled = pet.TourMenuEnabled;
             toys.Text = pet.ToyBasketMenuLabel;
             toys.Enabled = pet.ToyBasketMenuEnabled;
             games.Text = pet.L("Chơi cùng mèo", "Play with the cat");

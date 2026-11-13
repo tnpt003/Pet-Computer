@@ -1802,3 +1802,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 Đã kiểm bằng UiChecks (EndlessChecks); **chưa xem trong trận thật.**
 - [ ] Vô tận (hoặc Viễn chinh) gặp loại chưa có trong Sổ tay quái: banner "Quái mới: tên! mẹo" đọc được, không bị banner khác đè ngay; trận không đứng hình.
 - [ ] Loại đã có trong Sổ tay: không có banner này. Tắt ô Hướng dẫn trong trận ở bảng chuẩn bị một màn Phiêu lưu (lưu chung): Vô tận/Viễn chinh không có banner này.
+
+## Chương 2 thêm Slime dỗi và Slime hẹn giờ (14/11)
+Đã kiểm bằng test dữ liệu và mô phỏng cân bằng (người chơi mô phỏng dỗ bằng chuột); **chưa chơi thật.** Kỷ lục màn 1 (r5) và màn 4 (r8) tính riêng với lượt cũ.
+- [ ] Màn 1 Cổng tải về đợt 2: Slime dỗi xuất hiện, bước guide "Slime dỗi" hiện đúng lúc; rê chuột qua lại thì nó cười bỏ đi; nếu chỉ để mèo đánh thì trận có kéo quá dài không (đặc biệt với Búa).
+- [ ] Màn 4 Đầm nhầy đợt 1: Slime hẹn giờ đứng yên, bước guide "Slime hẹn giờ" hiện; hết giờ gọi Bạt nhún hoặc Pháo đài, tối đa 2 lần; hạ sớm thì không gọi nữa. Màn có quá khó không.
+- [ ] Sổ tay quái: hạ Slime hẹn giờ ở màn 4 cộng vào trang Slime hẹn giờ; trận tự do chọn trang đó sinh Slime hẹn giờ thường (gọi đủ đội hình).

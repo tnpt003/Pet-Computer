@@ -1292,7 +1292,7 @@
   "Click a chosen skill to drop it, then choose another.": "選んだスキルをクリックで外し、別のスキルを選ぼう。",
   "The Download Dump": "ダウンロードのゴミ捨て場",
   "Download gate": "ダウンロードの門",
-  "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.": "学ぶこと：扇風機（場所をクリック：風の柱がスライムを足止めし、水たまりを乾かし、飛ぶスライムを落とす）。バネスライムの金色の輪をよける（縮んだら猫を持ち上げる）か2回たたいてぺしゃんこにする。遠くの吐き出しスライムを先に倒す。ゲージが満ちる前にがったいスライムを引き離す。この章からスライムが魚とポーションを落とす：クリックで拾おう。",
+  "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stroke a sulky slime with the mouse; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.": "学ぶこと：扇風機（場所をクリック：風の柱がスライムを足止めし、水たまりを乾かし、飛ぶスライムを落とす）。バネスライムの金色の輪をよける（縮んだら猫を持ち上げる）か2回たたいてぺしゃんこにする。遠くの吐き出しスライムを先に倒す。すねスライムはマウスでなでてなだめる。ゲージが満ちる前にがったいスライムを引き離す。この章からスライムが魚とポーションを落とす：クリックで拾おう。",
   "Ghost folder": "おばけフォルダー",
   "You learn: to point at a ghost slime so it shows (a hidden one cannot be hit); to point at a mirage to find the real one (it has a shadow); the Laser pulls slimes out of the flag's ring and reveals both; to lift the cat on the last beat to dodge the big drum, and to hit or Push the drummer to reset its count; knocking the flag down scares the whole band.": "学ぶこと：おばけスライムにマウスを重ねて姿を出す（隠れている間は当たらない）。まぼろしスライムにマウスを重ねて本物を探す（本物には影がある）。レーザーで旗の輪からスライムを誘い出し、両方の正体を暴く。最後の拍で猫を持ち上げて大太鼓をかわし、ドラムスライムを攻撃するか押し出して数え直させる。旗を倒すと群れ全体が慌てる。",
   "Keep the fish basket": "魚かごを守れ",
@@ -1584,10 +1584,10 @@
   "Break nests; stop healing. Carry to hit eggs and return children. Soothe 33/66/100: heart notes, cat in ring for back rub, lift over waves then tap open belly 5 times. Wrap: 3 clicks; cords: Scissors.": "巣と回復を止めよう。ネコを運んで卵を叩き、子をゆりかごへ。なだめ33/66/100：音符、輪の中で背中なで、波を持ち上げて避けて開いたお腹を5回叩く。布は3クリック、ひもはハサミ。",
   "The Zip Slime rolls three times and re-aims between rolls! Watch each warned lane; lift the cat high to dodge.": "ZIPスライムは3回転がり、その間に狙い直します！予告されたレーンを見て、猫を高く持ち上げて避けましょう。",
   "At 1 HP the boss becomes a zip bomb! Strike six zipper pulls once each: three in the air and three on the floor. Carry the cat to the high pulls. Clear all six to deflate and defeat it. On timeout the whole arena bursts for 80% max HP; lifting cannot dodge it. Survive and all six pulls reset for another attempt.": "HPが1になるとZIP爆弾に変わります！空中3個、地上3個の引き手を各1回攻撃してください。高い引き手には猫を運びます。6個壊すと倒せます。時間切れで全域に最大HPの80%の爆発が起き、持ち上げても避けられません。生き残ると6個すべてが復活し、再挑戦できます。",
-  "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. Learn the Screenshot app. This stage lends the Fan.": "吐き出しスライムは加速する水たまりを残し、ばねスライムは待ち伏せし、融合する群れは巨体になります。スクリーンショットを学びます。このステージでは扇風機を借りられます。",
+  "Spitters leave speed puddles, springs lie in wait, a sulky slime needs cheering up, swarms merge into a giant. Learn Screenshot. This stage lends the Fan.": "吐き出しスライムは加速する水たまりを残し、ばねは待ち伏せし、すねスライムはなだめる必要があり、群れは巨体になります。スクリーンショットを学びます。このステージでは扇風機を借りられます。",
   "Ghosts fade, mirages bring fakes, a drummer beats a big drum, a flag slime guards its friends. Learn to clear a CAPTCHA. This stage lends the Laser.": "おばけスライムは消えたり現れたり、幻影スライムは偽物を連れ、指揮者は大太鼓を鳴らし、はたスライムは仲間を守る旗を立てる。CAPTCHAの解除を学びます。このステージではレーザーを借りられます。",
-  "Practice Scissors on bubbles and chains, then meet ice, hedgehog, wall and split slimes. Learn to clear a frozen cursor. This stage lends the Scissors.": "泡や鎖でハサミを練習し、こおり・ハリネズミ・かべ・分裂スライムに出会います。固まったカーソルを解除します。このステージではハサミを借りられます。",
-  "You learn: the Scissors (click anywhere: they cut a band, slicing ropes and bubbles); to throw the cat hard through an ice slime; to hit a hedgehog while its quills are down; to throw the cat at a wall slime or Push it down; to click a bubble to pop it; to cut a chain slime's rope: it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin.": "学ぶこと：ハサミで帯状にロープや泡を切る、猫を強く投げて氷の殻を割る、針が寝たときに攻撃する、かべスライムは猫を投げるか押し出しで落として床で戦う、泡は数回クリックして割る、仲間の身代わりになる鎖を切る、分裂した半身の合体を防ぐため薬草を先に倒す。",
+  "Practice Scissors on bubbles and chains; meet timer, ice, hedgehog, wall and split slimes. Clear a frozen cursor. This stage lends the Scissors.": "泡や鎖でハサミを練習し、タイマー・こおり・ハリネズミ・かべ・分裂スライムに出会います。固まったカーソルを解除します。このステージではハサミを借りられます。",
+  "You learn: the Scissors (click anywhere: they cut a band, slicing ropes and bubbles); to beat a timer slime before its clock rings; to throw the cat hard at an ice slime; to hit a hedgehog with its quills down; to throw the cat at a wall slime or Push it; to click a bubble to pop it; to cut a chain slime's rope: it takes hits for a friend; to beat the herb slime first so halves cannot rejoin.": "学ぶこと：ハサミで帯状にロープや泡を切る、時計が鳴る前にタイマースライムを倒す、猫を強く投げて氷を割る、針が寝たときに攻撃する、かべスライムは猫を投げるか押し出しで落とす、泡はクリックして割る、仲間の身代わりになる鎖を切る、分裂した半身の合体を防ぐため薬草を先に倒す。",
   "Mutant goo den": "変異した粘液の巣",
   "Late-zone elite: Mutant Slime with bumps, reflected cores and goo terrain. Lift to dodge and solve its core windows.": "終盤エリアの精鋭：こぶ、跳ね返すコア、粘液地形を持つ変異スライム。猫を持ち上げて避け、コアの隙を解きましょう。",
   "Hedgehogs guard the pond; ice and sulky slimes block the path.": "ハリネズミが池を守り、氷とすねたスライムが道をふさぎます。",
@@ -1815,5 +1815,7 @@
   " or use the Fan": "（扇風機も使える）",
   " or hold it with the Fan": "（扇風機で足止めも）",
   "A goo rope! Beat the slime holding it to break it": "ねばねばロープ！つないでいるスライムを倒して切ろう",
-  "New foe: {0}! {1}": "新しい敵：{0}！{1}"
+  "New foe: {0}! {1}": "新しい敵：{0}！{1}",
+  "A sulky slime: hitting it only puffs it up and makes it hit harder; too many hits and it stamps off in tears, leaving nothing. Stroke it with the mouse, back and forth: it smiles and leaves. The cat only goes for it once no other slime is left.": "すねスライム：たたくとふくれて、もっと強くたたき返してくるだけ。たたきすぎると泣いて足を踏み鳴らし、何も落とさずに逃げる。マウスで行ったり来たりなでよう：笑って帰っていく。猫はほかのスライムがいなくなるまでこれを狙わない。",
+  "A timer slime stands still while the clock over it counts down; at zero it calls a formation behind the cat, twice at most. Beat it first; a stunned one's clock runs slow.": "タイマースライムは頭の上の時計が数える間じっとしている。ゼロになると猫の後ろに隊列を呼ぶ（最大2回）。先に倒そう。気絶中は時計がゆっくり進む。"
 }

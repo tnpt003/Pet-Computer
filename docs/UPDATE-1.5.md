@@ -149,7 +149,7 @@ M3 (bục tự vẽ) đã bỏ.
 | Mã | Nội dung |
 |---|---|
 | T1 | Bảo vệ giỏ cá: slime tha cá đi; mất hết cá thì thua dù mèo còn máu (13/11 đổi thành màn phòng thủ: giỏ có máu, slime đánh giỏ, bị mèo đánh mới aggro; xem docs/BATTLE-DATA.md) |
-| C1 | Chương 2 "Bãi rác Tải về", mở khi thắng Vua Slime: Cổng tải về (Quạt/Screenshot), Thư mục ma (Laser/CAPTCHA), Giữ giỏ cá (Kẹp gắp/Pin yếu, 75 s), Đầm nhầy (Kéo cắt/Đơ con trỏ), Slime Nén (Bình xịt). Không có Slime Mẹ. Chi tiết: [rà nội dung #69](CONTENT-1.5-REVIEW-2026-11-07.md) |
+| C1 | Chương 2 "Bãi rác Tải về", mở khi thắng Vua Slime (14/11: màn 1 có Slime dỗi, màn 4 có Slime hẹn giờ chỉ gọi Bạt nhún/Pháo đài, tối đa 2 lần): Cổng tải về (Quạt/Screenshot), Thư mục ma (Laser/CAPTCHA), Giữ giỏ cá (Kẹp gắp/Pin yếu, 75 s), Đầm nhầy (Kéo cắt/Đơ con trỏ), Slime Nén (Bình xịt). Không có Slime Mẹ. Chi tiết: [rà nội dung #69](CONTENT-1.5-REVIEW-2026-11-07.md) |
 | C2 | Tranh, bản đồ, phông trận riêng (`scene` "dump") |
 | C3 | Phần thưởng: phụ kiện Mũ thư mục, kỷ vật Thú bông Slime Nén (physics như kệ kỷ vật) |
 | X1 | Viễn chinh tuyến 2 "Lối Bãi rác" (mở khi thắng Slime Nén): 6 bậc qua Đầm nhầy, Kho cá, Mê cung thư mục; trùm Slime Nén; kỷ lục riêng |
@@ -227,7 +227,7 @@ Nhật ký chi tiết và kết quả test từng mốc: docs/archive/UPDATE-1.5
 4. Mèo tự rớt khỏi tay khi đánh slime bay: chưa rõ nguyên nhân, chờ log "Cat let go in battle".
 5. Version1.5.0/README/website/tag đã xong. Kiểm cài đặt/cập nhật từ1.4.4 trên máy thật; feed1.5.0 và HTTP200 không thay việc thử nâng cấp thực tế.
 
-rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 4, 5, 3, 7, 15; Vô tận 26; Viễn chinh tuyến 1 r9 (`keepRuns` 6, 7, 8), Lối Bãi rác r19 (`keepRuns` 1, 2, 3, 4, 17, 18). Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
+rulesVersion hiện tại (#70, 07/11): chương 1 giữ như 1.4.4 theo duyệt 05/11; chương 2 là 5, 5, 4, 8, 15 (14/11: màn 1 thêm Slime dỗi, màn 4 thêm Slime hẹn giờ chương 2; trước đó giỏ cá 3→4 ngày 13/11); Vô tận 26; Viễn chinh tuyến 1 r9 (`keepRuns` 6, 7, 8), Lối Bãi rác r19 (`keepRuns` 1, 2, 3, 4, 17, 18). Chuyến cũ được giữ không đồng nghĩa với replay nguyên bản luật cũ. Đổi luật đáng kể phải xét tách kỷ lục cả trước release, giữ ngoại lệ chương 1 đã duyệt.
 
 ## Rủi ro còn lại
 

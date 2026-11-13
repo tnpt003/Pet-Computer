@@ -16,6 +16,26 @@ internal static class ChapterTwoTests
         LendChecks(check);
         MalwareChecks(check);
         DataChecks(check);
+        RosterChecks(check);
+    }
+
+    // Chapter 2 review E (2026-11-14): the chapter also shows the sulky slime (stage 1) and a timer
+    // (stage 4) whose calls are formations the chapter has shown by then; it shares the timer's page.
+    private static void RosterChecks(Action<bool, string> check)
+    {
+        var two = Shipped.Campaign!.Chapters[1];
+        IEnumerable<string> Kinds(StageSpec stage) => stage.Waves.SelectMany(w => w.Groups ?? Array.Empty<WaveGroup>()).Select(g => g.Enemy).OfType<string>();
+        check(Kinds(two.Stages[0]).Contains("sulky") && two.Stages[0].RulesVersion == 5, "Chapter 2 stage 1 brings a sulky slime (rules 5)");
+        check(Kinds(two.Stages[3]).Contains("timer_dump") && two.Stages[3].RulesVersion == 8, "Chapter 2 stage 4 brings chapter 2's timer (rules 8)");
+        var dump = Shipped.Enemy("timer_dump");
+        var timer = Shipped.Enemy("timer");
+        check(dump is { Page: "timer", TipVi: null, Clock.Calls: 2 } && dump.Clock!.CallFormations!.Keys.OrderBy(k => k).SequenceEqual(new[] { "fortress", "trampoline" })
+              && dump.MaxHp == timer.MaxHp && dump.Damage == timer.Damage && dump.Clock.Seconds == timer.Clock!.Seconds,
+            "Chapter 2's timer is the timer (same page, numbers and clock) calling only the Trampoline or the Fortress, twice at most");
+        check(MonsterBook.PageOf(Shipped, "timer_dump") == "timer" && CustomFights.SpawnOf(Shipped, "timer") == "timer" && CustomFights.SpawnOf(Shipped, "king") == "king_c1",
+            "Its defeats count on the timer's page; a Custom Fight still spawns the timer itself (and the chapter 1 King for the King's page)");
+        var (_, mouse) = BattleData.Reach(Shipped, Kinds(two.Stages[0]));
+        check(mouse.Count <= BattleData.MaxMouseKinds, $"Stage 1 keeps within the cursor kinds limit ({string.Join(",", mouse)})");
     }
 
     private static void ShippedChecks(Action<bool, string> check)

@@ -658,6 +658,16 @@
       "elite": { "hp": 1.2, "cost": 1, "descVi": "đồng hồ ngắn hơn", "descEn": "its clock is shorter" }
     },
     {
+      // Chapter 2 review E (2026-11-14): the timer of chapter 2 (stage 4). Its page is the timer's; it
+      // calls only formations chapter 2 has shown by then (Trampoline, Fortress), twice at most.
+      "id": "timer_dump", "page": "timer", "nameVi": "Slime hẹn giờ", "nameEn": "Timer slime",
+      "maxHp": 45, "speed": 0, "damage": 8, "range": 55,
+      "windup": 0.8, "attackCooldown": 2.0, "recover": 0.4,
+      "scale": 0.9, "color": "#7CC6A4", "marks": "clock", "cost": 2, "binSpit": false,
+      "clock": { "seconds": 20, "eliteSeconds": 15, "stunned": 0.3, "calls": 2, "call": [ "slime", "slime", "runner" ], "callFormations": { "trampoline": 1, "fortress": 1 } },
+      "elite": { "hp": 1.2, "cost": 1, "descVi": "đồng hồ ngắn hơn", "descEn": "its clock is shorter" }
+    },
+    {
       // 1.5 S11 (M16): never hurts the cat (2026-11-04: steals from afar, range 160, a beam while it winds up;
       // an elite takes two things). Its windup near the cat steals the clean app icon with the most
       // charge (at least `minCharge`; battles with apps), otherwise the ready skill with the longest cooldown.
@@ -1049,15 +1059,15 @@
             "id": "c2_download_gate", "nameVi": "Cổng tải về", "nameEn": "Download gate",
             "malwareKinds": ["loading", "update", "virus", "ads"],
             "lesson": "screenshot",
-            "goalVi": "Slime phun để lại vũng tăng tốc, slime lò xo nằm chờ, bầy hợp thể nhập thành khổng lồ. Học app Chụp Màn Hình. Màn này cho mượn Quạt.",
-            "goalEn": "Spitters leave speed puddles, spring slimes lie in wait, fusing swarms merge into a giant. Learn the Screenshot app. This stage lends the Fan.",
-            "tipVi": "Bạn sẽ học: Quạt (click một chỗ: cột gió giữ chân slime, làm khô vũng, thổi rơi slime bay); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; giữ chân bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
-            "tipEn": "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
-            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 4,
+            "goalVi": "Slime phun để lại vũng tăng tốc, lò xo nằm chờ, slime dỗi cần dỗ, bầy hợp thể nhập thành khổng lồ. Học app Chụp Màn Hình. Màn này cho mượn Quạt.",
+            "goalEn": "Spitters leave speed puddles, springs lie in wait, a sulky slime needs cheering up, swarms merge into a giant. Learn Screenshot. This stage lends the Fan.",
+            "tipVi": "Bạn sẽ học: Quạt (click một chỗ: cột gió giữ chân slime, làm khô vũng, thổi rơi slime bay); né vòng vàng của slime lò xo (nhấc mèo ra khi nó nén) hoặc đánh 2 đòn cho nó bẹp; hạ slime phun đứng xa trước; rê chuột qua lại để dỗ slime dỗi; giữ chân bầy hợp thể trước khi thanh nhập đầy. Từ chương này slime rơi cá và bình: click để nhặt.",
+            "tipEn": "You learn: the Fan (click a spot: its column holds slimes, dries puddles, blows flyers down); to dodge a spring slime's gold ring (lift the cat while it squeezes) or flatten it with two hits; to take the far spitter first; to stroke a sulky slime with the mouse; to stop a fusing swarm before its bar fills. From this chapter slimes drop fish and potions: click to pick them up.",
+            "objective": "clear", "upgrades": true, "maxAlive": 5, "threat": 1.9, "eliteChance": 0.15, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 5,
             "unlocksSkill": "fan", "suggestSkills": [ "fan", "push", "bomb" ],
             "waves": [
               { "groups": [ { "enemy": "slime", "count": 2 }, { "enemy": "spitter", "count": 1 } ] },
-              { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
+              { "groups": [ { "enemy": "springer", "count": 1 }, { "enemy": "sulky", "count": 1 }, { "enemy": "runner", "count": 1 }, { "enemy": "spitter", "count": 1 } ] },
               { "groups": [ { "enemy": "fuser", "count": 3 }, { "formation": { "trampoline": 1 } } ] }
             ]
           },
@@ -1100,14 +1110,14 @@
             "id": "c2_slime_swamp", "nameVi": "Đầm nhầy", "nameEn": "Slime swamp",
             "malwareKinds": ["loading", "update", "virus", "ads", "captcha", "battery", "cursor"],
             "lesson": "cursor",
-            "goalVi": "Luyện Kéo cắt với bong bóng, dây xích; gặp slime băng, nhím, bám tường và tách đôi. Học gỡ Đơ con trỏ. Màn này cho mượn Kéo cắt.",
-            "goalEn": "Practice Scissors on bubbles and chains, then meet ice, hedgehog, wall and split slimes. Learn to clear a frozen cursor. This stage lends the Scissors.",
-            "tipVi": "Bạn sẽ học: Kéo cắt (click chỗ bất kỳ: kéo cắt ngang một dải, đứt dây và bong bóng); ném mèo xuyên slime băng thật mạnh để vỡ vỏ; đánh slime nhím lúc gai nằm; ném mèo hoặc Đẩy cho slime bám tường rơi rồi đánh dưới sàn; click bong bóng vài lần để chọc vỡ; dùng Kéo cắt cắt dây slime xích vì nó gánh sát thương cho đồng đội; hạ thảo dược trước để hai nửa slime tách đôi không nhập lại.",
-            "tipEn": "You learn: the Scissors (click anywhere: they cut a band, slicing ropes and bubbles); to throw the cat hard through an ice slime; to hit a hedgehog while its quills are down; to throw the cat at a wall slime or Push it down; to click a bubble to pop it; to cut a chain slime's rope: it takes hits for a friend; to beat the herb slime first so split halves cannot rejoin.",
-            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 7,
+            "goalVi": "Luyện Kéo cắt với bong bóng, dây xích; gặp slime hẹn giờ, băng, nhím, bám tường, tách đôi. Học gỡ Đơ con trỏ. Màn này cho mượn Kéo cắt.",
+            "goalEn": "Practice Scissors on bubbles and chains; meet timer, ice, hedgehog, wall and split slimes. Clear a frozen cursor. This stage lends the Scissors.",
+            "tipVi": "Bạn sẽ học: Kéo cắt (click chỗ bất kỳ: cắt ngang một dải, đứt dây và bong bóng); hạ slime hẹn giờ trước khi đồng hồ reo; ném mèo thật mạnh xuyên slime băng; đánh nhím lúc gai nằm; ném mèo hoặc Đẩy cho slime bám tường rơi; click bong bóng để chọc vỡ; cắt dây slime xích vì nó gánh đòn cho đồng đội; hạ thảo dược trước để slime tách đôi không nhập lại.",
+            "tipEn": "You learn: the Scissors (click anywhere: they cut a band, slicing ropes and bubbles); to beat a timer slime before its clock rings; to throw the cat hard at an ice slime; to hit a hedgehog with its quills down; to throw the cat at a wall slime or Push it; to click a bubble to pop it; to cut a chain slime's rope: it takes hits for a friend; to beat the herb slime first so halves cannot rejoin.",
+            "objective": "clear", "upgrades": true, "maxAlive": 6, "threat": 1.95, "eliteChance": 0.2, "maxMalware": 4, "newAppsFrom": 1, "rulesVersion": 8,
             "unlocksSkill": "scissors", "suggestSkills": [ "scissors", "bomb", "push" ],
             "waves": [
-              { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "bubble", "count": 1 }, { "enemy": "slime", "count": 2 } ] },
+              { "groups": [ { "enemy": "hedgehog", "count": 1 }, { "enemy": "bubble", "count": 1 }, { "enemy": "slime", "count": 1 }, { "enemy": "timer_dump", "count": 1 } ] },
               { "groups": [ { "formation": { "artillery": 1 } }, { "enemy": "chain", "count": 1 }, { "enemy": "slime", "count": 1 } ] },
               { "budget": 8, "groups": [ { "squad": [ { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 }, { "enemy": "slime", "count": 1 } ] } ] },
               { "threat": 1.15, "groups": [ { "formation": { "artillery": 1 } }, { "enemy": "chain", "count": 1 }, { "enemy": "hedgehog", "count": 1 }, { "enemy": "splitter", "count": 1 }, { "enemy": "mender", "count": 1 } ] }

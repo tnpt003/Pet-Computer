@@ -76,8 +76,9 @@ public static class CustomFights
     // The kinds a preset can bring: those with a Monster Book page; slimes, then bosses.
     public static List<EnemyType> Kinds(BattleSettings s) => s.EnemyTypes.Where(e => e.TipVi != null && !e.Boss && !e.Packet).ToList();
     public static List<EnemyType> Bosses(BattleSettings s) => s.EnemyTypes.Where(e => e.TipVi != null && e.Boss).ToList();
-    // The kind a page spawns: the one sharing it (the chapter 1 King, with its shield phases, for the King's page), else itself.
-    public static string SpawnOf(BattleSettings s, string page) => s.EnemyTypes.FirstOrDefault(e => e.Page == page)?.Id ?? page;
+    // The kind a page spawns: the boss sharing it (the chapter 1 King, with its shield phases, for the King's page), else itself
+    // (2026-11-14: a slime's page spawns the slime itself, not chapter 2's timer_dump that shares the timer's page).
+    public static string SpawnOf(BattleSettings s, string page) => s.EnemyTypes.FirstOrDefault(e => e.Page == page && e.Boss)?.Id ?? page;
     public static bool Open(MonsterBook book, string page) => book.Knows(page);
     public static bool AppOpen(MonsterBook book, string id) => book.KnowsApp(id);
 

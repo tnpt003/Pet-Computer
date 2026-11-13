@@ -139,7 +139,8 @@ internal static class AdventureBalanceTests
         // The cursor rests on the nearest hiding or mirrored slime near the cat (shows it, finds the real one).
         var hidden = sim.Slimes.Where(s => s.Type.UsesMouse && s.Type.Bubble == null && s.State != SlimeState.Defeated && Math.Abs(s.X - cat) <= 420)
             .OrderBy(s => Math.Abs(s.X - cat)).FirstOrDefault();
-        if (hidden != null) sim.SetPointer((hidden.X, 10));
+        // 2026-11-14 (chapter 2 stage 1 brings one): a sulky slime is stroked back and forth (~600 DIPs/s), as its guide step says.
+        if (hidden != null) sim.SetPointer((hidden.X + (hidden.Type.Sulk != null ? 30 * Math.Sin(now * 20) : 0), 10));
         else if (sim.PointerX != null) sim.SetPointer(null);
         var packets = sim.Slimes.Where(s => s.PacketLeft > 0 && s.Targetable).ToArray();
         if (packets.Length > 0) sim.SetPointer((packets[(int)(now / 0.25) % packets.Length].X, 10));

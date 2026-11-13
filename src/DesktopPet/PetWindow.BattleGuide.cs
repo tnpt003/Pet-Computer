@@ -37,7 +37,7 @@ public sealed partial class PetWindow
         GuidePhantom = "phantom", GuideMirage = "mirage", GuideDrummer = "drummer", GuideFlag = "flag",
         GuideBasket = "basket", GuideAggro = "basket_aggro", GuideBomber = "bomber", GuideCrack = "crack", GuideFlyer = "flyer", GuideThief = "thief",
         GuideHedgehog = "hedgehog", GuideIcy = "icy", GuideChain = "chain", GuideSplitter = "splitter", GuideMother = "mother",
-        GuideBubble = "bubble", GuideClinger = "clinger", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePress = "press", GuideZipBomb = "zipbomb", GuideZipLock = "ziplock";
+        GuideBubble = "bubble", GuideClinger = "clinger", GuideSulky = "sulky", GuideTimer = "timer", GuideZip = "zip", GuideRoll = "roll", GuideRopes = "ropes", GuidePress = "press", GuideZipBomb = "zipbomb", GuideZipLock = "ziplock";
     // 1.5 M26 apps: steps for any guided stage that has the newer apps (newAppsFrom: chapter 2).
     public const string GuideScreenshot = "screenshot", GuideDazzle = "dazzle", GuideCaptcha = "captcha", GuideBattery = "battery", GuideCursor = "cursor";
     public const string GuideNewApps = "new_apps";
@@ -238,6 +238,10 @@ public sealed partial class PetWindow
         Meet(GuideFuser, StageDownloadGate, s => s.Type.Link?.Kind == EnemyLinks.Merge && !s.Type.Link.AfterHeal,
             () => L("Slime hợp thể đi bầy 3 con. Chụm lại đủ lâu là nhập thành Slime khổng lồ (thanh trên đầu): Đẩy tách bầy, Quạt giữ chân, hoặc thả Bom len khi chúng chụm.",
                     "Fusing slimes come in threes. Bunched up long enough they merge into a giant (the bar over them): push them apart, hold them with the Fan, or drop the Yarn bomb while they bunch.")),
+        // Chapter 2 review E (2026-11-14): the sulky slime in stage 1, the timer in stage 4.
+        Meet(GuideSulky, StageDownloadGate, s => s.Type.Sulk != null,
+            () => L("Slime dỗi: đánh chỉ làm nó phồng và đánh trả đau hơn; đánh quá tay là nó òa khóc bỏ chạy, không để lại gì. Rê chuột qua lại trên nó để dỗ: nó cười rồi bỏ đi. Mèo chỉ đánh nó khi không còn slime nào khác.",
+                    "A sulky slime: hitting it only puffs it up and makes it hit harder; too many hits and it stamps off in tears, leaving nothing. Stroke it with the mouse, back and forth: it smiles and leaves. The cat only goes for it once no other slime is left.")),
         new(GuideDrops, StageDownloadGate, false, true, 1,
             () => { var drop = battle!.Drops.FirstOrDefault(d => d.Age >= 0.3); guideRef = drop?.Id ?? 0; return drop != null && TourDue(); },
             () => battle!.FindDrop(guideRef) == null, () => Spots(FieldSpot(battleView?.DropBounds(guideRef), 4)),
@@ -282,6 +286,9 @@ public sealed partial class PetWindow
             () => L("Slime trộm không đánh mèo mà hút năng lượng icon hoặc một kỹ năng rồi chạy trốn. Hạ nó trước khi nó thoát để lấy lại.",
                     "A thief slime never hits the cat: it drains an icon or a skill, then runs. Beat it before it gets away to get it back.")),
         // 4 · Slime swamp.
+        Meet(GuideTimer, StageSlimeSwamp, s => s.Type.Clock != null,
+            () => L("Slime hẹn giờ đứng yên, đồng hồ trên đầu đếm ngược; về 0 là nó gọi một đội hình ra sau lưng mèo, tối đa 2 lần. Hạ nó trước; bị choáng thì đồng hồ chạy chậm.",
+                    "A timer slime stands still while the clock over it counts down; at zero it calls a formation behind the cat, twice at most. Beat it first; a stunned one's clock runs slow.")),
         Meet(GuideHedgehog, StageSlimeSwamp, s => s.Type.Quills != null,
             () => L("Slime nhím xù gai theo chu kỳ: đánh lúc gai dựng thì mèo bị đâm. Đánh lúc gai nằm.",
                     "A hedgehog slime puts its quills up now and then: hitting it then pricks the cat. Hit it while they lie flat.")

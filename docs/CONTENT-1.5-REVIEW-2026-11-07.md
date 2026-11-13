@@ -4,10 +4,10 @@ Phạm vi đã duyệt: nơ và motion Slime Mẹ, tiến trình học chương 
 
 | Màn chương 2 | Kỹ năng cho mượn | App mới và slime thực hành |
 |---|---|---|
-| Cổng tải về | Quạt | Screenshot; phun, lò xo, hợp thể |
+| Cổng tải về | Quạt | Screenshot; phun, lò xo, dỗi (14/11), hợp thể |
 | Thư mục ma | Laser | CAPTCHA; bóng ma, ảo ảnh, cờ, trống |
 | Giữ giỏ cá | Kẹp gắp | Pin yếu; trộm, cưỡi bom, bay, đào hang |
-| Đầm nhầy | Kéo cắt | Đơ con trỏ; bong bóng, xích, băng, nhím, tách đôi |
+| Đầm nhầy | Kéo cắt | Đơ con trỏ; hẹn giờ (14/11), bong bóng, xích, băng, nhím, bám tường, tách đôi |
 | Slime Nén | Bình xịt | Tổng hợp, ZIP ba lượt lăn và mech sáu tay kéo |
 
 Khi bật hướng dẫn, mỗi bài app chờ ít nhất 4 giây và có quái đang hoạt động, rồi xuất hiện một lần. Trong lúc chờ giải bài, ngừng phát app độc ngẫu nhiên và đạn lây mới; trận vẫn chạy bình thường ngoài những thẻ hướng dẫn vốn đứng hình. Pause giữ nguyên thời gian. Bỏ hướng dẫn giải phóng bài học; không tự xóa app độc đang có. Screenshot tôn trọng bộ app đã chọn: thiếu icon thì bỏ bài, không thêm icon thứ sáu. Pool app độc mở dần: bốn loại cũ → CAPTCHA → Pin yếu → Đơ con trỏ. Tắt hướng dẫn không ép xuất hiện bài học.

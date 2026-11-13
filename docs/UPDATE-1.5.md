@@ -41,6 +41,7 @@ Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode, App trong trậ
 - **Cửa sổ:** slime bay và slime bám tường trên cao có cửa sổ topmost riêng; lớp chọn vị trí cho Kéo cắt và Quạt; Chụp Màn Hình chớp không chặn chuột.
 - **Slime đi theo mèo đang bế** với 50% tốc độ.
 - **Hướng dẫn phiêu lưu** mở rộng sang chương 2, luật như chương 1.
+- **Giới thiệu quái mới ngoài Phiêu lưu (14/11):** ở Vô tận và Viễn chinh, lần đầu một loại có trang Sổ tay chưa mở xuất hiện, banner "Quái mới: tên! mẹo Sổ tay" (4 s, giữ 3 s không bị banner thường đè; thắng/thua vẫn đè). Không đứng hình trận (ngoại lệ Hướng dẫn phiêu lưu không áp cho hai chế độ này); tắt theo cài đặt Hướng dẫn; không có với battle.json riêng.
 
 ## Nguyên tắc thiết kế
 

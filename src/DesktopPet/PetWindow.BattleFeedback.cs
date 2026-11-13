@@ -222,10 +222,35 @@ public sealed partial class PetWindow
     private readonly HashSet<BattleEventKind> trickExplained = new();
     private readonly HashSet<int> basketWarned = new(); // 1.5 M20 defence: "about to break" once a battle.
     private readonly HashSet<string> formationsExplained = new();
+    // 2026-11-14 (chapter 2 review D): the Infinity and the Expedition can bring a kind before chapter 2
+    // (or anything else) has shown it. The first time one comes in a kind whose Monster Book page is not
+    // open yet is met (BattleSim.MetKinds: in, not a decoy), its name and its page's tip take the banner,
+    // held (BattleHud.BannerHold) so a plain one does not cover it. A banner only: the battle never stands
+    // still for it (the Adventure Guide's freeze is for Adventure stages only). Off with the Guide
+    // setting; never with the user's own data.
+    public const double NewKindSeconds = 4;
+    private readonly List<string> kindsIntroduced = new();
+    public IReadOnlyList<string> BattleKindsIntroduced => kindsIntroduced;
+    private bool NewKindsExplained => preferences.AdventureGuide && !battleCustomData
+        && (battle?.Stage is { Endless: true } || battleExpedition != null);
+    private string? NewKindBanner()
+    {
+        if (battle == null || !NewKindsExplained) return null;
+        foreach (string kind in battle.MetKinds)
+        {
+            string page = MonsterBook.PageOf(battle.Settings, kind);
+            if (!MonsterBook.HasPage(battle.Settings, page) || MonsterBook.Knows(page) || kindsIntroduced.Contains(page)) continue;
+            kindsIntroduced.Add(page);
+            var type = battle.Settings.Enemy(page);
+            string name = type.Name(preferences.Language), tip = type.Tip(preferences.Language);
+            return LF($"Quái mới: {name}! {tip}", $"New foe: {name}! {tip}");
+        }
+        return null;
+    }
     private void ShowBattleBanners()
     {
         if (battle == null || battleHud == null) return;
-        if (battle.Time < 0.05) { trickExplained.Clear(); basketWarned.Clear(); }
+        if (battle.Time < 0.05) { trickExplained.Clear(); basketWarned.Clear(); kindsIntroduced.Clear(); }
         if (battle.Time < 0.05) { healerExplained = farHealExplained = rallyExplained = behindExplained = wardExplained = pushResistExplained = appExplained = popupExplained = virusExplained = loadingExplained = updateExplained = virusExeExplained = lockExplained = rageExplained = spitExplained = puddleExplained = springExplained = flatExplained = beatExplained = ropeExplained = cutExplained = mergeExplained = remergeExplained = rideExplained = fuseExplained = splitExplained = flagExplained = panicExplained = false; elitesExplained.Clear(); formationsExplained.Clear(); }
         var rules = battle.AppRules;
         for (int i = 0; i < battle.Events.Count; i++)
@@ -405,7 +430,11 @@ public sealed partial class PetWindow
             if (e.Kind == BattleEventKind.VirusFileAdded) virusExeExplained = true;
             if (e.Kind == BattleEventKind.HazardOpened && IsUpdate(e)) updateExplained = true;
             else if (e.Kind == BattleEventKind.HazardOpened) loadingExplained = true;
-            if (text != null) battleHud.ShowBanner(text, battle.Time, e.Kind is BattleEventKind.Won or BattleEventKind.Lost ? 3 : 1.6);
+            bool ending = e.Kind is BattleEventKind.Won or BattleEventKind.Lost;
+            if (text != null) battleHud.ShowBanner(text, battle.Time, ending ? 3 : 1.6, hold: ending);
         }
+        // After this frame's banners, so the introduction is the one shown; one at a time (the next waits for the hold to end).
+        if (!battle.Over && !battleHud.BannerHeld(battle.Time) && NewKindBanner() is string fresh)
+            battleHud.ShowBanner(fresh, battle.Time, NewKindSeconds, hold: true);
     }
 }

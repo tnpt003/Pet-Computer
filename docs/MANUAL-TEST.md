@@ -1797,3 +1797,8 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Màn 4 Đầm nhầy chưa mở Bình xịt: bước Nhím/Băng và banner xù gai/xước băng không nhắc Bình xịt; bước Bám tường chỉ nhắc Kẹp gắp/Quạt khi đã chọn mang.
 - [ ] Vô tận/Viễn chinh không mang Kéo cắt: banner dây nhầy bảo hạ con giữ dây; mang Kéo cắt thì bảo cắt.
 - [ ] Đọc goal/tip màn 2, 4, 5 ở vi/en/ja: không tràn khung, nhắc đúng slime bám tường ở màn 4.
+
+## Quái mới ở Vô tận/Viễn chinh (14/11)
+Đã kiểm bằng UiChecks (EndlessChecks); **chưa xem trong trận thật.**
+- [ ] Vô tận (hoặc Viễn chinh) gặp loại chưa có trong Sổ tay quái: banner "Quái mới: tên! mẹo" đọc được, không bị banner khác đè ngay; trận không đứng hình.
+- [ ] Loại đã có trong Sổ tay: không có banner này. Tắt ô Hướng dẫn trong trận ở bảng chuẩn bị một màn Phiêu lưu (lưu chung): Vô tận/Viễn chinh không có banner này.

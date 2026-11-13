@@ -74,6 +74,7 @@ internal static class EndlessChecks
             check(window.BattlePrepReady() == null && window.BattleActive && window.Battle is { Endless: true }, "Ready starts an Infinity battle");
             var hud = Field<BattleHud>(window, "battleHud");
             Fight(0.2);
+            check(window.BattleKindsIntroduced.Count == 0, "A kind without a Monster Book page (the code's plain slime) gets no introduction");
             check(hud.StatusText.StartsWith("Wave 1 ·") && !hud.StatusText.Contains("/") && hud.WaveMarks == BattleHud.EndlessDots, $"The HUD counts waves without a total, ten marks ({hud.StatusText})");
             for (int i = 0; i < 400 && !window.BattleUpgradeOpen && window.BattleActive; i++) { Fight(0.05); if (window.Battle?.Slimes.Count > 0) window.Battle.Slimes[0].X = pet.X + 56 + 50; }
             check(window.BattleUpgradeOpen && window.Battle!.Wave == 2 && window.BattleUpgradeText.Contains("rest of this Infinity run"), $"A card after wave 2, kept for the run ({window.BattleUpgradeText.Replace('\n', '|')})");
@@ -222,6 +223,42 @@ internal static class EndlessChecks
             window.EndBattleByUser();
             Fight(1);
             Call(window, "CloseBattleSummary");
+
+            // Chapter 2 review D (14/11): a kind whose Monster Book page is not open yet is introduced the
+            // first time it comes in Infinity (a banner, held; the battle never stands still for it).
+            bool guideBefore = prefs.AdventureGuide, knewSulky = window.MonsterBook.Met.Remove("sulky");
+            prefs.AdventureGuide = true;
+            var meet = new EndlessSpec { UnlockAfter = "inf_gate", UpgradeEvery = 2, BossEvery = 10, FirstCount = 2, CountPerWave = 0, Kinds = new[] { new EndlessKind { Enemy = "sulky", Weight = 1 } } };
+            window.BattleTuning = new BattleSettings { FirstWaveDelay = 0, SpawnInterval = 0, SlimeDamage = 0, WaveBreakSeconds = 0.3, OutroSeconds = 0.5, Campaign = campaign, Endless = meet,
+                Enemies = BattleData.Settings.EnemyTypes.ToArray() };
+            check(window.OpenBattlePrep(forEndless: true) == null, "Infinity's setup opens with the shipped enemy kinds");
+            if (window.BattleTutorialOpen) window.CloseBattleTutorial(finished: true);
+            check(window.BattlePrepReady() == null && window.Battle is { Endless: true }, "An Infinity run of sulky slimes starts");
+            hud = Field<BattleHud>(window, "battleHud");
+            Fight(1.5);
+            check(window.BattleKindsIntroduced.SequenceEqual(new[] { "sulky" }) && hud.BannerText.StartsWith("New foe: Sulky slime! ", StringComparison.Ordinal) && window.BattlePauseReasons == PetWindow.BattlePause.None,
+                $"Infinity introduces a kind the Monster Book has not met, once, by its name and page tip, without stopping ({hud.BannerText})");
+            hud.ShowBanner("Plain (test)", window.Battle!.Time);
+            check(hud.BannerText.StartsWith("New foe: ", StringComparison.Ordinal), "A plain banner does not cover the introduction while it is held");
+            hud.ShowBanner("Held (test)", window.Battle.Time, hold: true);
+            check(hud.BannerText == "Held (test)", "A held banner (the win, the loss) still replaces it");
+            window.EndBattleByUser();
+            Fight(1);
+            Call(window, "CloseBattleSummary");
+            check(window.MonsterBook.Knows("sulky"), "The battle opens its Monster Book page");
+            window.MonsterBook.Met.RemoveAll(kind => kind == "sulky");
+            prefs.AdventureGuide = false;
+            check(window.OpenBattlePrep(forEndless: true) == null, "Infinity's setup opens again");
+            if (window.BattleTutorialOpen) window.CloseBattleTutorial(finished: true);
+            check(window.BattlePrepReady() == null && window.Battle is { Endless: true }, "Another run starts");
+            Fight(1.5);
+            check(window.BattleKindsIntroduced.Count == 0, "With the Guide setting off, no kind is introduced");
+            window.EndBattleByUser();
+            Fight(1);
+            Call(window, "CloseBattleSummary");
+            prefs.AdventureGuide = guideBefore;
+            window.MonsterBook.Met.RemoveAll(kind => kind == "sulky");
+            if (knewSulky) window.MonsterBook.Met.Add("sulky");
         }
         finally
         {

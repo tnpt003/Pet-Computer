@@ -299,8 +299,15 @@ public sealed class BattleHud : Border
     public string Describe(BattleSkill skill) => BattleSkills.Get(skill).Describe(last?.Settings ?? BattleData.Settings, language());
     private string SkillTip(BattleSkill skill) => Describe(skill);
 
-    public void ShowBanner(string text, double now, double seconds = 1.6)
+    // hold (2026-11-14, a new foe's introduction; the win and the loss): no plain banner replaces it
+    // for BannerHold s of battle time. A new battle (its clock back before the hold began) ends it.
+    public const double BannerHold = 3;
+    private double holdFrom = -1, holdUntil = -1;
+    public bool BannerHeld(double now) => now >= holdFrom && now < holdUntil;
+    public void ShowBanner(string text, double now, double seconds = 1.6, bool hold = false)
     {
+        if (!hold && now >= holdFrom && now < holdUntil) return;
+        if (hold) { holdFrom = now; holdUntil = now + BannerHold; }
         banner.Text = text;
         // A long one stays a little longer so it can be read (2026-11-04).
         bannerUntil = now + seconds + Math.Clamp((text.Length - 28) * 0.04, 0, 2);

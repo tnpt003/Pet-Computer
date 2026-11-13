@@ -495,8 +495,9 @@ public sealed partial class BattleSim
     {
         var live = scratch;
         live.Clear();
-        // A leaping boss flies over the others.
-        foreach (var slime in slimes) if (slime.State != SlimeState.Defeated && !slime.KeepingBack && slime.RunAwayLeft <= 0 && !slime.Faded && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
+        // A leaping boss flies over the others; a dash or a roll (2026-11-13) runs through its allies to the
+        // end of its locked lane (shoved back each frame, it fell short of the cat).
+        foreach (var slime in slimes) if (slime.State is not (SlimeState.Defeated or SlimeState.Dashing) &&!slime.KeepingBack && slime.RunAwayLeft <= 0 && !slime.Faded && slime.LeapHeight <= 0 && !slime.Riding && !slime.Airborne && !slime.Handled && !slime.Burrowed && slime.Type.Spring == null && slime.Loot == StolenKind.None && !slime.CarriesFish && slime.FishClock <= 0 && !slime.Type.Still && slime.Type.Blocker == blockers) live.Add(slime);
         live.Sort(ByX);
         for (int i = 1; i < live.Count; i++)
         {

@@ -5,6 +5,15 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #79 — Slime nhanh gồng xong bị slime phía trước chặn, không lao trúng mèo (13/11)
+- **Triệu chứng:** Slime nhanh gồng xong mà có slime khác đứng trước thì cú lao không đi qua được, dừng sớm và không trúng mèo.
+- **Nguyên nhân:** mỗi khung hình `Separate()` đẩy hai slime chồng nhau lùi mỗi con một nửa. Slime đang lao cũng bị đẩy, nhưng `DashLeft` vẫn trừ đủ, nên cú lao chỉ đi khoảng một nửa quãng (test: 230 → 136 DIP), con chắn bị kẹt thì gần như đứng yên. Cú lăn của boss (`roll`, Slime Nén) cùng trạng thái `Dashing` nên bị y hệt. Đã rà các kiểu di chuyển khác: Slime Mẹ lao và Slime biến dị đặt vị trí tuyệt đối theo đường đi nên không bị; boss nhảy, bom bay, đào hang, bay, bóng ma, trộm chạy, slime tha cá, hợp thể đã được miễn từ trước.
+- **Sửa:** slime ở trạng thái `Dashing` (Slime nhanh lao, boss lăn) không bị `Separate()` đẩy: lao/lăn xuyên đồng minh tới hết đường đã khóa (`PetBattle.Enemies.cs`). Lao xong (Recover/chạy ra xa) thì tách như cũ.
+- **Cân bằng (mô phỏng, không phải chơi thật):** trận khó hơn, tổng −84 lượt thắng trên bảng Phiêu lưu. Normal simple/casual gần như giữ nguyên, sụt nhiều nhất ở Hard casual chương 2 (màn 4 kiếm 40 → 32/60, màn 5 kiếm 38 → 33/60). Viễn chinh tuyến 2, búa, Normal, simple, đường tham lam 18 → 15/40, dưới ngưỡng 18. Người dùng chọn giữ bản sửa ("cứ tiếp"), ngưỡng hạ xuống 15/40 (`ExpeditionTests`).
+- **Commit:** (điền sau publish).
+- **Kiểm chứng:** test mới trong `RescueTests` (một slime đứng chắn giữa Slime nhanh và mèo, cú lao vẫn đi hết 230 DIP và trúng mèo) fail trước khi sửa, đạt sau khi sửa. Script đầy đủ một lần: Python 67 + i18n 5 đạt; C# 4940/4941 (106 suite), FAIL duy nhất là ngưỡng Viễn chinh trên; sau khi hạ ngưỡng chạy lại `ExpeditionTests` 82/82; WPF 3229 đạt.
+- [ ] Cần xem tay: trận có Slime nhanh đứng sau slime khác, cú lao xuyên qua và trúng mèo; Slime Nén lăn qua quái nhỏ.
+
 ## #78 — Sổ tay quái: ảnh có hiệu ứng trận, trùm lệch, click nhảy cuộn; nút ‹ › chương quá to (13/11)
 - **Triệu chứng:** nút ‹ › cạnh tên chương rộng gấp đôi. Trong Sổ tay quái, ảnh Slime cờ hiệu có vòng khiên vàng, ảnh Slime lò xo và Slime bom (cả trong ảnh đội hình) có vệt ngang. Bốn trùm (Slime Nén, Slime Mẹ, Slime biến dị, Vua Slime) không nằm giữa. Click một quái thì danh sách cuộn về đầu. Ngoài ra, người dùng muốn câu hướng dẫn Slime nhạc trưởng dùng "đánh hụt" thay cho "loạn nhịp".
 - **Nguyên nhân:** `HudButton` có `MinWidth = 70`, giá trị này thắng `Width = 32` của nút mũi tên. Ảnh chân dung được vẽ bằng nguyên khúc sân đấu nên kéo theo vòng aura, vòng lò xo, vòng nổ và bong bóng khiên (cờ hiệu bất tử khi chưa cắm cờ). Khung cắt ước lượng theo `SlimeWidth × scale` và bị chặn ở 150 DIP, nên trùm bị lệch hoặc thừa khoảng trống. Click gọi `FillMonsterBook()`, hàm này dựng lại cả `ScrollViewer`.

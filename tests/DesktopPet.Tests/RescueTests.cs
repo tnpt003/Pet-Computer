@@ -15,6 +15,8 @@ internal static class RescueTests
         Id = "runner", MaxHp = 1000, Speed = 0, Damage = 10, Range = 54, Windup = 0.7, AttackCooldown = 2.6, Recover = 0.4, Scale = 0.75,
         Dash = true, DashRange = 170, DashDistance = 230, DashSpeed = 420
     };
+    // Stands where it is put and never attacks (an ally in the way).
+    private static readonly EnemyType Dummy = new() { Id = "dummy", MaxHp = 1000, Speed = 0, Damage = 0, Range = 20, Windup = 9, AttackCooldown = 9, Recover = 0.35 };
     private static readonly EnemyType Mender = new()
     {
         Id = "mender", MaxHp = 40, Speed = 0, Damage = 0, Range = 56, Windup = 0.8, AttackCooldown = 2, Scale = 0.9, Support = true, KeepBack = 110,
@@ -131,6 +133,15 @@ internal static class RescueTests
         for (double t = 0; t < 1.5 && runner.State == SlimeState.Dashing; t += dt) { sim.Step(dt, 1500, true, true); locked &= runner.DashDirection == lane; }
         check(lane == -1 && locked && Math.Abs(runner.X - (from - runner.Type.DashDistance)) < 1 && sim.CatHp == 1000 && !sim.CatStunned,
             $"A dash under way runs its locked lane to the end while the cat is carried the other way ({from:F0} → {runner.X:F0}); no damage, no stun");
+        // 2026-11-13: an ally standing in the lane does not stop the dash: it runs its whole lane and
+        // hits the cat behind (before, Separate shoved it back every frame and it fell short).
+        var crowd = Field(0, (Runner, 950), (Dummy, 880));
+        var dasher = crowd.Slimes[0];
+        Until(crowd, () => dasher.State == SlimeState.Dashing, 2);
+        double start = dasher.X;
+        Until(crowd, () => dasher.State != SlimeState.Dashing, 2);
+        check(crowd.CatHp == 990 && Math.Abs(dasher.X - (start - dasher.Type.DashDistance)) < 30,
+            $"A dash passes an ally standing in its lane and hits the cat behind it ({start:F0} → {dasher.X:F0}, HP {crowd.CatHp:F0})");
         // A cat held up over the lane while the dash passes under it is not hit.
         var over = Field(0, (Runner, 950));
         var r2 = over.Slimes[0];

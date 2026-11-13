@@ -14,7 +14,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
   - Chân dung được vẽ trên khúc sân rộng hơn (300 DIP cho trùm), rồi cắt sát theo vùng có hình (`PortraitBounds`).
   - Chọn trang chỉ thay thẻ chi tiết và viền ô (`PetWindow.MonsterBook.cs`).
   - Câu hướng dẫn nhạc trưởng: "mất máu và đánh hụt một lúc" (vi/en/ja).
-- **Commit:** (điền sau publish).
+- **Commit:** `15eaa0d`, ZIP `artifacts/DesktopPet-1.5.1-15eaa0d-win-x64.zip`, smoke 3/3 PASS.
 - **Kiểm chứng:** script đầy đủ một lần: Python 67 + i18n 5, C# 4940, WPF 3200 đều đạt. Check mới:
   - nút ‹ › rộng 32 DIP;
   - chọn trang giữ vị trí cuộn (120 → 120);

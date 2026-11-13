@@ -9,6 +9,7 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Triệu chứng:** đến lượt chọn, chỉ bấm được một cốc; hai cốc kia bấm không có tác dụng.
 - **Nguyên nhân:** `CupGameArt.DrawCup` tô bóng men và dải màu bằng `PushClip(Body)`. Sau lớp clip đó, hit-test của WPF chỉ còn nhận cốc vẽ đầu tiên (cốc số 0, đi theo nó qua các lần đổi chỗ); hai cốc vẽ sau vẫn hiện nhưng không nhận chuột. Test cũ gọi thẳng `PickCup(x)` nên không bắt được.
 - **Sửa:** cắt sẵn hình bóng men và dải màu theo thân cốc (`Geometry.Combine` một lần, frozen) rồi vẽ thẳng, không còn clip (`PetCupGameArt.cs`).
+- **Commit:** `e6297f7` (chung #81–#86), ZIP `artifacts/DesktopPet-1.5.1-e6297f7-win-x64.zip`, smoke 3/3 PASS; Python 67 + i18n 5, C# 4962, WPF 3275 đạt.
 - **Kiểm chứng:** check mới trong `CupGameChecks` bấm chuột thật của Windows (`SetCursorPos` + `mouse_event`) vào giữa từng cốc trong 3 ván: trước khi sửa chỉ 1/3 cốc chọn được (quét hit-test chỉ trúng [42–79]), sau khi sửa cả 3.
 - [ ] Cần xem tay: chơi vài vòng, bấm cả cốc trái, giữa, phải.
 

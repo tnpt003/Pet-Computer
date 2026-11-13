@@ -1783,3 +1783,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Úp cốc: bấm được cả cốc trái, giữa, phải.
 - [ ] Trốn tìm khi có thời tiết: vùng sao/tuyết không đi theo chỗ mèo nấp; hết ván không còn bụi nào.
 - [ ] Nông trại không bị khuất sau trình duyệt khi không có app toàn màn hình.
+
+## Đồ hiện ra và biến mất (13/11)
+Đã kiểm bằng UiChecks (độ phóng, khói, Pause, lưu); **chưa xem chuyển động trên desktop thật.**
+- [ ] Lấy giỏ ra, lấy hộp/trụ cào/chậu cây/bóng/cần câu/chuột ra: đồ phình lên hơi to rồi về cỡ, có khói lấp lánh, nghe "sparkle"; hộp/trụ/chậu nảy ra khỏi giỏ.
+- [ ] Cất từng món, "Cất giỏ", "Cất nhanh": đồ phình nhẹ rồi co mất trong khói, nghe "swoosh"; không còn sót cửa sổ đồ hay khói.
+- [ ] Bấm giữ đồ ngay lúc vừa hiện: chưa cầm được; nửa giây sau cầm được. Pause giữa lúc co: đứng yên tới khi bỏ Pause.

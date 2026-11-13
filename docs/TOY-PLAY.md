@@ -39,6 +39,11 @@ Ngoại lệ physics: docs/APPROVED-EXCEPTIONS.md → Đồ vật có physics.
 - Mèo ngủ, bị kéo hoặc đổi việc thì trò dừng như cũ, nhưng bóng đang nằm ngoài vẫn nằm lại. "Cất bóng" (trong Chơi ›, hoặc chuột phải lên quả bóng từ 12/11) và Cất nhanh thì đưa bóng về giỏ. Từ 12/11 mỗi đồ có menu chuột phải riêng kết thúc bằng "Cất vào giỏ" (docs/WINDOWS.md → Menu and settings layout).
 - Bóng đang trong trò thì hàng của nó trong giỏ mờ và ghi "đang chơi".
 
+### Hiện ra và biến mất (13/11)
+
+- Lấy đồ khỏi giỏ hoặc lấy giỏ ra: đồ phình từ 0 lên hơi quá cỡ rồi về đúng cỡ trong làn khói lấp lánh, tiếng "sparkle"; đồ vẫn nảy ra khỏi giỏ như cũ. Đang phình thì chưa cầm được (khoảng nửa giây).
+- Cất một món, Cất giỏ, Cất nhanh: đồ phình nhẹ rồi co mất trong làn khói, tiếng "swoosh". Đồ rời danh sách ngay (lưu như đã cất), cửa sổ đóng sau 0,3 giây. Pause đứng yên. Code: `PetWindow.ToyMagic.cs`.
+
 ### Cất nhanh
 
 - Một lệnh trên menu chuột phải và khay: cất mọi đồ, ẩn giỏ, dừng trò đang chơi; mèo vẫn ở lại. Từ 13/11 menu chuột phải của chính giỏ cũng có dòng "Cất giỏ" ở cuối, làm y như vậy.

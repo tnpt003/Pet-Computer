@@ -79,6 +79,44 @@ internal static class ToyChecks
         encoder.Save(stream);
     }
 
+    // How things come and go (feedback 13/11): a pop in a puff, a shrink in a puff; Pause holds both.
+    private static void RunMagic(PetWindow window, PetPreferences preferences, Action<bool, string> check)
+    {
+        const string Post = DesktopToyRules.Post;
+        window.ToggleToyBasket();
+        Tick(window);
+        var basket = Field<object>(window, "toyBasket");
+        check(GetThing<double>(basket, "PopAge") >= 0 && window.ToyPuffCount >= 1, "The basket pops out in a puff of smoke");
+        Tick(window, PetWindow.ToyPopSeconds + 0.1);
+        check(GetThing<double>(basket, "PopAge") < 0 && GetThing<Border?>(basket, "Holder")!.RenderTransform == Transform.Identity, "...and settles at its own size");
+        check(window.TakeToyOut(Post), "(the post out)");
+        Tick(window);
+        var post = Thing(window, Post);
+        var holder = GetThing<Border?>(post, "Holder")!;
+        check(holder.RenderTransform is ScaleTransform { ScaleX: < 1 } && GetThing<double>(post, "PopAge") >= 0, "Taken out, it pops in small");
+        Call(window, "PressToy", post);
+        check(!GetThing<bool>(post, "Press"), "While it pops in it cannot be picked up");
+        double peak = 0;
+        for (int i = 0; i < 20; i++) { Tick(window); if (holder.RenderTransform is ScaleTransform grow) peak = Math.Max(peak, grow.ScaleX); }
+        check(peak > 1.02, $"...a little too big for a moment ({peak:F2})");
+        Tick(window, PetWindow.ToyPopSeconds);
+        check(holder.RenderTransform == Transform.Identity && window.ToyPuffCount == 0, "...then its own size; the puffs are gone");
+        Settle(window, window.ToyMotionOf(Post)!);
+        var postWindow = window.ToyWindowOf(Post)!;
+        check(window.StowToy(Post) && !window.ToyIsOut(Post) && window.ToyVanishingCount == 1 && postWindow.IsVisible && window.ToyPuffCount == 1,
+            "Put away: it leaves the list at once and shrinks away in a puff");
+        SetField(window, "paused", true);
+        Tick(window, 0.5);
+        check(window.ToyVanishingCount == 1, "Pause holds the shrink");
+        SetField(window, "paused", false);
+        Tick(window, PetWindow.ToyVanishSeconds + 0.05);
+        check(window.ToyVanishingCount == 0 && !postWindow.IsVisible, "...then its window closes");
+        check(!preferences.ToysOut?.Any(toy => toy.Id == Post) ?? true, "It is saved as put away");
+        window.ToggleToyBasket();
+        Tick(window, 0.8);
+        check(window.ToyVanishingCount == 0 && window.ToyPuffCount == 0, "(tidied away)");
+    }
+
     public static void Run(PetWindow window, PetModel pet, PetBehavior behavior, PetPreferences preferences, Action<bool, string> check)
     {
         void FeatureStep(double dt) => Call(window, "TickFeatures", dt);
@@ -288,6 +326,9 @@ internal static class ToyChecks
         check(!window.ToyBasketShown && !window.ToyIsOut(Ball) && Field<Window?>(window, "toyWindow") == null, "Quick tidy puts everything away and stops the game");
         check(!preferences.ToyBasketShown && preferences.ToysOut == null && pet.X == catX, "...remembered, with the cat still there");
         check(window.ToyBasketMenuLabel == "Toy basket", "The menu offers the basket again");
+        Tick(window, 0.4);
+        check(window.ToyVanishingCount == 0 && !Application.Current.Windows.OfType<Window>().Any(w => w.Title == "Pet toy basket"), "...the basket shrinks away and its window is closed");
+        RunMagic(window, preferences, check);
         RunBox(window, pet, behavior, preferences, check);
         RunFetch(window, pet, behavior, preferences, check);
         RunWand(window, pet, behavior, preferences, check);

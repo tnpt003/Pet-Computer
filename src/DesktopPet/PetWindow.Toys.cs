@@ -39,6 +39,11 @@ public sealed partial class PetWindow
         public readonly FeatherString Feather = new();
         public readonly WindUpMouse WindUp = new();
         public int Facing = 1;
+        // How it comes and goes (PetWindow.ToyMagic.cs): the holder scaled around the surface, the pop's
+        // age (-1: none) and whether its puff has been shown.
+        public Border? Holder;
+        public double PopAge = -1;
+        public bool PopPuffed;
     }
 
     private const double ToySide = 56;
@@ -76,8 +81,9 @@ public sealed partial class PetWindow
         {
             preferences.ToyBasketShown = true;
             CreateToyBasket();
+            StartToyPop(toyBasket!);
             SavePreferences();
-            PlayPetSound("pop");
+            PlayPetSound("sparkle");
         }
     }
 
@@ -91,15 +97,15 @@ public sealed partial class PetWindow
         StopToyChase();
         StopToyPass();
         if (react == React.SniffWalk) StopToyReact();
-        foreach (var toy in desktopToys) CloseDesktopThing(toy);
+        foreach (var toy in desktopToys) VanishDesktopThing(toy);
         desktopToys.Clear();
         WriteToyPlaces();
-        if (toyBasket != null) CloseDesktopThing(toyBasket);
+        if (toyBasket != null) VanishDesktopThing(toyBasket);
         toyBasket = null; toyBasketArt = null; toyBasketMenu = null;
         preferences.ToyBasketShown = false;
         preferences.ToysOut = null;
         SavePreferences();
-        PlayPetSound("pop");
+        PlayPetSound("swoosh");
     }
 
     private void CreateToyBasket()
@@ -145,7 +151,8 @@ public sealed partial class PetWindow
         toy.Motion.VY = 190;
         toy.Unsaved = true;
         desktopToys.Add(toy);
-        PlayPetSound("pop");
+        StartToyPop(toy);
+        PlayPetSound("sparkle");
         return true;
     }
 
@@ -163,11 +170,11 @@ public sealed partial class PetWindow
         if (toy.Id == DesktopToyRules.Post) StopPostTrip();
         if (toy.Id == DesktopToyRules.Plant) StopPlantTrip();
         if (sniffToy == toy) StopToyReact();
-        CloseDesktopThing(toy);
+        VanishDesktopThing(toy);
         desktopToys.Remove(toy);
         WriteToyPlaces();
         SavePreferences();
-        PlayPetSound("pop");
+        PlayPetSound("swoosh");
     }
 
     private static void CloseDesktopThing(DesktopThing thing)
@@ -175,7 +182,7 @@ public sealed partial class PetWindow
         thing.Press = thing.Held = false;
         thing.Surface?.ReleaseMouseCapture();
         thing.Window?.Close();
-        thing.Window = null; thing.Surface = thing.Art = null; thing.Halo = null;
+        thing.Window = null; thing.Surface = thing.Art = null; thing.Halo = null; thing.Holder = null;
     }
 
     private void WriteToyPlaces()
@@ -280,6 +287,9 @@ public sealed partial class PetWindow
             thing.Window.Width = ToySide; thing.Window.Height = ToySide;
         }
         thing.Surface = surface;
+        // Scaled from where it stands: the floor, or the middle for the ball and the wand.
+        thing.Holder = WrapToySurface(thing.Window, surface, thing.Id is DesktopToyRules.Wand || (thing != toyBasket && thing.Id == DesktopToyRules.Ball) ? new Point(0.5, 0.5) : new Point(0.5, 1));
+        if (thing.PopAge >= 0) thing.Holder.RenderTransform = new ScaleTransform(0, 0);
         if (thing != toyBasket) AttachToyMenu(thing, surface);
         surface.MouseLeftButtonDown += (_, e) => { PressToy(thing); e.Handled = true; };
         surface.MouseMove += (_, _) => CheckToyDragThreshold(thing);
@@ -407,7 +417,8 @@ public sealed partial class PetWindow
 
     private void PressToy(DesktopThing thing)
     {
-        if (paused || !ToysMayShow || thing.InGame || thing.Carried || (thing.Id == DesktopToyRules.Box && BoxOccupied) || thing.Surface == null || !thing.Surface.CaptureMouse()) return;
+        // Not while it is still popping in (about half a second).
+        if (paused || !ToysMayShow || thing.InGame || thing.Carried || thing.PopAge >= 0 || (thing.Id == DesktopToyRules.Box && BoxOccupied) || thing.Surface == null || !thing.Surface.CaptureMouse()) return;
         thing.Press = true;
         thing.PressAt = ToyCursor(thing);
         thing.Glide = null;
@@ -610,6 +621,7 @@ public sealed partial class PetWindow
         GuardToyChase(dt); // PetWindow.ToyChase.cs: the same for chasing the wand or the mouse.
         GuardToyPass(dt); // PetWindow.ToyPass.cs: and for passing the ball, with its label.
         GuardFavorite(); // PetWindow.FavoriteToy.cs: and for a trip to the favourite toy.
+        if (!paused) StepToyMagic(dt); // PetWindow.ToyMagic.cs: what is shrinking away, and the puffs.
         if (toyBasket == null) return;
         bool show = ToysMayShow, shown = false;
         foreach (var thing in DesktopThings)
@@ -637,6 +649,7 @@ public sealed partial class PetWindow
         bool checkPlaces = toysAreaTimer >= 1;
         if (checkPlaces) toysAreaTimer = 0;
         bool save = false;
+        foreach (var thing in DesktopThings) StepToyPop(thing, dt);
         foreach (var thing in DesktopThings.ToList()) save |= StepDesktopThing(thing, dt, checkPlaces);
         if (save) { WriteToyPlaces(); SavePreferences(); }
     }
@@ -692,5 +705,6 @@ public sealed partial class PetWindow
         bool unsaved = DesktopThings.Any(thing => thing.Unsaved);
         if (unsaved) { WriteToyPlaces(); SavePreferences(); }
         foreach (var thing in DesktopThings) CloseDesktopThing(thing);
+        CloseToyMagic();
     }
 }

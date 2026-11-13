@@ -151,6 +151,9 @@ public sealed partial class PetWindow
         foreach (var s in battle.Slimes) if (s.Id == (int)e.Value) return s;
         return null;
     }
+    // 2026-11-14: endings for banners whose advice needs a skill the cat may not carry (IfCarried).
+    private string OrScissors() => IfCarried(BattleSkill.Scissors, ", hoặc dùng Kéo cắt", ", or use the Scissors");
+    private string GrabberToo() => IfCarried(BattleSkill.Grabber, "; Kẹp gắp cũng kéo được nó xuống", "; the Grabber can pull it down too");
     private string? TrickBanner(BattleEvent e) => e.Kind switch
     {
         BattleEventKind.GhostFaded => L("Slime bóng ma tàng hình! Rê chuột lên nó để soi", "The ghost slime faded out! Hover the cursor over it to light it up"),
@@ -165,32 +168,34 @@ public sealed partial class PetWindow
         BattleEventKind.CatResponding => L("Mèo tỉnh lại rồi!", "The cat responds again!"),
         BattleEventKind.BigDrum => L("Trống lớn! Nhấc mèo đúng nhịp cuối; đánh hoặc Đẩy nhạc trưởng thì nó đếm lại", "The big drum! Lift the cat on the last beat; hit or Push the drummer to reset its count"),
         BattleEventKind.CatOffBeat => L("Mèo loạn nhịp: đánh trượt một lúc!", "The cat is off the beat: its swings miss for a while!"),
-        BattleEventKind.LeafShielded => L("Lá chắn lá! Slime bom không mất máu. Hạ thảo dược hoặc dùng Kéo cắt để phá", "A leaf shield! The bomb slime takes no damage. Beat the herb slime or use the Scissors"),
+        BattleEventKind.LeafShielded => L("Lá chắn lá! Slime bom không mất máu. Hạ thảo dược để phá", "A leaf shield! The bomb slime takes no damage. Beat the herb slime to break it") + OrScissors(),
         BattleEventKind.LeafBurst => L("Bom sống sót nhờ lá chắn và bay về tay slime nhanh! Đánh con đó lúc nó chờ", "The shield saved the bomb and it flies back to the quick slime! Hit that one as it waits"),
         BattleEventKind.FlyerWatched => L("Trên sàn hết quái: bế mèo lên gần slime bay để vuốt", "The floor is clear: carry the cat up to the flyer to swipe it"),
         BattleEventKind.SprayRefilled => L("Slime ngã dưới nước nóng: bình được thêm nước!", "A slime fell to the hot water: the spray gets more water!"),
         BattleEventKind.MirageShuffled => L("Khói ảo ảnh! Bản thật có thể đã đổi chỗ, rê chuột kiểm tra lại", "Mirage smoke! The real one may have swapped places; check again with the mouse"),
         BattleEventKind.SulkTantrum => L("Quá tay rồi! Slime dỗi òa khóc dậm chân bỏ chạy, không để lại gì", "Too much! The sulky slime stamps off in tears, leaving nothing"),
         // 1.5 M14.
-        BattleEventKind.FlyAimed => L("Slime bay ngắm mèo! Đạn dính trúng cả mèo đang cầm: cầm mèo lại gần để vuốt, hoặc Đẩy/Kẹp gắp",
-            "The flying slime takes aim! Its goo hits even a held cat: carry the cat up to it, or Push or Grab it"),
+        BattleEventKind.FlyAimed => L("Slime bay ngắm mèo! Đạn dính trúng cả mèo đang cầm: cầm mèo lại gần để vuốt, hoặc Đẩy",
+            "The flying slime takes aim! Its goo hits even a held cat: carry the cat up to it, or Push it") + GrabberToo(),
         BattleEventKind.FlyerDowned => L("Slime bay rơi xuống! Đánh ngay, nó mất máu gấp rưỡi", "The flying slime is down! Hit it now, it takes extra damage"),
         BattleEventKind.BurrowCracked => L("Sàn nứt! Nhấc mèo lên rồi thả xuống vòng nứt để đè nó", "The floor cracks! Lift the cat, then drop it on the cracks to pin it"),
         BattleEventKind.BurrowPinned => L("Đè trúng! Slime đào hang kẹt ngoài, đánh ngay", "Pinned! The burrowing slime is stuck out, hit it now"),
         // 1.5 M15.
-        BattleEventKind.IceScratched => L("Slime băng: vũ khí chỉ làm xước! Ném mèo thật mạnh vào nó để phá băng (Bình xịt làm mềm băng)",
-            "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice (the Spray softens it)"),
+        BattleEventKind.IceScratched => L("Slime băng: vũ khí chỉ làm xước! Ném mèo thật mạnh vào nó để phá băng",
+            "Ice slime: weapons only scratch it! Throw the cat hard into it to break the ice")
+            + IfCarried(BattleSkill.Spray, " (Bình xịt làm mềm băng)", " (the Spray softens it)"),
         BattleEventKind.IceShattered => L("Vỡ băng! Đánh ngay trước khi băng mọc lại", "The ice broke! Hit it now, before the ice grows back"),
         BattleEventKind.IceBonked => L("Cộp! Mèo dội ra khỏi vỏ băng. Ném thật mạnh mới vỡ được", "Bonk! The cat bounces off the ice shell. Throw harder to break it"),
         BattleEventKind.IceCracked => L("Băng nứt nhưng chưa vỡ! Ném mèo mạnh hơn, lần sau dễ vỡ hơn", "The ice cracked but held! Throw the cat harder, it breaks easier now"),
-        BattleEventKind.ClingClimbed => L("Slime bám tường leo lên mép! Ném mèo vào nó, Đẩy hoặc Kẹp gắp kéo xuống",
-            "The wall slime climbed the edge! Throw the cat into it, or Push or Grab it down"),
+        BattleEventKind.ClingClimbed => L("Slime bám tường leo lên mép! Ném mèo vào nó hoặc Đẩy nó xuống",
+            "The wall slime climbed the edge! Throw the cat into it, or Push it down") + GrabberToo(),
         BattleEventKind.ClingLanded => L("Slime bám tường rơi xuống! Đánh ngay trước khi nó leo lại", "The wall slime fell! Hit it before it climbs back"),
-        BattleEventKind.WallWatched => L("Mèo không với tới slime trên tường! Ném mèo vào nó, Đẩy hoặc Kẹp gắp cho nó rơi",
-            "The cat can't reach the slime up the wall! Throw the cat into it, or Push or Grab it down"),
+        BattleEventKind.WallWatched => L("Mèo không với tới slime trên tường! Ném mèo vào nó hoặc Đẩy cho nó rơi",
+            "The cat can't reach the slime up the wall! Throw the cat into it, or Push it down") + GrabberToo(),
         // 1.5 M16.
-        BattleEventKind.QuillsUp => L("Slime nhím xù gai! Đánh lúc gai xẹp, hoặc dùng Bom, Bình xịt làm xẹp gai",
-            "The hedgehog slime puffs up its quills! Hit it when they lie flat, or use the Bomb; the Spray flattens them"),
+        BattleEventKind.QuillsUp => L("Slime nhím xù gai! Đánh lúc gai xẹp, hoặc dùng Bom",
+            "The hedgehog slime puffs up its quills! Hit it when they lie flat, or use the Bomb")
+            + IfCarried(BattleSkill.Spray, "; Bình xịt làm xẹp gai", "; the Spray flattens them"),
         BattleEventKind.QuillsPricked => L("Bị gai đâm! Chờ gai xẹp rồi hãy đánh", "Pricked! Wait for the quills to lie flat"),
         BattleEventKind.ClockStarted => L("Slime hẹn giờ: hết giờ nó gọi thêm quân! Hạ nó trước; choáng làm đồng hồ chậm",
             "Timer slime: when its clock runs out, it calls more slimes! Beat it first; dazing it slows the clock"),
@@ -326,18 +331,23 @@ public sealed partial class PetWindow
                 BattleEventKind.Raged => L("MÈO NỔI GIẬN!", "THE CAT RAGES!"),
                 // 1.5 M09: the spitter and the spring trap, once each per battle.
                 BattleEventKind.SpitAimed when !spitExplained => L("Slime phun! Nhấc mèo khỏi vòng cam", "A spitter! Lift the cat out of the orange ring"),
-                BattleEventKind.PuddleBoost when !puddleExplained => L("Slime nhanh dính vũng nhầy: lao xa và nhanh hơn cả trận! Dùng Quạt làm khô vũng", "A quick slime touched a goo puddle: longer, faster dashes all battle! Dry puddles with the Fan"),
-                BattleEventKind.PuddleBurned when trickExplained.Add(e.Kind) => L("Vũng nhầy làm bỏng và chậm mèo! Ra khỏi vũng hoặc dùng Quạt", "Goo puddles burn and slow the cat! Step out or use the Fan"),
+                BattleEventKind.PuddleBoost when !puddleExplained => L("Slime nhanh dính vũng nhầy: lao xa và nhanh hơn cả trận!", "A quick slime touched a goo puddle: longer, faster dashes all battle!")
+                    + IfCarried(BattleSkill.Fan, " Dùng Quạt làm khô vũng", " Dry puddles with the Fan"),
+                BattleEventKind.PuddleBurned when trickExplained.Add(e.Kind) => L("Vũng nhầy làm bỏng và chậm mèo! Ra khỏi vũng", "Goo puddles burn and slow the cat! Step out")
+                    + IfCarried(BattleSkill.Fan, " hoặc dùng Quạt", " or use the Fan"),
                 BattleEventKind.SpringSqueezed when !springExplained => L("Lò xo đang nén! Nhấc mèo ra khỏi vòng", "The spring is squeezing! Lift the cat out of the ring"),
                 BattleEventKind.SpringCrouched when trickExplained.Add(e.Kind) => L("Lò xo sắp bật nhảy tới! Chạy khỏi vòng đỏ hoặc nhấc mèo lên", "The spring is about to leap! Run out of the red ring or lift the cat"),
                 BattleEventKind.SpringFlattened when !flatExplained => L("Lò xo bẹp rồi! Nó nằm im một lúc", "The spring is flattened! It lies still a while"),
                 // 1.5 M10: the drummer and the chain slime, once each per battle.
                 BattleEventKind.LinkBeat when !beatExplained => L("Nhạc trưởng đếm nhịp! Đẩy nó trước nhịp cuối", "The drummer counts! Push it before the last beat"),
-                BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => L("Dây nhầy! Dùng Kéo cắt để cắt", "A goo rope! Cut it with the Scissors"),
+                BattleEventKind.LinkFormed when !ropeExplained && IsRope(e) => battle?.Carries(BattleSkill.Scissors) == true
+                    ? L("Dây nhầy! Dùng Kéo cắt để cắt", "A goo rope! Cut it with the Scissors")
+                    : L("Dây nhầy! Hạ con giữ dây để đứt dây", "A goo rope! Beat the slime holding it to break it"),
                 BattleEventKind.LinkCut when !cutExplained => L("Đứt dây! Đồng đội choáng", "Rope cut! Its ally is dazed"),
                 // 1.5 M11: the fusing slimes, the bomb slime, the splitting slime, once each per battle.
                 BattleEventKind.Merged when !remergeExplained && EventSlime(e)?.Type.Split != null => L("Hai nửa nhập lại! Hạ slime thảo dược trước", "The halves merged back! Take down the herb slime first"),
-                BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy tách bầy hoặc Quạt giữ chân", "The slimes merged into a giant! Next time push the pack apart or hold it with the Fan"),
+                BattleEventKind.Merged when !mergeExplained && EventSlime(e)?.Type.Split == null => L("Slime nhập thành khổng lồ! Lần sau Đẩy tách bầy", "The slimes merged into a giant! Next time push the pack apart")
+                    + IfCarried(BattleSkill.Fan, " hoặc Quạt giữ chân", " or hold it with the Fan"),
                 BattleEventKind.LinkFormed when !rideExplained && IsRide(e) => L("Slime bom cưỡi slime nhanh! Hạ con ngựa giữa đường", "A bomb rides a quick slime! Take the mount down on the way"),
                 BattleEventKind.FuseLit when !fuseExplained => L("Bom châm ngòi! Nhấc mèo ra khỏi vòng đỏ", "The fuse is lit! Lift the cat out of the red ring"),
                 BattleEventKind.ThrowAimed when trickExplained.Add(e.Kind) => L("Slime nhanh sắp quăng bom! Chạy khỏi vòng đỏ hoặc nhấc mèo, đánh nó để bom rơi", "A quick slime is about to throw its bomb! Run out of the red ring or lift the cat; hit it to make it drop the bomb"),
@@ -347,8 +357,8 @@ public sealed partial class PetWindow
                 BattleEventKind.SlimeSplit when !splitExplained => L("Slime tách đôi! Đừng để thảo dược hồi cho hai nửa", "It split in two! Don't let a herb slime heal the halves"),
                 BattleEventKind.HalvesRejoined when trickExplained.Add(e.Kind) => L("Thảo dược nối lại hai nửa! Hạ một nửa trước khi chúng chụm lại", "The herb slime mends the halves! Beat one before they gather and merge"),
                 // 1.5 M12: the flag slime and its panic, once each per battle; each formation the first time it comes.
-                BattleEventKind.SlimeSpawned or BattleEventKind.FlagPlanted when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Trong vòng vàng slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước, hoặc dùng Kéo cắt", "A flag slime! In the gold ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it first, or use the Scissors"),
-                BattleEventKind.FlagGuarded when trickExplained.Add(e.Kind) => L("Cờ đang được bảo vệ! Hạ slime cờ hiệu trước, hoặc dùng Kéo cắt", "That flag is guarded! Beat the flag slime first, or use the Scissors"),
+                BattleEventKind.SlimeSpawned or BattleEventKind.FlagPlanted when !flagExplained && FlagOnField() => L("Slime cờ hiệu! Trong vòng vàng slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước", "A flag slime! In the gold ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it first") + OrScissors(),
+                BattleEventKind.FlagGuarded when trickExplained.Add(e.Kind) => L("Cờ đang được bảo vệ! Hạ slime cờ hiệu trước", "That flag is guarded! Beat the flag slime first") + OrScissors(),
                 BattleEventKind.Panicked when !panicExplained => L("Mất cờ! Cả đội hoảng loạn", "The flag fell! They all panic"),
                 BattleEventKind.FormationArrived when FormationOf(e) is FormationSpec team && formationsExplained.Add(team.Id) =>
                     LF($"Đội hình {team.Name(PetLanguage.Vietnamese)}! {team.Tip(PetLanguage.Vietnamese)}", $"{team.Name(preferences.Language)} formation! {team.Tip(preferences.Language)}").TrimEnd(),

@@ -254,8 +254,9 @@ public sealed partial class PetWindow
             () => L("Slime nhạc trưởng gõ nhịp: nhịp 4 là trống lớn, mèo trong vòng mất máu và đánh hụt một lúc. Nhấc mèo đúng nhịp đó, hoặc Đẩy hay làm choáng nó để đếm lại.",
                     "A drummer slime keeps time: beat 4 is a big drum that hurts the cat in its ring and makes its swings miss for a while. Lift the cat on that beat, or Push or stun the drummer to start the count again.")),
         Meet(GuideFlag, StageGhostFolder, s => s.Type.Link?.Kind == EnemyLinks.Aura,
-            () => L("Slime cờ hiệu bất tử tới khi cắm cờ đầu, rồi cắm thêm cờ thứ hai. Trong vòng cờ slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước, đánh đổ cờ để cả đội hoảng, hoặc dùng Kéo cắt.",
-                    "A flag slime cannot be hurt until its first flag is down, then it plants a second. In the ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it, knock them down to panic the band, or use the Scissors.")),
+            () => L("Slime cờ hiệu bất tử tới khi cắm cờ đầu, rồi cắm thêm cờ thứ hai. Trong vòng cờ slime bớt đau, không bị choáng. Cờ bất tử khi nó còn sống: hạ nó trước, rồi đánh đổ cờ để cả đội hoảng.",
+                    "A flag slime cannot be hurt until its first flag is down, then it plants a second. In the ring slimes take less and cannot be dazed. Its flags stand while it lives: beat it first, then knock them down to panic the band.")
+                + IfCarried(BattleSkill.Scissors, " Kéo cắt nhổ cờ chỉ một nhát.", " The Scissors pull a flag up in one cut.")),
         // 3 · The fish basket.
         See(GuideBasket, StageFishBasket, () => TourDue(), () => Spots(FieldSpot(battleView?.BasketBounds())),
             () => L("Giỏ cá của mèo, có thanh máu. Slime hai bên sẽ kéo tới đánh giỏ; giỏ vỡ là thua dù mèo còn máu.",
@@ -282,11 +283,13 @@ public sealed partial class PetWindow
                     "A thief slime never hits the cat: it drains an icon or a skill, then runs. Beat it before it gets away to get it back.")),
         // 4 · Slime swamp.
         Meet(GuideHedgehog, StageSlimeSwamp, s => s.Type.Quills != null,
-            () => L("Slime nhím xù gai theo chu kỳ: đánh lúc gai dựng thì mèo bị đâm. Đánh lúc gai nằm, hoặc xịt nước cho gai cụp.",
-                    "A hedgehog slime puts its quills up now and then: hitting it then pricks the cat. Hit it while they lie flat, or spray it so they drop.")),
+            () => L("Slime nhím xù gai theo chu kỳ: đánh lúc gai dựng thì mèo bị đâm. Đánh lúc gai nằm.",
+                    "A hedgehog slime puts its quills up now and then: hitting it then pricks the cat. Hit it while they lie flat.")
+                + IfCarried(BattleSkill.Spray, " Bình xịt nước nóng làm gai cụp.", " The Hot water spray makes them drop.")),
         Meet(GuideIcy, StageSlimeSwamp, s => s.Type.Ice != null,
-            () => L("Slime băng có vỏ: vũ khí chỉ làm xước. Ném mèo xuyên qua nó thật mạnh để vỡ vỏ; Bình xịt nước nóng làm tan băng.",
-                    "An ice slime wears a shell: weapons only scratch it. Throw the cat hard through it to crack it; the Hot water spray melts the ice.")),
+            () => L("Slime băng có vỏ: vũ khí chỉ làm xước. Ném mèo xuyên qua nó thật mạnh để vỡ vỏ.",
+                    "An ice slime wears a shell: weapons only scratch it. Throw the cat hard through it to crack it.")
+                + IfCarried(BattleSkill.Spray, " Bình xịt nước nóng làm tan băng.", " The Hot water spray melts the ice.")),
         Meet(GuideChain, StageSlimeSwamp, s => s.Type.Link?.Kind == EnemyLinks.Tether,
             () => L("Slime xích nối dây nhầy vào một đồng đội và gánh một nửa sát thương cho nó. Dùng Kéo cắt để cắt dây hoặc hạ slime xích trước.",
                     "A chain slime ties a slime rope to a friend and takes half its hits. Cut the rope with the Scissors or beat the chain slime first.")),
@@ -302,8 +305,10 @@ public sealed partial class PetWindow
         new(GuideClinger, StageSlimeSwamp, false, true, 1,
             () => { var wall = battle!.Slimes.FirstOrDefault(s => s.Type.Cling != null && s.Targetable && s.Altitude > 20); guideRef = wall?.Id ?? 0; return wall != null && TourDue(); },
             () => false, () => battle!.Find(guideRef) is { Targetable: true } wall ? Spots(AirSlimeSpot(wall)) : new(),
-            () => L("Slime bám tường leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy, Kẹp gắp cho nó rơi rồi đánh dưới sàn.",
-                    "A wall slime climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push or grab it down and fight it on the floor.")),
+            () => L("Slime bám tường leo lên mép và ném gai xuống chỗ mèo. Ném mèo vào nó, hoặc Đẩy cho nó rơi rồi đánh dưới sàn.",
+                    "A wall slime climbs the edge and drops spikes where the cat stands. Throw the cat at it, or Push it down and fight it on the floor.")
+                + IfCarried(BattleSkill.Grabber, " Kẹp gắp cũng kéo được nó xuống.", " The Grabber can pull it down too.")
+                + IfCarried(BattleSkill.Fan, " Quạt thổi nó rơi.", " The Fan blows it down.")),
         See(GuideZip, StageZipSlime, () => King() is { State: not SlimeState.Spawning } boss && boss.Type.Roll != null, () => King() is Slime boss ? Spots(SlimeSpot(boss)) : new(),
             () => L("Slime Nén, trùm chương 2: càng mất máu càng phình to. Mỗi giai đoạn có ba đòn riêng, báo trước rồi mới đánh, và một trò cần giải. Hạ nó là xong chương.",
                     "The Zip Slime, chapter 2's boss: it swells as it loses HP. Each stage has three blows of its own, warned before they land, and a trick to solve. Beat it to finish the chapter.")),
@@ -414,6 +419,9 @@ public sealed partial class PetWindow
 
     private double CatX() => pet.X + settings.Width / 2;
     private string SkillName(BattleSkill skill) => BattleSkills.Get(skill).Name(preferences.Language, battle?.Settings ?? BattleTuning);
+    // 2026-11-14: advice that needs a skill the cat may not carry (chapter 2 opens them stage by stage;
+    // the Expedition and Infinity carry five of ten) is said only while it is carried. Guide and banners.
+    private string IfCarried(BattleSkill skill, string vietnamese, string english) => battle?.Carries(skill) == true ? L(vietnamese, english) : "";
     private static List<Rect> Spots(params Rect?[] spots) => spots.Where(s => s != null).Select(s => s!.Value).ToList();
 
     // Every lit spot is measured where the thing is really shown: a rectangle of an element (its own

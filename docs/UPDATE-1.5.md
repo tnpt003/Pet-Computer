@@ -77,7 +77,7 @@ Bản đầy đủ: docs/APPROVED-EXCEPTIONS.md → Battle Mode, App trong trậ
 | Bạt nhún | Slime + slime nhanh, lò xo ở mép sau lưng mèo | Đánh bẹp lò xo hoặc nhấc mèo khỏi vòng |
 | Bầy nhập | 2 bầy hợp thể + thảo dược | Bom đúng lúc chụm |
 | Quân cảm tử | Thảo dược + bom + 2 slime nhanh | Hạ thảo dược; đánh slime nhanh lúc chờ bắt bom |
-| Pháo kích | 2 bám tường + băng đứng trước | Quạt thổi rơi, ném mèo phá băng |
+| Pháo kích | 2 bám tường + băng đứng trước | Ném mèo hoặc Đẩy cho bám tường rơi (Quạt, Kẹp gắp nếu mang), ném mèo phá băng |
 | Báo động | Hẹn giờ + trộm + bóng ma | Hạ hẹn giờ trước |
 
 ### Quái solo (S)

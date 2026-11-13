@@ -1790,3 +1790,10 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Cất từng món, "Cất giỏ", "Cất nhanh": đồ phình nhẹ rồi co mất trong khói, nghe "swoosh"; không còn sót cửa sổ đồ hay khói.
 - [ ] Bấm giữ đồ ngay lúc vừa hiện: chưa cầm được; nửa giây sau cầm được. Pause giữa lúc co: đứng yên tới khi bỏ Pause.
 - [ ] Kéo xe hàng qua lại: bánh xe quay theo, kéo sang trái quay ngược; thả lên ruộng thì xe lăn (không nhảy) ra chỗ trống.
+
+## Chương 2: lời khuyên theo kỹ năng đang mang (14/11)
+Đã kiểm bằng test dữ liệu/chữ; **chưa xem trong trận thật.**
+- [ ] Màn 2 Thư mục ma, chưa mở Kéo cắt: bước guide và banner Cờ hiệu không nhắc Kéo cắt. Trận tự do mang Kéo cắt: có câu "Kéo cắt nhổ cờ".
+- [ ] Màn 4 Đầm nhầy chưa mở Bình xịt: bước Nhím/Băng và banner xù gai/xước băng không nhắc Bình xịt; bước Bám tường chỉ nhắc Kẹp gắp/Quạt khi đã chọn mang.
+- [ ] Vô tận/Viễn chinh không mang Kéo cắt: banner dây nhầy bảo hạ con giữ dây; mang Kéo cắt thì bảo cắt.
+- [ ] Đọc goal/tip màn 2, 4, 5 ở vi/en/ja: không tràn khung, nhắc đúng slime bám tường ở màn 4.

@@ -145,6 +145,16 @@ public sealed class FarmStall
         rolled = Left = 0;
     }
 
+    // Sent away by the user (feedback 13/11): it rolls off now, from where it is. False when it is not here.
+    public bool Leave()
+    {
+        if (!Here) return false;
+        rolled = Phase == FarmStallPhase.Arriving ? Math.Max(0, RollSeconds - rolled) : 0;
+        Phase = FarmStallPhase.Leaving;
+        Left = 0;
+        return true;
+    }
+
     // True on the frame it has rolled away.
     public bool Step(double dt)
     {

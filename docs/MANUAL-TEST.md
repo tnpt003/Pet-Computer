@@ -1767,3 +1767,5 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Có Chong chóng: chờ tối đa ~1,5 phút thấy ba vệt gió lướt qua, chong chóng quay nhanh rồi chậm dần, dừng hẳn. Trời Phấn hoa/Hoàng hôn: quay đều liên tục. Pause: đứng yên. Nhấc ruộng lên: chong chóng vẫn đúng chỗ.
 - [ ] Ao: chờ tối đa ~1,5 phút thấy một con cá nhỏ nhảy vòng cung và gợn nước; lúc mèo đang câu thì không có cá nhảy. FPS khi chong chóng quay không giảm rõ.
 - [ ] Có chuồng và trứng trong tổ: chờ lượt mèo ghé chuồng (10–15 phút) thấy mèo đi tới tổ, cúi nhặt, nhãn "+n trứng", Kho tăng trứng; gà không bay tán loạn lượt đó. Tổ trống thì mèo vồ gà như cũ. Mèo ngủ/Quiet/Pause: không đi.
+- [ ] Xe hàng đang đứng: kéo xe sang trái/phải, xe trượt theo chuột mượt, nhả ra không mở bảng; thả lên ruộng/bếp/hồ thì xe trượt ra chỗ trống. Bấm nhẹ (không kéo) vẫn mở bảng. Lượt xe sau đứng chỗ đã kéo. Pause: không kéo được. DPI 125/150%: xe bám đúng chuột.
+- [ ] Bảng Gian hàng có nút "Cho xe đi" bên trái: bấm thì bảng đóng, xe lăn đi, nghe "swoosh"; Pause thì nút mờ.

@@ -65,7 +65,7 @@ internal static class FarmChecks
             Levels(window, farm, path, check, () => Tick(0.02));
             Trophies(window, prefs, farm, check, Tick);
             check(farm.TipPending(PetFarm.TipCart), "The cart's hint waits for its first visit");
-            Stall(window, pet, prefs, farm, path, check, Tick);
+            Stall(window, pet, prefs, farm, path, check, Tick, point => cursor = point);
             check(!farm.TipPending(PetFarm.TipCart), "...which gives it");
             Lands(window, farm, path, check, Tick, point => cursor = point);
             Monitors(window, pet, farm, path, check, Tick, point => cursor = point);
@@ -860,7 +860,7 @@ internal static class FarmChecks
     }
 
     // The traveling stall in the real window: it comes by itself, delivers, leaves, what stops it.
-    private static void Stall(PetWindow window, PetModel pet, PetPreferences prefs, PetFarm farm, string path, Action<bool, string> check, Action<double> frames)
+    private static void Stall(PetWindow window, PetModel pet, PetPreferences prefs, PetFarm farm, string path, Action<bool, string> check, Action<double> frames, Action<Point> setCursor)
     {
         Window? Panel() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm stall" && w.IsLoaded);
         Window? Cart() => Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.Title == "Pet farm cart" && w.IsLoaded);
@@ -913,7 +913,9 @@ internal static class FarmChecks
         check(window.FarmStallOpen && Panel() != null, "The menu opens the stall");
         window.CloseFarmStall();
         cart.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonDownEvent });
-        check(window.FarmStallOpen, "...and so does a click on the cart");
+        check(!window.FarmStallOpen, "Pressed, it waits to see whether it is a drag");
+        cart.RaiseEvent(new System.Windows.Input.MouseButtonEventArgs(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = UIElement.MouseLeftButtonUpEvent });
+        check(window.FarmStallOpen, "...and a click on the cart opens it");
         var panel = Panel()!;
         check(panel.Topmost && !panel.ShowInTaskbar && !panel.ShowActivated, "It takes no focus and has no taskbar button");
         var bounds = Field<Area>(window, "bounds");
@@ -1055,6 +1057,7 @@ internal static class FarmChecks
         check(window.FarmGroundAboveCat, "(Topmost again puts the land over the cat, which is the fault)");
         Call(window, "KeepFarmBelowCat");
         check(!window.FarmGroundAboveCat, "The cat is back in front of the land and the cart");
+        CartByHand(window, stall, area, check, frames, setCursor, Cart);
         ResetCart();
         void ResetCart() => Call(window, "ResetFarmCart");
 
@@ -1201,6 +1204,62 @@ internal static class FarmChecks
         SetField(window, "farmSunUnsaved", 0.0);
         farm.Tiles[0] = new FarmTile();
         Call(window, "FarmChanged");
+    }
+
+    // The user drags the cart along the floor and sends it off from its panel (feedback 13/11).
+    private static void CartByHand(PetWindow window, FarmStall stall, Area area, Action<bool, string> check, Action<double> frames, Action<Point> setCursor, Func<Window?> cart)
+    {
+        double scale = Field<double>(window, "farmCartScale"), width = PetFarmStallArt.ArtWidth;
+        double X() => Field<double>(window, "farmCartX");
+        void Drag(double from, double to, bool up = true)
+        {
+            setCursor(new Point(from * scale, 0));
+            Call(window, "PressFarmCart");
+            setCursor(new Point(to * scale, 0));
+            Call(window, "MoveFarmCart");
+            if (up) Call(window, "ReleaseFarmCart", true);
+        }
+        bool OnLand(double x) => !(x + width <= window.FarmPlotStart || x >= window.FarmPlotStart + PetFarmArt.PlotWidth)
+            || !(x + width <= window.FarmPatchLeft(window.FarmHearth) || x >= window.FarmPatchLeft(window.FarmHearth) + window.FarmHearth.Width)
+            || !(x + width <= window.FarmPatchLeft(window.FarmPond) || x >= window.FarmPatchLeft(window.FarmPond) + window.FarmPond.Width);
+
+        double start = X();
+        Drag(start + 20, start + 23);
+        check(X() == start && window.FarmStallOpen, "A wobble under the slack is still a click: the stall opens");
+        window.CloseFarmStall();
+
+        Drag(start + 20, start - 30, up: false);
+        check(Field<bool>(window, "farmCartDragging") && (Math.Abs(X() - (start - 50)) < 0.5 || X() == area.Left), $"Past the slack the cart follows the mouse ({X():F0})");
+        check(Math.Abs(cart()!.Left - X()) < 1.5, "...and its window with it");
+        Call(window, "ReleaseFarmCart", true);
+        check(!window.FarmStallOpen && !OnLand(X()) && X() >= area.Left - 0.5 && X() + width <= area.Right + 0.5, $"Let go, it stands on a free piece of floor; a drag opens nothing ({X():F0})");
+
+        double field = window.FarmPlotStart + PetFarmArt.PlotWidth / 2 - width / 2, before = X();
+        Drag(before + 10, field + 10);
+        check(!OnLand(X()), $"Dropped on the field it slides to the nearest gap ({X():F0})");
+        double chosen = X();
+
+        Call(window, "ResetFarmCart");
+        frames(0.02);
+        check(window.TryFarmStall() && Math.Abs(X() - chosen) < 0.5, "Next visit it comes to the place the user chose");
+        frames(FarmStall.RollSeconds + 0.1);
+
+        SetField(window, "paused", true);
+        Drag(X() + 10, X() + 80);
+        check(Math.Abs(X() - chosen) < 0.5, "Pause: it cannot be moved");
+        check(!window.FarmSendStallAway() && stall.Here, "...nor sent off");
+        SetField(window, "paused", false);
+
+        window.OpenFarmStall();
+        var leave = Field<Border?>(window, "farmStallLeave")!;
+        check(leave.IsEnabled && leave.Visibility == Visibility.Visible, "The panel has a lit Send it off button");
+        frames(0.02);
+        Render(Application.Current.Windows.OfType<Window>().First(w => w.Title == "Pet farm stall" && w.IsLoaded), "farm-stall-leave.png");
+        check(window.FarmSendStallAway() && !window.FarmStallOpen && stall.Phase == FarmStallPhase.Leaving, "Sent off: the panel closes and the cart rolls away");
+        check(stall.Due >= FarmStall.MinSeconds, "The next visit is a while off");
+        frames(FarmStall.RollSeconds + 0.1);
+        check(stall.Phase == FarmStallPhase.Away && cart() == null && !window.FarmStallHere, "...and is gone");
+        check(!window.FarmSendStallAway(), "Gone, there is nothing to send off");
     }
 
     // What the stall sells: bought in its panel, shown on the land, no part of what a click lands on.

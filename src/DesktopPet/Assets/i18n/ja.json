@@ -32,6 +32,8 @@
   "Stall": "屋台",
   "Click to browse": "クリックで見る",
   "Traveling stall": "移動屋台",
+  "Send it off": "屋台を見送る",
+  "The stall leaves now; offers left are dropped": "屋台はすぐに去ります。残りの注文はなくなります",
   "Leaves in {0}.": "あと{0}で出発します。",
   "The stall has left. Deliver what you can, then close this.": "屋台は出発しました。渡せる分を渡してから閉じてください。",
   "Offer {0}": "買い取り {0}",

@@ -12,7 +12,7 @@ namespace DesktopPet;
 // never touches the cat. Its offers end with the visit; nothing is lost when one is missed.
 public sealed partial class PetWindow
 {
-    private const double FarmCartRoll = 150, FarmCartGap = 4;
+    private const double FarmCartRoll = 150, FarmCartGap = 4, FarmCartDragStart = 6;
 
     private sealed record FarmStallRow(Border Icon, TextBlock Name, TextBlock Note, Border Deliver);
     private sealed record FarmDecorRow(Border Row, Border Icon, TextBlock Name, TextBlock Note, Border Buy, TextBlock Price);
@@ -29,6 +29,14 @@ public sealed partial class PetWindow
     // Where this visit stands: chosen when the cart comes, and it stays there whatever land is moved.
     private double farmCartX, farmCartRoom = FarmCartRoll, farmCartScale = 1;
     private int farmCartSide = 1;
+    // The user's hand on the cart (feedback 13/11): where the press was, where the cart stood then, and
+    // whether it has moved past the click's slack. The place they chose is tried first next visit, this session only.
+    private double? farmCartPress;
+    private double farmCartPressX;
+    private bool farmCartDragging;
+    private double? farmCartChosenX;
+    private string? farmCartChosenMonitor;
+    private Border? farmStallLeave;
     private string? farmCartMonitor;
     private Area farmCartArea;
 
@@ -83,8 +91,11 @@ public sealed partial class PetWindow
         farmCartArt = art; farmCartLabel = label; farmCartRolled = 0;
         farmCartWindow = CreateOverlayWindow(surface, "Pet farm cart");
         farmCartWindow.Width = PetFarmStallArt.ArtWidth; farmCartWindow.Height = PetFarmStallArt.ArtHeight;
-        farmCartWindow.MouseLeftButtonDown += (_, e) => { e.Handled = true; OpenFarmStall(); };
-        farmCartWindow.Closed += (_, _) => { farmCartWindow = null; farmCartArt = null; farmCartLabel = null; };
+        farmCartWindow.MouseLeftButtonDown += (_, e) => { e.Handled = true; PressFarmCart(); };
+        farmCartWindow.MouseMove += (_, _) => MoveFarmCart();
+        farmCartWindow.MouseLeftButtonUp += (_, e) => { e.Handled = true; ReleaseFarmCart(click: true); };
+        farmCartWindow.LostMouseCapture += (_, _) => ReleaseFarmCart(click: false);
+        farmCartWindow.Closed += (_, _) => { farmCartWindow = null; farmCartArt = null; farmCartLabel = null; farmCartPress = null; farmCartDragging = false; };
         art.Ready = FarmStallReady;
         PlaceFarmCart();
         farmCartWindow.Show();
@@ -99,7 +110,9 @@ public sealed partial class PetWindow
         var area = monitor.WorkDips;
         var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
         double max = area.Right - width;
-        if (FarmLands.RandomFreeSpot(featureRandom, width, taken, area.Left, max, FarmCartGap) is not double x) return false;
+        double? chosen = farmCartChosenMonitor == monitor.Name && farmCartChosenX is double at && at >= area.Left && at <= max
+            && Math.Abs(FarmLands.FreeSpot(at, width, taken, area.Left, max, FarmCartGap) - at) < 0.5 ? at : null;
+        if ((chosen ?? FarmLands.RandomFreeSpot(featureRandom, width, taken, area.Left, max, FarmCartGap)) is not double x) return false;
         (farmCartSide, farmCartRoom) = FarmLands.RollWay(x, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
         farmCartX = x;
         StoreFarmCartMonitor(monitor);
@@ -136,6 +149,66 @@ public sealed partial class PetWindow
     }
 
     private void CloseFarmCart() => farmCartWindow?.Close();
+
+    // A press is a click until the mouse goes past the slack; then the cart slides along the floor of its screen.
+    private void PressFarmCart()
+    {
+        if (farmCartWindow == null) return;
+        farmCartPress = ScreenCursor().X / farmCartScale;
+        farmCartPressX = farmCartX;
+        farmCartDragging = false;
+        farmCartWindow.CaptureMouse();
+    }
+
+    private void MoveFarmCart()
+    {
+        if (farmCartPress is not double press || farmCartWindow == null) return;
+        double moved = ScreenCursor().X / farmCartScale - press;
+        if (!farmCartDragging)
+        {
+            if (Math.Abs(moved) < FarmCartDragStart || paused || farmStall.Phase != FarmStallPhase.Open) return;
+            farmCartDragging = true;
+        }
+        farmCartX = Math.Clamp(farmCartPressX + moved, farmCartArea.Left, Math.Max(farmCartArea.Left, farmCartArea.Right - PetFarmStallArt.ArtWidth));
+        PlaceFarmCart();
+    }
+
+    private void ReleaseFarmCart(bool click)
+    {
+        if (farmCartPress == null) return;
+        farmCartPress = null;
+        bool dragged = farmCartDragging;
+        farmCartDragging = false;
+        farmCartWindow?.ReleaseMouseCapture();
+        if (dragged) SettleFarmCart();
+        else if (click) OpenFarmStall();
+    }
+
+    // Let go over land: to the nearest gap; back where it stood when no gap is wide enough.
+    private void SettleFarmCart()
+    {
+        var monitor = FindFarmMonitor(farmCartMonitor);
+        var area = monitor.WorkDips;
+        double width = PetFarmStallArt.ArtWidth, max = area.Right - width;
+        var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
+        double x = FarmLands.FreeSpot(farmCartX, width, taken, area.Left, max, FarmCartGap);
+        bool free = taken.All(land => x + width <= land.Left - FarmCartGap + 0.5 || x >= land.Right + FarmCartGap - 0.5);
+        farmCartX = free ? x : farmCartPressX;
+        (farmCartSide, farmCartRoom) = FarmLands.RollWay(farmCartX, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
+        farmCartChosenX = farmCartX;
+        farmCartChosenMonitor = monitor.Name;
+        PlaceFarmCart();
+    }
+
+    // "Send it off" in the panel: the visit ends now, with whatever was still offered; nothing is lost.
+    public bool FarmSendStallAway()
+    {
+        if (paused || !farmStall.Leave()) return false;
+        if (farmStall.Due < FarmStall.MinSeconds) farmStall.Schedule(FarmStall.NextDelay(featureRandom));
+        CloseFarmStall();
+        PlayPetSound("swoosh");
+        return true;
+    }
 
     // A fullscreen app or a battle takes the screen: the visit is over.
     private void ResetFarmCart()
@@ -200,9 +273,14 @@ public sealed partial class PetWindow
         var (close, closeText, _) = HudButton(CloseFarmStall, plain: true);
         close.Margin = new Thickness(0);
         closeText.Text = L("Đóng", "Close");
+        var (leave, leaveText, _) = HudButton(() => FarmSendStallAway(), plain: true);
+        leave.Margin = new Thickness(0);
+        leaveText.Text = L("Cho xe đi", "Send it off");
+        leave.ToolTip = L("Xe rời đi ngay, lời mua còn lại bỏ qua", "The stall leaves now; offers left are dropped");
+        farmStallLeave = leave;
 
-        var window = CreateGamePanel(body, PanelActions(Array.Empty<UIElement>(), new UIElement[] { close }), "Pet farm stall", scene: PetSceneKind.Home);
-        window.Closed += (_, _) => { if (farmStallWindow == window) { farmStallWindow = null; farmStallNote = farmStallDecorTitle = null; farmStallRows.Clear(); farmStallDecorRows.Clear(); } };
+        var window = CreateGamePanel(body, PanelActions(new UIElement[] { leave }, new UIElement[] { close }), "Pet farm stall", scene: PetSceneKind.Home);
+        window.Closed += (_, _) => { if (farmStallWindow == window) { farmStallWindow = null; farmStallNote = farmStallDecorTitle = null; farmStallLeave = null; farmStallRows.Clear(); farmStallDecorRows.Clear(); } };
         farmStallWindow = window;
         UpdateFarmStall();
         window.Show();
@@ -223,6 +301,11 @@ public sealed partial class PetWindow
         }
         if (farmStallWindow == null || farm == null || farmStallNote == null) return;
         farmStallPaused = paused;
+        if (farmStallLeave != null)
+        {
+            farmStallLeave.Visibility = farmStall.Here ? Visibility.Visible : Visibility.Collapsed;
+            ShowFarmShopButton(farmStallLeave, !paused && farmStall.Here);
+        }
         farmStallNote.Text = farmStall.Here
             ? LF($"Xe rời đi sau {FarmClock(TimeSpan.FromSeconds(farmStall.Left))}.", $"Leaves in {FarmClock(TimeSpan.FromSeconds(farmStall.Left))}.")
             : L("Xe đã đi. Giao nốt rồi đóng bảng nhé.", "The stall has left. Deliver what you can, then close this.");

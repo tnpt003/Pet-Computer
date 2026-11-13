@@ -114,6 +114,11 @@ internal static class ChapterArtChecks
             var arrows = new[] { "mapPrevChapter", "mapNextChapter" }.Select(n => Field<System.Windows.Controls.Border>(window, n)).ToList();
             check(arrows.All(a => a.ActualWidth is > 20 and <= 34),
                 $"The chapter arrows are small ({string.Join(", ", arrows.Select(a => a.ActualWidth.ToString("F0")))} DIPs wide)");
+            // The chevron sits in the middle of its button.
+            var offsets = arrows.Select(a => a.Child is FrameworkElement mark
+                ? mark.TranslatePoint(new Point(mark.ActualWidth / 2, mark.ActualHeight / 2), a) - new Point(a.ActualWidth / 2, a.ActualHeight / 2) : new Vector(99, 99)).ToList();
+            check(offsets.All(o => Math.Abs(o.X) < 1.5 && Math.Abs(o.Y) < 1.5),
+                $"The chapter arrows' marks are centred ({string.Join("; ", offsets.Select(o => $"{o.X:F1},{o.Y:F1}"))})");
             Call(window, "CloseAdventureMap");
             check(window.OpenBattleHub() == null, "(setup) the hub opens");
             for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickBattleHub", 1.0 / 60);

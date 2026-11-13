@@ -174,8 +174,11 @@ public sealed partial class PetWindow
             return PetIllustration.Beside(BagLine(L("Chưa gặp quái nào. Vào trận: mỗi loại quái gặp lần đầu mở một trang.", "No enemy met yet. Battle on: each kind met for the first time opens a page."),
                 PetUi.SmallSize, PetUi.Game.Soft), PetMotif.Book, 30);
         var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
-        var art = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Top };
-        void Add(string line, double size, Brush brush, bool bold = false) { var t = BagLine(line, size, brush, bold); t.MaxWidth = 300; text.Children.Add(t); }
+        // The pictures in the middle of a block of one width (two looks, three members or one boss alike);
+        // the lines start right beside it (a MaxWidth with Stretch would centre them, leaving a gap).
+        var art = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
+        var block = new Grid { Width = BookArtWidth, MinHeight = 80, Margin = new Thickness(0, 0, 12, 0), Children = { art } };
+        void Add(string line, double size, Brush brush, bool bold = false) { var t = BagLine(line, size, brush, bold); t.MaxWidth = 300; t.HorizontalAlignment = HorizontalAlignment.Left; text.Children.Add(t); }
         if (page.StartsWith("f:", StringComparison.Ordinal) && BattleTuning.Formation(page[2..]) is FormationSpec formation)
         {
             foreach (var kind in formation.Members.Distinct())
@@ -197,10 +200,12 @@ public sealed partial class PetWindow
             if (skills.Count > 0) Add(L("Kỹ năng hợp: ", "Good skills: ") + string.Join(", ", skills), PetUi.CaptionSize, PetUi.AccentBright, true);
             Add(LF($"Đã hạ: {MonsterBook.DefeatedOf(type.Id)}", $"Defeated: {MonsterBook.DefeatedOf(type.Id)}"), PetUi.CaptionSize, PetUi.Game.Gold, true);
         }
-        var row = new DockPanel { Children = { art, text } };
-        DockPanel.SetDock(art, Dock.Left);
+        var row = new DockPanel { Children = { block, text } };
+        DockPanel.SetDock(block, Dock.Left);
         return row;
     }
+
+    private const double BookArtWidth = 192; // Three formation members of 64, or two looks of 88.
 
     private const int BookColumns = 5;
     private const double BookTileGap = 6;
@@ -282,9 +287,19 @@ public sealed partial class PetWindow
             bitmap.Render(picture);
         }
         else bitmap.Render(view);
-        // Cut close around what was drawn (a boss's odd shape, a small chest, an elite's word over its head),
-        // so the picture's middle is the slime's: the tile and the page centre it.
-        var cropped = new CroppedBitmap(bitmap, PortraitBounds(bitmap));
+        // A slime: a box by its size around its middle (room over its head for an elite's word), the same
+        // for its plain and elite look so both are drawn at one size. A boss (no elite; odd shapes, a small
+        // chest): cut close round what was drawn, so its middle is the picture's.
+        Int32Rect box;
+        if (type.Boss) box = PortraitBounds(bitmap);
+        else
+        {
+            const int Top = 40;
+            double scale = type.Scale;
+            int cw = (int)Math.Clamp(BattleTuning.SlimeWidth * scale * 1.6 + 24, 56, W), ch = (int)Math.Clamp(BattleTuning.SlimeHeight * scale * 1.8 + 34, 48, h - Top);
+            box = new Int32Rect(W - cw, (h - ch) * 2, cw * 2, ch * 2);
+        }
+        var cropped = new CroppedBitmap(bitmap, box);
         cropped.Freeze();
         BookPortraits[(type.Id, elite)] = cropped;
         return cropped;

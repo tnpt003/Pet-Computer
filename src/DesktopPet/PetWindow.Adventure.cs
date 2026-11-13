@@ -194,15 +194,22 @@ public sealed partial class PetWindow
         var (enter, enterText) = PrimaryButton(() => { if (AdventureEnterStage() is string reason) ShowBattleNotice(reason); });
         mapEnter = enter; mapEnterText = enterText; mapCloseText = closeText;
         // 1.5 M21: ‹ › beside the title when the campaign has more than one chapter.
-        var (prev, prevText, _) = HudButton(() => AdventureShowChapter(-1), plain: true);
-        var (next, nextText, _) = HudButton(() => AdventureShowChapter(1), plain: true);
-        prevText.Text = "‹"; nextText.Text = "›";
+        var (prev, _, _) = HudButton(() => AdventureShowChapter(-1), plain: true);
+        var (next, _, _) = HudButton(() => AdventureShowChapter(1), plain: true);
         foreach (var arrow in new[] { prev, next })
         {
             arrow.MinWidth = 0; // HudButton's own 70 would win over the width.
             arrow.Width = 32; arrow.Height = 32;
             arrow.Padding = new Thickness(0);
             arrow.VerticalAlignment = VerticalAlignment.Center;
+            // A drawn chevron in the middle (the font's ‹ › sat high and to the side).
+            bool back = arrow == prev;
+            arrow.Child = new Path
+            {
+                Data = Geometry.Parse(back ? "M 5,0 L 0,5 L 5,10" : "M 0,0 L 5,5 L 0,10"), Stroke = Brushes.White, StrokeThickness = 2.2,
+                StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round,
+                HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center
+            };
         }
         prev.ToolTip = L("Chương trước", "Previous chapter"); next.ToolTip = L("Chương tiếp", "Next chapter");
         prev.Margin = new Thickness(8, 0, 0, 0); next.Margin = new Thickness(4, 0, 0, 0);

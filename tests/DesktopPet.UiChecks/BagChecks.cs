@@ -222,18 +222,67 @@ internal static class BagChecks
                 for (int i = 3; i < px.Length; i += 4) { sum += px[i] * ((i / 4) % w); mass += px[i]; }
                 return mass == 0 ? 0 : sum / mass / Math.Max(1, w - 1);
             }
+            // Pixels with ink in the two outer columns on each side (a floor ring wider than the slime crosses them).
+            static int EdgeInk(System.Windows.Media.Imaging.BitmapSource p)
+            {
+                int w = p.PixelWidth, stride = w * 4, n = 0; var px = new byte[stride * p.PixelHeight];
+                p.CopyPixels(px, stride, 0);
+                for (int y = 0; y < p.PixelHeight; y++)
+                    foreach (int x in new[] { 0, 1, w - 2, w - 1 }) if (px[y * stride + x * 4 + 3] > 40) n++;
+                return n;
+            }
+            // The shield bubble's pale gold (BubblePen), at full strength.
+            static int BubbleGold(System.Windows.Media.Imaging.BitmapSource p)
+            {
+                int stride = p.PixelWidth * 4, n = 0; var px = new byte[stride * p.PixelHeight];
+                p.CopyPixels(px, stride, 0);
+                for (int i = 0; i < px.Length; i += 4)
+                    if (px[i + 3] > 200 && Math.Abs(px[i + 2] - 0xFF) < 10 && Math.Abs(px[i + 1] - 0xD8) < 10 && Math.Abs(px[i] - 0x5A) < 14) n++;
+                return n;
+            }
             foreach (var id in new[] { "flagbearer", "springer", "bomber" })
                 foreach (bool elite in new[] { false, true })
                 {
                     var shot = Portrait(id, elite);
-                    check(shot.PixelWidth / 2.0 < (id == "flagbearer" ? 72 : 120), $"The {id}{(elite ? " elite" : "")} portrait has no floor ring round it ({shot.PixelWidth / 2.0:F0} DIPs wide)");
+                    int edge = EdgeInk(shot), gold = BubbleGold(shot);
+                    check(edge == 0 && gold < 8, $"The {id}{(elite ? " elite" : "")} portrait has no ring or shield round it ({edge} px at its edges, {gold} px of shield gold)");
                 }
+            // 2026-11-13 (second look): a slime's plain and elite look are one size, in the box its size gives
+            // (as before the cut-close try, which shrank the elite and blew the soldiers up).
+            foreach (var kind in data.EnemyTypes.Where(e => !e.Boss && e.TipVi != null))
+            {
+                var look = Portrait(kind.Id);
+                double cw = Math.Clamp(data.SlimeWidth * kind.Scale * 1.6 + 24, 56, 150);
+                bool sized = look.PixelWidth == (int)cw * 2;
+                if (kind.Elite != null)
+                {
+                    var gilded = Portrait(kind.Id, true);
+                    sized &= gilded.PixelWidth == look.PixelWidth && gilded.PixelHeight == look.PixelHeight;
+                }
+                check(sized, $"The {kind.Id} portrait keeps its size box, plain and elite alike ({look.PixelWidth / 2} DIPs wide)");
+            }
             foreach (var boss in data.EnemyTypes.Where(e => e.Boss && e.TipVi != null))
             {
                 double middle = Middle(Portrait(boss.Id));
                 check(Math.Abs(middle - 0.5) < 0.12, $"The {boss.Id} portrait is centred ({middle:F2})");
             }
-            foreach (var kind in data.EnemyTypes.Where(e => !e.Boss && e.TipVi != null)) Portrait(kind.Id);
+            // A boss's page: its picture in the middle of the picture block, the lines right beside it.
+            book.Add(data, new[] { "king" }, new Dictionary<string, int>(), Array.Empty<string>(), out _);
+            check(window.SelectBookPage("king"), "(setup) the king's page opens");
+            Find("Pet battle hub")?.UpdateLayout();
+            if (FieldOf("bookDetail").GetValue(window) is Border detailCard && Descendants(detailCard).OfType<Image>().FirstOrDefault() is Image kingImage
+                && VisualTreeHelper.GetParent(VisualTreeHelper.GetParent(kingImage)) is Grid artBlock)
+            {
+                var c = kingImage.TranslatePoint(new Point(kingImage.ActualWidth / 2, kingImage.ActualHeight / 2), artBlock);
+                var title = Descendants(detailCard).OfType<TextBlock>().First(t => t.Text == data.Enemy("king").Name("en"));
+                double gap = title.TranslatePoint(new Point(0, 0), artBlock).X - artBlock.ActualWidth;
+                Shot("Pet battle hub", "battle-book-king-en.png");
+                check(Math.Abs(c.X - artBlock.ActualWidth / 2) < 1.5 && Math.Abs(c.Y - artBlock.ActualHeight / 2) < 1.5 && gap is >= 0 and < 20,
+                    $"The king's picture sits in the middle of its block ({c.X:F0},{c.Y:F0} of {artBlock.ActualWidth:F0}×{artBlock.ActualHeight:F0}), its name {gap:F0} DIPs beside it");
+            }
+            else check(false, "The king's picture sits in the middle of its block (no picture found)");
+            check(window.SelectBookPage("slime"), "(setup) the slime's page opens");
+            Shot("Pet battle hub", "battle-book-slime-en.png");
             window.ShowMonsterBook(false);
             // Counted once per battle; custom battle data counts nothing.
             var met = new BattleSim(data, 0, 1000, seed: 1);

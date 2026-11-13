@@ -1745,3 +1745,4 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1 và Nông trại
 - [ ] Sổ tay quái: cuộn xuống giữa danh sách rồi click một quái, danh sách KHÔNG nhảy lên đầu; thẻ chi tiết đổi đúng quái, ô được chọn viền vàng.
 - [ ] Ảnh Slime cờ hiệu không có vòng khiên; Slime lò xo, Slime bom (cả trong đội hình Kỵ binh) không có vệt ngang; Slime Nén, Slime Mẹ, Slime biến dị, Vua Slime nằm giữa khung.
 - [ ] Gặp Slime nhạc trưởng lần đầu: hướng dẫn nói "mất máu và đánh hụt một lúc" (vi/en/ja vừa khung).
+- [ ] (Lần hai) Mũi tên ‹ › nằm giữa nút. Trong Sổ tay quái, slime lính có cỡ như bản 1.5.1 trước #78; ảnh thường và tinh anh cùng cỡ; ảnh trùm nằm giữa khối ảnh, chữ sát cạnh khối.

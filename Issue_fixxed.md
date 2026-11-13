@@ -22,6 +22,18 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
   - tâm hình bốn trùm 0,50–0,52.
 
   Đã xem ảnh render của các chân dung và trang đội hình.
+- **Lần hai (người dùng xem bản 15eaa0d):**
+  - Mũi tên ‹ › chưa nằm giữa nút: ký tự font ngồi lệch, StackPanel bám đỉnh nút. Sửa: vẽ mũi tên bằng vector, đặt giữa nút.
+  - Ảnh tinh anh nhỏ hơn ảnh thường, slime lính bị phóng to: do cắt sát theo hình (chữ "ĐÁNH NHANH" và ngôi sao làm khung tinh anh to hơn). Sửa: slime lính quay lại khung theo kích thước như cũ, dùng chung cho bản thường và tinh anh; chỉ trùm cắt sát.
+  - Ảnh trùm chưa nằm giữa khối ảnh: chữ có `MaxWidth` nên WPF tự đặt vào giữa phần còn lại, tạo khoảng trống cạnh ảnh. Sửa: khối ảnh rộng cố định 192 DIP, ảnh nằm giữa khối, chữ canh trái sát khối.
+  - Commit: (điền sau publish).
+  - Kiểm chứng: script đầy đủ một lần: Python 67 + i18n 5, C# 4940, WPF 3229 đều đạt. Check mới:
+    - mũi tên lệch 0,0 DIP so với tâm nút;
+    - mọi slime lính giữ khung theo kích thước, ảnh thường và tinh anh cùng cỡ;
+    - cờ hiệu, lò xo, bom không có mực ở mép ảnh, không còn màu khiên;
+    - ảnh Vua Slime nằm giữa khối 192 DIP, tên cách khối 12 DIP.
+
+    Đã xem render trang Slime và Vua Slime.
 - **Cần xem tay:** Sổ tay quái trong app thật: cuộn xuống rồi click quái, danh sách không nhảy; xem ảnh cờ hiệu, lò xo, bom, đội hình Kỵ binh và bốn trùm; nút ‹ › trên bản đồ chương.
 
 ## #77 — Nhãn trên biển nông trại bị cắt chữ khi bay lên gần cuối (12/11)

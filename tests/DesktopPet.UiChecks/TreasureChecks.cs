@@ -73,7 +73,8 @@ internal static class TreasureChecks
         Call(window, "CloseGuest"); Free(); Home();
 
         // The find scene: the cat sits holding the rolled map, looking up about 2 seconds; then the map over its head.
-        check(!window.TreasureMenuEnabled && window.TreasureMenuLabel == "Treasure hunt · no map yet" && !window.ToggleTreasure(), "No map yet: the row is greyed, \"no map yet\"");
+        check(window.TreasureMenuEnabled && window.TreasureMenuLabel == "Treasure hunt" && window.TreasureMenuNote == "The pet finds a map, then you hunt together.",
+            "No map yet: the row still works (the cat will find one first)");
         SetField(window, "treasureWait", 0.005);
         Call(window, "TickTreasure", 1 / 60.0);
         var renderer = Field<PetRenderer>(window, "renderer");
@@ -172,7 +173,7 @@ internal static class TreasureChecks
         check(window.ClickTreasureStory() && !window.TreasureActive && !window.TreasureStoryShown && !window.TreasureArtShown && !pet.Emotions.Suspended,
             "A click on the paper closes it; the hunt is over");
         check(pet.Action == PetAction.Idle && !(bool)Call(window, "FeatureOwnsMovement")!, "The cat is itself again");
-        check(window.TreasureMenuLabel == "Treasure hunt · no map yet", "No map left after the chest");
+        check(!window.TreasureMapHeld && window.TreasureMenuLabel == "Treasure hunt" && window.TreasureMenuEnabled, "No map left after the chest; the row still works");
 
         // From the menu, the story closing itself after 8 seconds, the chest opening itself after 30.
         Home(); GiveMap();
@@ -258,11 +259,42 @@ internal static class TreasureChecks
         preferences.Quiet = false; behavior.Quiet = false;
         Home();
 
-        // The switch: off, the map is gone at once (and a hunt ends).
-        window.ToggleTreasure();
+        // The row without a map (approved 14/11): the find scene first, not counted in the 3 a day, then the hunt.
+        Clear();
+        preferences.TreasureMapsToday = 2; preferences.TreasureMapDay = today.Date;
+        check(window.ToggleTreasure() && window.TreasurePhase == "Wait" && window.TreasureFinding && window.TreasureUserFind && window.TreasureMapHeld && renderer.CarryMap
+              && TreasureRules.MapsToday(preferences, today) == 2, "No map: the row makes the cat find one now, not counted for today");
+        int sceneFrames = 0;
+        bool sceneSat = true;
+        while (window.TreasurePhase == "Wait" && sceneFrames++ < 60 * 4) { Frame(); sceneSat &= !window.TreasureFinding || pet.Action == PetAction.Sitting; }
+        check(window.TreasurePhase == "Hunt" && sceneFrames / 60.0 is >= 1.8 and <= 2.4 && sceneSat && !renderer.CarryMap && !window.TreasureUserFind,
+            $"...it sits with the map about 2 seconds ({sceneFrames / 60.0:F1} s), then the hunt starts");
+        window.ToggleTreasure(); Clear();
+        preferences.TreasureMapsToday = 3; preferences.TreasureMapDay = today.Date;
+        check(!window.TryTreasureFind() && window.ToggleTreasure() && window.TreasureFinding, "Three maps found today: the row still works");
+        pet.Action = PetAction.Dragging; pet.Grounded = false;
+        Frame();
+        check(!window.TreasureActive && !window.TreasureFinding && window.TreasureMapHeld && pet.Action == PetAction.Dragging, "Picking up the cat in that scene ends it; the map stays");
+        Free(); Clear();
+        // Asleep: no find scene and no map; the cat sleeps on, and after 30 seconds it gives up.
+        pet.Action = PetAction.Sleeping; pet.Emotions.EnterSleep();
+        check(window.ToggleTreasure() && window.TreasurePhase == "Wait" && !window.TreasureFinding && !window.TreasureMapHeld, "Asleep, no map: the hunt waits, no scene");
+        for (int i = 0; i < 60 * 31; i++) Call(window, "TickFeatures", 1 / 60.0);
+        check(pet.Action == PetAction.Sleeping && pet.Emotions.SleepLocked && !window.TreasureActive && !window.TreasureMapHeld && !window.TreasureUserFind,
+            "...the cat sleeps on, gives up after 30 seconds, no map");
+        pet.Emotions.FinishSleep(0); pet.Emotions.Reset(); Free(); Home();
+
+        // The switch only stops the automatic finding: a map held is gone at once, the row still works.
+        GiveMap();
         preferences.Treasure = false;
         Frame();
-        check(!window.TreasureActive && !window.TreasureMapHeld && !window.TreasureIconShown && !window.TryTreasureFind(), "Switched off: the hunt ends, the map is gone, no new map");
+        check(!window.TreasureMapHeld && !window.TreasureIconShown && !window.TryTreasureFind() && window.TreasureMenuEnabled, "Switched off: the map is gone, no new map by itself");
+        check(window.ToggleTreasure() && window.TreasureFinding && Until(() => window.TreasurePhase == "Hunt", 60 * 4), "...the row still finds one and starts the hunt");
+        Frame();
+        check(window.TreasureActive, "...and that hunt goes on with the switch off");
+        window.ToggleTreasure();
+        Frame();
+        check(!window.TreasureMapHeld, "...after it the map is gone again");
         preferences.Treasure = true;
         Home();
 

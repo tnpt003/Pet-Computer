@@ -13,7 +13,8 @@ namespace DesktopPet;
 // an X, looks up for about 2 seconds (a little scene, never an emotion), then goes on as usual with a small map
 // over its head for 10 minutes (Pause stops that clock; the switch in Customize → Habits takes it away). Only the
 // user starts a hunt: a click on that map (its own window, so it is never a click on the cat) or "Treasure hunt"
-// in "Play with the cat". The hunt follows the mini-games' rules (the user's request; never wakes the cat; nothing
+// in "Play with the cat"; without a map that row first plays the find scene (approved 14/11: not counted in the 3
+// a day, works with the switch off, which only stops the automatic finding). The hunt follows the mini-games' rules (the user's request; never wakes the cat; nothing
 // automatic, no Python command, no automatic emotion, no visitor while it runs) except that Pause freezes it and a
 // click on empty space does not end it. Three faint paw prints hide around the cat in a window under the cat's
 // (only the prints and the chest take clicks); each one found, the cat walks under it on its own ground and
@@ -33,7 +34,7 @@ public sealed partial class PetWindow
     private double treasureWait = double.NaN, treasureFind = -1, treasureTime, treasureGround, treasureGroundLeft, treasureGroundRight,
         treasureScale, treasureOrderCheck, treasureGoal, treasureChestX, treasureStand, treasureWalkLimit = TreasureRules.WalkSeconds;
     private int treasureStory;
-    private bool treasureSuspended, treasureChestClicked, treasurePawed;
+    private bool treasureSuspended, treasureChestClicked, treasurePawed, treasureUserFind;
     private string? treasureMonitor;
     // Replaceable for UI checks: today's date and time.
     private Func<DateTime>? treasureClock = null;
@@ -58,15 +59,15 @@ public sealed partial class PetWindow
     private bool TreasureFindOwnsMovement => treasureFind >= 0;
     private DateTime TreasureNow => treasureClock?.Invoke() ?? DateTime.Now;
 
-    public bool TreasureMenuEnabled => TreasureActive || (!MiniGameBlocked && !MiniGameActive && preferences.Treasure && treasureMap.Held);
-    public string TreasureMenuLabel => TreasureActive ? L("Dừng Săn kho báu", "Stop Treasure hunt")
-        : treasureMap.Held || !preferences.Treasure ? L("Săn kho báu", "Treasure hunt")
-        : L("Săn kho báu · chưa có bản đồ", "Treasure hunt · no map yet");
+    // The row works with or without a map (approved 14/11): without one the cat first finds one (its scene, not
+    // counted in the 3 a day), then the hunt starts. The Habits switch only stops the cat finding maps by itself.
+    public bool TreasureMenuEnabled => TreasureActive || (!MiniGameBlocked && !MiniGameActive);
+    public string TreasureMenuLabel => TreasureActive ? L("Dừng Săn kho báu", "Stop Treasure hunt") : L("Săn kho báu", "Treasure hunt");
     public string TreasureMenuNote => TreasureActive ? ""
         : MiniGameBlocked ? MiniGameMenuNote
-        : !preferences.Treasure ? L("Săn kho báu đang tắt trong Tùy chỉnh → Thói quen.", "Treasure hunt is off in Customize → Habits.")
-        : !treasureMap.Held ? L("Thỉnh thoảng mèo tự tìm thấy một tấm bản đồ; lúc đó bản đồ hiện trên đầu mèo.", "Now and then the pet finds a map; it then shows over the pet's head.")
+        : !treasureMap.Held ? L("Mèo sẽ tìm một tấm bản đồ rồi cùng bạn đi săn.", "The pet finds a map, then you hunt together.")
         : "";
+    public bool TreasureUserFind => treasureUserFind;
 
     // The cat finds a map now, if this is a moment it may (also the UiChecks' hook). True when it did.
     public bool TryTreasureFind()
@@ -88,10 +89,9 @@ public sealed partial class PetWindow
     private void TickTreasure(double dt)
     {
         if (double.IsNaN(treasureWait)) treasureWait = TreasureRules.NextDelay(featureRandom); // From the app's start, in RAM only.
-        if (!preferences.Treasure && (treasureMap.Held || TreasureActive || treasureFind >= 0))
-        {
-            StopTreasure(); EndTreasureFind(); treasureMap.Take(); // Switched off: the map is gone at once.
-        }
+        // Switched off: a map the cat found by itself and is only holding is gone at once. A hunt the user asked
+        // for (and its find scene) goes on; the switch only stops the automatic finding.
+        if (!preferences.Treasure && treasureMap.Held && !TreasureActive && treasureFind < 0) treasureMap.Take();
         treasureMap.Step(dt); // Its 10 minutes go on during a hunt too; a hunt under way still ends as usual.
         PlaceTreasureIcon(dt);
         if (paused || dt <= 0 || treasureMap.Held || TreasureActive) return; // One map at a time.
@@ -168,12 +168,35 @@ public sealed partial class PetWindow
     public bool ToggleTreasure()
     {
         if (TreasureActive) { StopTreasure(); return true; }
-        if (MiniGameBlocked || MiniGameActive || !preferences.Treasure || !treasureMap.Held) return false;
+        if (MiniGameBlocked || MiniGameActive) return false;
         revision++; // Like DoNow: AI replies chosen before this request are dropped.
         StopCall(); StopLesson();
         treasureStep = TreasureStep.Wait; treasureTime = 0;
-        if (!TrickCatBusy && CanPlay) BeginTreasure();
+        treasureUserFind = !treasureMap.Held; // No map yet: the cat finds one first, once it is free.
+        TreasureWaitStep();
         return true;
+    }
+
+    // The wait before a hunt (asleep, busy, or the find scene the user asked for): what can start now.
+    private void TreasureWaitStep()
+    {
+        if (TrickCatBusy || !CanPlay) return;
+        if (treasureFind >= 0) return; // Its find scene plays out first (BeginTreasure would cut it).
+        if (!treasureMap.Held && treasureUserFind) { BeginUserTreasureFind(); return; }
+        if (treasureMap.Held) BeginTreasure();
+    }
+
+    // The user asked for a hunt without a map: the same find scene, not counted in the 3 maps a day.
+    private void BeginUserTreasureFind()
+    {
+        double waited = treasureTime;
+        CancelFeatureActivity(); // Ends the ball, laser or toy game first; it also ends this wait, so it is put back.
+        treasureStep = TreasureStep.Wait; treasureTime = waited; treasureUserFind = true;
+        treasureMap.Give();
+        treasureFind = 0;
+        renderer.CarryMap = true;
+        HoldStill(PetAction.Sitting, pet.Facing);
+        System.Diagnostics.Trace.WriteLine("Treasure: the user asked; the cat finds a map.");
     }
 
     private void BeginTreasure()
@@ -197,6 +220,7 @@ public sealed partial class PetWindow
             System.Diagnostics.Trace.WriteLine("Treasure: no room for the prints.");
             return;
         }
+        treasureUserFind = false;
         treasureHunt.Reset(spots);
         treasureGround = ground; treasureGroundLeft = left; treasureGroundRight = right;
         treasureArea = new Area(Math.Max(bounds.Left, CatCenter - TreasureRules.Spread - 40), Math.Max(bounds.Top, ground - TreasureRules.Rise - 40),
@@ -220,8 +244,9 @@ public sealed partial class PetWindow
         if (closed || context.Fullscreen || Blocking(AutoBlock.AnyBattle) != AutoBlock.None) { StopTreasure(); return; }
         if (treasureStep == TreasureStep.Wait)
         {
-            if ((treasureTime += dt) > CupGameRules.SleepWaitSeconds || !treasureMap.Held) { treasureStep = TreasureStep.None; return; }
-            if (!TrickCatBusy && CanPlay) BeginTreasure();
+            if ((treasureTime += dt) > CupGameRules.SleepWaitSeconds || !treasureMap.Held && !treasureUserFind)
+            { treasureStep = TreasureStep.None; treasureUserFind = false; EndTreasureFind(); return; }
+            TreasureWaitStep();
             return;
         }
         if (dragging) return; // The drag ends it in TickFeatures (CancelFeatureActivity).
@@ -475,6 +500,7 @@ public sealed partial class PetWindow
     // another monitor or DPI. The map stays for the rest of its 10 minutes unless the chest was opened.
     private void StopTreasure()
     {
+        treasureUserFind = false;
         if (treasureStep == TreasureStep.None) return;
         var was = treasureStep;
         treasureStep = TreasureStep.None;

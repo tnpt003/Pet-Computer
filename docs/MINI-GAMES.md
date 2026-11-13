@@ -237,11 +237,11 @@ Hai phần: **mèo tìm thấy bản đồ** là sự kiện tự xảy ra (như
 - Chặn như khách M4: mèo ngủ (kể cả away nap) hoặc waking, Quiet, Giờ tập trung, app toàn màn hình, trận hoặc bảng chiến đấu, Pause, người dùng vắng, đang chơi mini-game, khách đang ghé, mèo bận (bị kéo, bay, phản ứng), cảm xúc ưu tiên cao, tính năng khác đang giữ mèo, wake cooldown.
 - Mèo ngồi xuống, ngậm một mẩu giấy cuộn có dấu X, ngước nhìn khoảng 2 giây (hoạt cảnh, không phải cảm xúc), rồi làm việc như thường; trên đầu mèo có biểu tượng bản đồ nhỏ.
 - Bản đồ giữ 10 phút (Pause đóng băng thời gian này); bỏ qua thì mờ dần rồi mất, không mất gì. Thoát app thì bản đồ mất (không lưu).
-- Công tắc "Săn kho báu" trong Cài đặt → Thói quen, mặc định bật; tắt thì bản đồ đang có mất ngay.
+- Công tắc "Săn kho báu" trong Cài đặt → Thói quen, mặc định bật; tắt thì mèo không tự tìm nữa và bản đồ mèo tự tìm đang giữ mất ngay. Từ 14/11 công tắc không khóa dòng menu (xem dưới).
 
 ### Bắt đầu và thoát (lệnh người dùng)
 
-- Bắt đầu bằng click biểu tượng bản đồ, hoặc dòng "Săn kho báu" trong "Chơi cùng mèo" (menu chuột phải và menu khay). Chưa có bản đồ thì dòng mờ kèm "chưa có bản đồ"; các lý do mờ khác như M1. Click biểu tượng không tính là click mèo.
+- Bắt đầu bằng click biểu tượng bản đồ, hoặc dòng "Săn kho báu" trong "Chơi cùng mèo" (menu chuột phải và menu khay). Chưa có bản đồ thì dòng vẫn bấm được (duyệt 14/11): mèo diễn cảnh tìm bản đồ ~2 s rồi vào săn ngay, không tính vào 3 bản đồ/ngày, không giới hạn số lần, chạy cả khi công tắc tắt; mèo ngủ thì không có cảnh, chờ tự thức như dưới. Các lý do mờ như M1. Click biểu tượng không tính là click mèo.
 - Luật mở/thoát chung của M1: chạy cả Quiet, Giờ tập trung, wake cooldown; không đánh thức mèo (chờ tự thức tối đa 30 giây); Esc, chọn lại dòng menu, click trái/kéo mèo thoát; fullscreen, vào trận, rút màn hình, đổi DPI kết thúc ngay. Click ra chỗ trống không thoát (vùng chơi rộng, dễ bấm nhầm).
 - Một ván tối đa khoảng 3 phút. Thoát giữa chừng thì bản đồ còn tới hết 10 phút; săn lại thì dấu chân đặt lại từ đầu.
 - Trong ván, hành vi tự động, lệnh Python, cảm xúc tự động và khách M4 không chen vào. Mỗi ván gửi `toy_started` sẵn có một lần.

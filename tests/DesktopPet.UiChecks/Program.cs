@@ -187,7 +187,7 @@ internal static class Program
               catMenu.Items.OfType<System.Windows.Controls.MenuItem>().Single(item => (string)item.Header == "Quiet mode").IsCheckable &&
               topItems.Single(item => (string)item.Header == "Focus time").ToolTip is string focusTip && focusTip.Contains("counts down") &&
               topItems[0].Icon is System.Windows.Controls.Border { Child: System.Windows.Controls.TextBlock { Text: PetUi.Magic } } &&
-              SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket|Find the fish|Hide and seek|Catch fireflies|Treasure hunt · no map yet" &&
+              SubHeaders("Play") == "Play with ball|Laser pointer|Toy basket|Find the fish|Hide and seek|Catch fireflies|Treasure hunt" &&
               playMenu.Items.IndexOf(playMenu.Items.OfType<System.Windows.Controls.Separator>().Single()) == 3 &&
               doNowMenu.Items[doNowMenu.Items.Count - 1] is System.Windows.Controls.MenuItem { Header: "Teach a trick" } &&
               doNowMenu.Items[doNowMenu.Items.Count - 2] is System.Windows.Controls.Separator &&

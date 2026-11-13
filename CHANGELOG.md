@@ -26,7 +26,7 @@ Bản này tập trung vào cuộc sống của mèo ngoài trận: nông trại
   - **Món yêu thích** (cần AI bật): mèo nhớ món bạn hay chơi cùng, ghé món đó và rủ chơi bằng món đó.
   - **Gọi mèo** ở menu khay: mèo đi tới con trỏ. **Dạy động tác:** Xoay vòng, Ngồi xin, Đập tay; dạy đủ buổi thì động tác vào menu "Động tác".
 - **Chơi cùng mèo:** ba mini-game ở menu "Chơi": Úp cốc tìm cá, Trốn tìm, Bắt đom đóm. Mèo đang ngủ thì không bắt đầu.
-- **Sự kiện tự đến** (tắt được trong Cài đặt → Thói quen): Khách ghé thăm (bướm giấy, slime hiền), Săn kho báu (mèo tìm thấy bản đồ, bạn cùng lần theo dấu chân tới rương, mẩu chuyện lưu vào Nhật ký).
+- **Sự kiện tự đến** (tắt được trong Cài đặt → Thói quen): Khách ghé thăm (bướm giấy, slime hiền), Săn kho báu (mèo tìm thấy bản đồ, bạn cùng lần theo dấu chân tới rương, mẩu chuyện lưu vào Nhật ký). Muốn săn ngay thì chọn "Chơi" → "Săn kho báu", mèo tìm bản đồ tại chỗ.
 - **Người mới:** mỗi lần mở app có màn mở đầu ngắn qua cổng phép (click để bỏ qua). Phiếu Chào mừng gọn hơn, mèo dẫn bạn đi một vòng 6 bước; xem lại ở Cài đặt → Chung hoặc menu khay → "Hướng dẫn".
 - **Menu gọn hơn:** menu mèo còn 9 dòng, "Làm ngay" đổi tên thành "Động tác"; Cho ăn, Cảm xúc, Yên lặng nằm trong menu tên mèo. Mỗi đồ vật có menu chuột phải riêng (ngủ trong hộp, cào móng ở đây, ngủ trên đệm, cất vào giỏ).
 - **Battle Mode:**
@@ -60,7 +60,7 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - **Favorite toy** (needs AI on): the pet remembers what you play with most, visits it and asks for a game with it.
   - **Call the cat** from the tray: the pet walks to your cursor. **Teach a trick:** Spin around, Sit up and beg, High five; once learned, a trick joins the "Actions" menu.
 - **Play with the cat:** three mini-games under "Play": Find the fish, Hide and seek, Catch fireflies. They do not start while the pet sleeps.
-- **Things that happen by themselves** (switch off in Settings → Habits): Visitors (a paper butterfly, a gentle slime) and Treasure hunt (the pet finds a map, you follow pawprints together to a chest, and a short story goes into the Diary).
+- **Things that happen by themselves** (switch off in Settings → Habits): Visitors (a paper butterfly, a gentle slime) and Treasure hunt (the pet finds a map, you follow pawprints together to a chest, and a short story goes into the Diary). To hunt right away, choose "Play" → "Treasure hunt" and the pet finds a map on the spot.
 - **New users:** each launch opens with a short intro through the portal (click to skip). The Welcome card is shorter, and the pet leads a 6-step tour; replay it from Settings → General or the tray → "Guide".
 - **A tidier menu:** the pet menu has 9 rows, "Do now" is now "Actions", and Feed, Emotions and Quiet live under the pet's name. Every desktop thing has its own right-click menu (nap in the box, scratch here, nap on the cushion, put back in the basket).
 - **Battle Mode:**
@@ -94,7 +94,7 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - **お気に入りのおもちゃ**(AI オン時): よく一緒に遊ぶおもちゃを覚えて、そばに行ったり、それで遊びに誘ったりします。
   - トレイの**ねこを呼ぶ**: カーソルまで歩いてきます。**芸を教える:** くるりんターン、ちんちん、ハイタッチ。覚えた芸は「動作」メニューに入ります。
 - **ねこと遊ぶ:** 「遊ぶ」メニューに3つのミニゲーム: お魚さがし、かくれんぼ、ホタルつかまえ。ペットが寝ているときは始まりません。
-- **自然に起きること**(設定 → 習慣でオフにできます): おきゃくさん(紙のちょうちょ、おとなしいスライム)、宝さがし(ペットが地図を見つけ、一緒に足あとをたどって宝箱へ。小さなお話が日記に残ります)。
+- **自然に起きること**(設定 → 習慣でオフにできます): おきゃくさん(紙のちょうちょ、おとなしいスライム)、宝さがし(ペットが地図を見つけ、一緒に足あとをたどって宝箱へ。小さなお話が日記に残ります)。すぐに遊びたいときは「遊ぶ」→「宝さがし」で、ペットがその場で地図を見つけます。
 - **はじめての人へ:** 起動するたびにポータルからの短いオープニングがあります(クリックでスキップ)。ようこそカードは短くなり、ペットが6ステップで案内します。設定 → 一般、またはトレイ → 「ガイド」からもう一度見られます。
 - **すっきりしたメニュー:** ペットのメニューは9行になり、「今すぐ」は「動作」に名前が変わりました。ごはん、気分、静かモードはペットの名前のメニューの中です。デスクトップの物にはそれぞれ右クリックメニューがあります(箱で昼寝、ここで爪とぎ、クッションで昼寝、かごに戻す)。
 - **バトルモード:**

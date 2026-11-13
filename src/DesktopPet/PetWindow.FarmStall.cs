@@ -37,6 +37,11 @@ public sealed partial class PetWindow
     private double? farmCartChosenX;
     private string? farmCartChosenMonitor;
     private Border? farmStallLeave;
+    // The wheels turn with every move the user makes (feedback 13/11): the distance rolled by hand, and a
+    // short roll to the nearest gap when it is let go over land (from, to, 0–1; null: none).
+    private const double FarmCartGlideSeconds = 0.3;
+    private double farmCartWheel, farmCartGlideFrom, farmCartGlideAge;
+    private double? farmCartGlideTo;
     private string? farmCartMonitor;
     private Area farmCartArea;
 
@@ -67,11 +72,8 @@ public sealed partial class PetWindow
         bool rolling = farmStall.Rolling;
         if (rolling) farmCartRolled += dt;
         if (farmStall.Step(dt)) { CloseFarmCart(); UpdateFarmStall(); return; }
-        if (farmCartArt != null && (rolling || farmStall.Rolling))
-        {
-            farmCartArt.Rolled = farmCartRolled * farmCartRoom / FarmStall.RollSeconds;
-            farmCartArt.InvalidateVisual();
-        }
+        if (farmCartArt != null && (rolling || farmStall.Rolling)) ShowFarmCartWheels();
+        StepFarmCartGlide(dt);
         if (farmCartLabel != null) farmCartLabel.Opacity = farmStall.Phase == FarmStallPhase.Open ? 1 : 0;
     }
 
@@ -88,14 +90,14 @@ public sealed partial class PetWindow
         var surface = new Grid { Width = PetFarmStallArt.ArtWidth, Height = PetFarmStallArt.ArtHeight, Cursor = Cursors.Hand };
         surface.Children.Add(art);
         surface.Children.Add(label);
-        farmCartArt = art; farmCartLabel = label; farmCartRolled = 0;
+        farmCartArt = art; farmCartLabel = label; farmCartRolled = farmCartWheel = 0; farmCartGlideTo = null;
         farmCartWindow = CreateOverlayWindow(surface, "Pet farm cart");
         farmCartWindow.Width = PetFarmStallArt.ArtWidth; farmCartWindow.Height = PetFarmStallArt.ArtHeight;
         farmCartWindow.MouseLeftButtonDown += (_, e) => { e.Handled = true; PressFarmCart(); };
         farmCartWindow.MouseMove += (_, _) => MoveFarmCart();
         farmCartWindow.MouseLeftButtonUp += (_, e) => { e.Handled = true; ReleaseFarmCart(click: true); };
         farmCartWindow.LostMouseCapture += (_, _) => ReleaseFarmCart(click: false);
-        farmCartWindow.Closed += (_, _) => { farmCartWindow = null; farmCartArt = null; farmCartLabel = null; farmCartPress = null; farmCartDragging = false; };
+        farmCartWindow.Closed += (_, _) => { farmCartWindow = null; farmCartArt = null; farmCartLabel = null; farmCartPress = null; farmCartDragging = false; farmCartGlideTo = null; };
         art.Ready = FarmStallReady;
         PlaceFarmCart();
         farmCartWindow.Show();
@@ -166,10 +168,12 @@ public sealed partial class PetWindow
         double moved = ScreenCursor().X / farmCartScale - press;
         if (!farmCartDragging)
         {
-            if (Math.Abs(moved) < FarmCartDragStart || paused || farmStall.Phase != FarmStallPhase.Open) return;
+            if (Math.Abs(moved) < FarmCartDragStart || paused || farmStall.Phase != FarmStallPhase.Open || farmCartGlideTo != null) return;
             farmCartDragging = true;
         }
+        double was = farmCartX;
         farmCartX = Math.Clamp(farmCartPressX + moved, farmCartArea.Left, Math.Max(farmCartArea.Left, farmCartArea.Right - PetFarmStallArt.ArtWidth));
+        RollFarmCartWheels(farmCartX - was);
         PlaceFarmCart();
     }
 
@@ -193,11 +197,40 @@ public sealed partial class PetWindow
         var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
         double x = FarmLands.FreeSpot(farmCartX, width, taken, area.Left, max, FarmCartGap);
         bool free = taken.All(land => x + width <= land.Left - FarmCartGap + 0.5 || x >= land.Right + FarmCartGap - 0.5);
-        farmCartX = free ? x : farmCartPressX;
-        (farmCartSide, farmCartRoom) = FarmLands.RollWay(farmCartX, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
-        farmCartChosenX = farmCartX;
+        double to = free ? x : farmCartPressX;
+        (farmCartSide, farmCartRoom) = FarmLands.RollWay(to, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
+        farmCartChosenX = to;
         farmCartChosenMonitor = monitor.Name;
+        // Over land: it rolls there instead of jumping.
+        if (Math.Abs(to - farmCartX) > 0.5) { farmCartGlideFrom = farmCartX; farmCartGlideTo = to; farmCartGlideAge = 0; }
+        else { farmCartX = to; PlaceFarmCart(); }
+    }
+
+    // Each unpaused frame of a roll to the gap.
+    private void StepFarmCartGlide(double dt)
+    {
+        if (farmCartGlideTo is not double to || farmCartWindow == null) return;
+        farmCartGlideAge = Math.Min(1, farmCartGlideAge + dt / FarmCartGlideSeconds);
+        double t = farmCartGlideAge, eased = t * t * (3 - 2 * t), was = farmCartX;
+        farmCartX = farmCartGlideFrom + (to - farmCartGlideFrom) * eased;
+        RollFarmCartWheels(farmCartX - was);
         PlaceFarmCart();
+        if (farmCartGlideAge >= 1) { farmCartX = to; farmCartGlideTo = null; }
+    }
+
+    // Wheels turn by the distance the cart went, either way.
+    private void RollFarmCartWheels(double distance)
+    {
+        if (distance == 0) return;
+        farmCartWheel += distance;
+        ShowFarmCartWheels();
+    }
+
+    private void ShowFarmCartWheels()
+    {
+        if (farmCartArt == null) return;
+        farmCartArt.Rolled = farmCartWheel + farmCartRolled * farmCartRoom / FarmStall.RollSeconds;
+        farmCartArt.InvalidateVisual();
     }
 
     // "Send it off" in the panel: the visit ends now, with whatever was still offered; nothing is lost.

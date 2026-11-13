@@ -1236,15 +1236,27 @@ internal static class FarmChecks
         check(X() == start && window.FarmStallOpen, "A wobble under the slack is still a click: the stall opens");
         window.CloseFarmStall();
 
+        var wheels = Field<PetFarmStallArt>(window, "farmCartArt");
+        double turned = wheels.Rolled;
         Drag(start + 20, start - 30, up: false);
         check(Field<bool>(window, "farmCartDragging") && (Math.Abs(X() - (start - 50)) < 0.5 || X() == area.Left), $"Past the slack the cart follows the mouse ({X():F0})");
+        check(Math.Abs(wheels.Rolled - turned - (X() - start)) < 0.5 && (X() == start || wheels.Rolled < turned),
+            $"Its wheels roll with it, backwards going left ({turned:F0} → {wheels.Rolled:F0})");
         check(Math.Abs(cart()!.Left - X()) < 1.5, "...and its window with it");
         Call(window, "ReleaseFarmCart", true);
         check(!window.FarmStallOpen && !OnLand(X()) && X() >= area.Left - 0.5 && X() + width <= area.Right + 0.5, $"Let go, it stands on a free piece of floor; a drag opens nothing ({X():F0})");
 
         double field = window.FarmPlotStart + PetFarmArt.PlotWidth / 2 - width / 2, before = X();
         Drag(before + 10, field + 10);
-        check(!OnLand(X()), $"Dropped on the field it slides to the nearest gap ({X():F0})");
+        double dropped = X(), rolledThere = wheels.Rolled;
+        check(Field<double?>(window, "farmCartGlideTo") is double gap && !OnLand(gap) && Math.Abs(gap - dropped) > 0.5, $"Let go on the field, it starts to roll to the nearest gap ({dropped:F0} → {Field<double?>(window, "farmCartGlideTo"):F0})");
+        frames(0.1);
+        check(Field<double?>(window, "farmCartGlideTo") != null && X() != dropped && Math.Abs(wheels.Rolled - rolledThere - (X() - dropped)) < 0.5, "...rolling there, wheels turning");
+        Drag(X() + 10, X() + 60, up: false);
+        check(!Field<bool>(window, "farmCartDragging"), "While it rolls it cannot be grabbed");
+        Call(window, "ReleaseFarmCart", false);
+        frames(0.3);
+        check(!OnLand(X()) && Field<double?>(window, "farmCartGlideTo") == null, $"...and stands in the gap ({X():F0})");
         double chosen = X();
 
         Call(window, "ResetFarmCart");

@@ -1789,3 +1789,4 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Lấy giỏ ra, lấy hộp/trụ cào/chậu cây/bóng/cần câu/chuột ra: đồ phình lên hơi to rồi về cỡ, có khói lấp lánh, nghe "sparkle"; hộp/trụ/chậu nảy ra khỏi giỏ.
 - [ ] Cất từng món, "Cất giỏ", "Cất nhanh": đồ phình nhẹ rồi co mất trong khói, nghe "swoosh"; không còn sót cửa sổ đồ hay khói.
 - [ ] Bấm giữ đồ ngay lúc vừa hiện: chưa cầm được; nửa giây sau cầm được. Pause giữa lúc co: đứng yên tới khi bỏ Pause.
+- [ ] Kéo xe hàng qua lại: bánh xe quay theo, kéo sang trái quay ngược; thả lên ruộng thì xe lăn (không nhảy) ra chỗ trống.

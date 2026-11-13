@@ -86,6 +86,11 @@ public static class TreasureRules
     }
 
     // Where the cat stands to be "under" x: on its own ground (the floor or its window edge), never off it.
+    // How long the cat may walk to a print or the chest: at least WalkSeconds, more when it is far. Two prints
+    // can be ~800 DIPs apart (±Spread around where the hunt began), longer than 10 s at the usual 72 DIP/s.
+    public static double WalkLimit(double distance, double speed) =>
+        speed > 0 && double.IsFinite(distance) ? Math.Max(WalkSeconds, Math.Abs(distance) / speed + 2) : WalkSeconds;
+
     public static double Under(double x, double groundLeft, double groundRight)
     {
         double low = groundLeft + CatHalfWidth, high = groundRight - CatHalfWidth;

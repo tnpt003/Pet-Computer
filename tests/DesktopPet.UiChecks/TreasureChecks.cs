@@ -143,7 +143,8 @@ internal static class TreasureChecks
             check(window.MiniLabel == $"{hunt.FoundCount}/3", $"\"{hunt.FoundCount}/3\" over the cat");
             double under = TreasureRules.Under(spot.X, bounds.Left, bounds.Right);
             bool sniffed = false;
-            for (int i = 0; i < 60 * 9 && window.TreasurePhase is "Go" or "Sniff"; i++)
+            // Long enough for the farthest pair of prints (2 × Spread at the walking speed, TreasureRules.WalkLimit) and the sniff.
+            for (int i = 0; i < 60 * 18 && window.TreasurePhase is "Go" or "Sniff"; i++)
             {
                 Frame();
                 sniffed |= window.TreasurePhase == "Sniff";
@@ -176,7 +177,7 @@ internal static class TreasureChecks
         // From the menu, the story closing itself after 8 seconds, the chest opening itself after 30.
         Home(); GiveMap();
         check(window.ToggleTreasure() && window.TreasurePhase == "Hunt", "The \"Treasure hunt\" row starts it too");
-        foreach (int print in new[] { 0, 1, 2 }) { window.ClickTreasureAt(hunt.Spots[print].X, hunt.Spots[print].Y); Until(() => window.TreasurePhase is not ("Go" or "Sniff"), 60 * 9); }
+        foreach (int print in new[] { 0, 1, 2 }) { window.ClickTreasureAt(hunt.Spots[print].X, hunt.Spots[print].Y); Until(() => window.TreasurePhase is not ("Go" or "Sniff"), 60 * 18); }
         check(Until(() => window.TreasurePhase == "Chest", 60 * 8), "...three prints, the chest");
         check(Until(() => window.TreasurePhase == "Paw", 60 * 31) && preferences.TreasureChests == chests + 2, "Not clicked for 30 seconds: the cat opens it itself");
         check(Until(() => window.TreasurePhase == "Story", 60 * 3) && Until(() => !window.TreasureActive, 60 * 9), "The story goes after about 8 seconds");
@@ -277,7 +278,7 @@ internal static class TreasureChecks
         foreach (int print in new[] { 0, 1, 2 })
         {
             window.ClickTreasureAt(hunt.Spots[print].X, hunt.Spots[print].Y);
-            for (int i = 0; i < 60 * 9 && window.TreasurePhase is "Go" or "Sniff"; i++)
+            for (int i = 0; i < 60 * 18 && window.TreasurePhase is "Go" or "Sniff"; i++)
             {
                 Frame();
                 onEdge &= pet.LedgeId == ledge.Id && Math.Abs(pet.Y - ledgeY) < 0.01 && CatCenter() - TreasureRules.CatHalfWidth >= ledge.Left - 0.5 && CatCenter() + TreasureRules.CatHalfWidth <= ledge.Right + 0.5;

@@ -249,7 +249,7 @@ Hai phần: **mèo tìm thấy bản đồ** là sự kiện tự xảy ra (như
 ### Ba dấu chân ẩn
 
 - Ba dấu chân mèo đặt ngẫu nhiên cùng màn hình với mèo, trong khoảng ±400 DIP ngang quanh mèo, từ sàn lên tối đa 300 DIP, cách nhau ≥ 80 DIP, trong vùng làm việc; không đè lên mèo, vùng đất nông trại, xe hàng, đồ chơi, đồ góc sống.
-- Dấu chân rất mờ (khoảng 20 % độ đậm); con trỏ tới gần khoảng 50 DIP thì sáng dần. Click trúng thì dấu sáng hẳn, nhãn "1/3", "2/3" trên đầu mèo; mèo đi tới dưới dấu đó (trên đúng sàn/mép đang đứng, không nhảy khỏi mép) và đánh hơi khoảng 1 giây. Tìm theo thứ tự bất kỳ.
+- Dấu chân rất mờ (khoảng 20 % độ đậm); con trỏ tới gần khoảng 50 DIP thì sáng dần. Click trúng thì dấu sáng hẳn, nhãn "1/3", "2/3" trên đầu mèo; mèo đi tới dưới dấu đó (trên đúng sàn/mép đang đứng, không nhảy khỏi mép) và đánh hơi khoảng 1 giây. Tìm theo thứ tự bất kỳ. Thời gian đi tối đa ít nhất 10 s, xa hơn thì theo quãng đường cộng 2 s (`TreasureRules.WalkLimit`, sửa 14/11: hai dấu có thể cách ~800 DIP nên trước đó mèo đôi khi dừng thiếu).
 - Gợi ý: 20 giây chưa tìm thêm dấu nào thì mèo quay đầu về dấu gần nhất; 40 giây thì mèo đi tới gần dấu đó và dấu sáng nhẹ hơn mức thường.
 - **Không thua**: hết 3 phút mà chưa đủ thì các dấu còn lại tự sáng lên, mèo dẫn tới rương như đã tìm đủ.
 - Dấu chân vẽ trong cửa sổ trong suốt riêng không chiếm focus; chỉ hình dấu chân (và rương) nhận click, chỗ trống click xuyên qua như M3/M4.

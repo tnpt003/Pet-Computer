@@ -99,6 +99,10 @@ internal static class TreasureTests
         check(hunt.AllFound && hunt.Last == 2, "...the chest comes near the last one lit");
 
         // Where the cat stands under a print: on its own ground.
+        check(TreasureRules.WalkLimit(100, 72) == TreasureRules.WalkSeconds && TreasureRules.WalkLimit(-800, 72) * 72 >= 800 + 72
+              && TreasureRules.WalkLimit(2 * TreasureRules.Spread, 72) * 72 > 2 * TreasureRules.Spread && TreasureRules.WalkLimit(800, 0) == TreasureRules.WalkSeconds
+              && TreasureRules.WalkLimit(double.NaN, 72) == TreasureRules.WalkSeconds,
+            "Walk time to a print: at least 10 s, enough for two prints 2 × Spread apart, safe on a zero speed");
         check(TreasureRules.Under(30, 0, 1600) == 46 && TreasureRules.Under(800, 600, 900) == 800 && TreasureRules.Under(1000, 600, 900) == 854, "Under a print, on the floor or the window edge it stands on");
 
         // The chest: on the ground near the last print, off the cat, off what is taken when it can be; the cat beside it.

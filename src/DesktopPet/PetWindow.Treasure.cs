@@ -31,7 +31,7 @@ public sealed partial class PetWindow
     private TreasureMapIcon? treasureIcon;
     private Area treasureArea;
     private double treasureWait = double.NaN, treasureFind = -1, treasureTime, treasureGround, treasureGroundLeft, treasureGroundRight,
-        treasureScale, treasureOrderCheck, treasureGoal, treasureChestX, treasureStand;
+        treasureScale, treasureOrderCheck, treasureGoal, treasureChestX, treasureStand, treasureWalkLimit = TreasureRules.WalkSeconds;
     private int treasureStory;
     private bool treasureSuspended, treasureChestClicked, treasurePawed;
     private string? treasureMonitor;
@@ -265,7 +265,7 @@ public sealed partial class PetWindow
                 return true;
             }
             case TreasureStep.Go: // Under the print just found, on its own ground.
-                if (Math.Abs(CatCenter - treasureGoal) > 6 && treasureTime < TreasureRules.WalkSeconds) { pet.ReactTilt = 0; WalkToward(treasureGoal - settings.Width / 2); return true; }
+                if (Math.Abs(CatCenter - treasureGoal) > 6 && treasureTime < treasureWalkLimit) { pet.ReactTilt = 0; WalkToward(treasureGoal - settings.Width / 2); return true; }
                 treasureStep = TreasureStep.Sniff; treasureTime = 0;
                 return true;
             case TreasureStep.Sniff: // Nose down, about a second.
@@ -278,7 +278,7 @@ public sealed partial class PetWindow
                 else { treasureStep = TreasureStep.Hunt; treasureTime = 0; }
                 return true;
             case TreasureStep.ToChest: // To stand beside the chest (never on it).
-                if (Math.Abs(CatCenter - treasureStand) > 6 && treasureTime < TreasureRules.WalkSeconds) { pet.ReactTilt = pet.ReactDip = 0; WalkToward(treasureStand - settings.Width / 2); return true; }
+                if (Math.Abs(CatCenter - treasureStand) > 6 && treasureTime < treasureWalkLimit) { pet.ReactTilt = pet.ReactDip = 0; WalkToward(treasureStand - settings.Width / 2); return true; }
                 HoldStill(PetAction.Sitting, treasureChestX < CatCenter ? -1 : 1);
                 treasureStep = TreasureStep.Chest; treasureTime = 0;
                 if (treasureArt != null) treasureArt.ChestClickable = true;
@@ -362,7 +362,11 @@ public sealed partial class PetWindow
         if (treasureArt != null) { treasureArt.ChestX = chest; treasureArt.ChestFloor = treasureGround; treasureArt.Puff = 0; treasureArt.Lid = 0; }
         PlayPetSound("sparkle");
         treasureStep = TreasureStep.ToChest; treasureTime = 0;
+        treasureWalkLimit = TreasureRules.WalkLimit(stand - CatCenter, TreasureWalkSpeed);
     }
+
+    // The cat's walking speed on the hunt (emotions are suspended, so only the move scale counts).
+    private double TreasureWalkSpeed => settings.WalkSpeed * pet.MoveScale;
 
     private void PawChest()
     {
@@ -390,6 +394,7 @@ public sealed partial class PetWindow
             treasureGoal = TreasureRules.Under(treasureHunt.Spots[print].X, treasureGroundLeft, treasureGroundRight);
             pet.ReactDip = 0;
             treasureStep = TreasureStep.Go; treasureTime = 0;
+            treasureWalkLimit = TreasureRules.WalkLimit(treasureGoal - CatCenter, TreasureWalkSpeed);
             treasureArt?.InvalidateVisual();
             return true;
         }

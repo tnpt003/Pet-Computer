@@ -9,7 +9,8 @@ Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm 
 - **Triệu chứng:** hàng "Đồ trang trí" trong Kho: hình hàng rào, đèn lồng, chong chóng… lệch khỏi giữa ô vuông.
 - **Nguyên nhân:** `DrawDecorIcon` căn giữa bằng kích thước nhập tay cho từng món (rộng, cao, tâm, đáy); các số này không khớp hình vẽ thật, ba món quà của mèo hàng xóm còn dùng số ước lượng.
 - **Sửa:** vẽ thử từng món vào `DrawingGroup` một lần, lấy khung bao thật (`Bounds`, có cả nét viền), rồi co và căn giữa theo khung đó (`PetFarmArt.Decor.cs`). Dùng chung cho Kho và Gian hàng.
-- **Kiểm chứng:** check mới trong `FarmChecks` (cả 9 món: tâm hình cách tâm ô < 0,6 DIP, cạnh dài bằng ô); xem ảnh render bảng Gian hàng.
+- **Commit:** `bf584be`, ZIP `artifacts/DesktopPet-1.5.1-bf584be-win-x64.zip`, smoke 3/3 PASS, đã mở lại mèo.
+- **Kiểm chứng:** Python 67 + i18n 5, C# 4957, WPF 3245 đạt; check mới trong `FarmChecks` (cả 9 món: tâm hình cách tâm ô < 0,6 DIP, cạnh dài bằng ô); xem ảnh render bảng Gian hàng.
 - [ ] Cần xem tay: hàng Đồ trang trí trong Kho ở DPI thật, cả món mờ (chưa có).
 
 ## #79 — Slime nhanh gồng xong bị slime phía trước chặn, không lao trúng mèo (13/11)

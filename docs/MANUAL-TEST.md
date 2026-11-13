@@ -1526,7 +1526,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Bật AI vài ngày: Mốc thân thiết, Món yêu thích; tắt Python thì không có hai phần này mà mèo vẫn chạy
 - [ ] Gọi mèo (menu khay), Dạy động tác đủ buổi rồi gọi từ "Động tác"
 - [ ] Úp cốc, Trốn tìm, Bắt đom đóm: bấm chuột thật, mèo ngủ thì không bắt đầu, click phải mèo kết thúc ván
-- [ ] Khách ghé thăm (chờ hẹn giờ thật), Săn kho báu (menu "Chơi cùng mèo" → "Săn kho báu" chơi ngay, không cần chờ bản đồ): mèo đi tới đúng dưới dấu chân, mẩu chuyện vào Nhật ký; tắt được trong Thói quen
+- [ ] Khách ghé thăm (chờ hẹn giờ thật), Săn kho báu (menu chuột phải "Chơi" hoặc menu khay "Chơi cùng mèo" → "Săn kho báu" chơi ngay, không cần chờ bản đồ): mèo đi tới đúng dưới dấu chân, mẩu chuyện vào Nhật ký; tắt được trong Thói quen
 
 **Người mới, menu, Battle (gộp 14/11)**
 - [ ] Mở app: màn mở đầu qua cổng, click bỏ qua; dữ liệu riêng mới tinh: phiếu Chào mừng rồi hướng dẫn 6 bước
@@ -1709,7 +1709,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 ## Mini-game M5 — Săn kho báu (12/11)
 - [ ] Để mèo chạy tự do (không Yên lặng, không Giờ tập trung, có chạm máy): khoảng 60–120 phút sau khi mở app mèo ngồi xuống ngậm cuộn giấy có dấu X, ngước nhìn ~2 giây, rồi trên đầu có biểu tượng bản đồ nhỏ. Tối đa 3 lần mỗi ngày. Muốn thử nhanh phải dùng UiChecks.
 - [ ] Biểu tượng bản đồ: nằm ngay trên đầu mèo, đi theo mèo, ẩn khi kéo mèo/toàn màn hình/trong trận; click vào là bắt đầu săn và không tính là click mèo (mèo không bị nhấc, không phản ứng). Để yên 10 phút thì mờ dần rồi mất. Pause thì 10 phút đứng lại.
-- [ ] Menu chuột phải và menu khay → "Chơi cùng mèo" → "Săn kho báu": chưa có bản đồ vẫn bấm được (từ 14/11), mèo ngồi ngậm bản đồ ~2 s rồi vào săn; có bản đồ thì bắt đầu ngay; đang chơi thì thành "Dừng Săn kho báu". Mini-game khác mờ khi đang săn.
+- [ ] Menu chuột phải → "Chơi" và menu khay → "Chơi cùng mèo" → "Săn kho báu": chưa có bản đồ vẫn bấm được (từ 14/11), mèo ngồi ngậm bản đồ ~2 s rồi vào săn; có bản đồ thì bắt đầu ngay; đang chơi thì thành "Dừng Săn kho báu". Mini-game khác mờ khi đang săn.
 - [ ] Ba dấu chân mờ (~20 %) quanh mèo, trong khoảng ±400 DIP ngang, tới 300 DIP trên sàn; không đè lên mèo, nông trại, xe hàng, đồ chơi, đồ góc sống. Đưa con trỏ lại gần thì sáng dần. Rõ trên nền sáng và tối. Chỗ trống click xuyên xuống cửa sổ dưới; không lấy focus của cửa sổ đang gõ; click chỗ trống không thoát ván.
 - [ ] Click trúng dấu: dấu sáng hẳn, nhãn "1/3"/"2/3"/"3/3" trên đầu mèo, mèo đi tới dưới dấu trên đúng sàn/mép đang đứng (không nhảy khỏi mép) và đánh hơi ~1 giây.
 - [ ] 20 giây không tìm thêm: mèo quay đầu về dấu gần nhất. 40 giây: mèo đi tới gần dấu đó, dấu sáng hơn một chút. Hết 3 phút: các dấu còn lại tự sáng, mèo dẫn tới rương (không thua).

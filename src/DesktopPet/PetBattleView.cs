@@ -19,6 +19,8 @@ public sealed partial class BattleFieldView : FrameworkElement
     private readonly BattleSim sim;
     // Screen X of the strip's left edge (DIPs).
     public double OriginX { get; set; }
+    // A Monster Book portrait: the slime alone, without the battle's rings (aura, spring, blast, a shield bubble).
+    public bool Portrait { get; init; }
     // The language of the few words drawn on the field ("BLOCK", "IMMUNE").
     // The UI language; data names still use English for every language but Vietnamese.
     public string Language { get; set; } = PetLanguage.English;
@@ -215,7 +217,7 @@ public sealed partial class BattleFieldView : FrameworkElement
             if (boss.BroodSpots is { } clutch) DrawCallSpots(dc, clutch, boss.Type.Brood is { Warning: > 0 } brood ? 1 - boss.BroodWarn / brood.Warning : 1, floor, time);
         }
         DrawBasket(dc, floor, time); // 1.5 M20
-        DrawLinksBehind(dc, floor, time);
+        if (!Portrait) DrawLinksBehind(dc, floor, time);
         DrawBossRopes(dc, floor, time);
         for (int layer = 0; layer <= 3; layer++)
             for (int i = 0; i < sim.Slimes.Count; i++)
@@ -554,8 +556,11 @@ public sealed partial class BattleFieldView : FrameworkElement
             dc.DrawEllipse(null, Halo, new Point(x, floor - 1), w / 2 + 9, 7);
             dc.DrawEllipse(null, WallRing, new Point(x, floor - 1), w / 2 + 9, 7);
         }
-        DrawSpringRing(dc, slime, x, floor);
-        DrawBlastRing(dc, slime, x, floor);
+        if (!Portrait)
+        {
+            DrawSpringRing(dc, slime, x, floor);
+            DrawBlastRing(dc, slime, x, floor);
+        }
         if (slime.Type.Slam && slime.State == SlimeState.Windup && !slime.Rolling)
         {
             // The slam's reach on the floor, filling up as it comes: get out (or push, shield, lift).
@@ -729,7 +734,7 @@ public sealed partial class BattleFieldView : FrameworkElement
         dc.Pop();
         unturned = PushUnturned(dc, slime, x, floor, h);
         DrawBubbleShell(dc, slime, x, floor, w, h, time);
-        if (slime.Shielded && slime.State != SlimeState.Defeated)
+        if (slime.Shielded && slime.State != SlimeState.Defeated && !Portrait)
         {
             // The shield phase: a gently pulsing bubble around the boss and a shine on it.
             double pulse = 1 + 0.03 * Math.Sin(time * 4);

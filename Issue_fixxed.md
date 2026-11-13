@@ -5,6 +5,25 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #78 — Sổ tay quái: ảnh có hiệu ứng trận, trùm lệch, click nhảy cuộn; nút ‹ › chương quá to (13/11)
+- **Triệu chứng:** nút ‹ › cạnh tên chương rộng gấp đôi. Trong Sổ tay quái, ảnh Slime cờ hiệu có vòng khiên vàng, ảnh Slime lò xo và Slime bom (cả trong ảnh đội hình) có vệt ngang. Bốn trùm (Slime Nén, Slime Mẹ, Slime biến dị, Vua Slime) không nằm giữa. Click một quái thì danh sách cuộn về đầu. Ngoài ra, người dùng muốn câu hướng dẫn Slime nhạc trưởng dùng "đánh hụt" thay cho "loạn nhịp".
+- **Nguyên nhân:** `HudButton` có `MinWidth = 70`, giá trị này thắng `Width = 32` của nút mũi tên. Ảnh chân dung được vẽ bằng nguyên khúc sân đấu nên kéo theo vòng aura, vòng lò xo, vòng nổ và bong bóng khiên (cờ hiệu bất tử khi chưa cắm cờ). Khung cắt ước lượng theo `SlimeWidth × scale` và bị chặn ở 150 DIP, nên trùm bị lệch hoặc thừa khoảng trống. Click gọi `FillMonsterBook()`, hàm này dựng lại cả `ScrollViewer`.
+- **Sửa:**
+  - Nút mũi tên đặt `MinWidth = 0` (`PetWindow.Adventure.cs`).
+  - `BattleFieldView.Portrait` bỏ vòng aura, lò xo, nổ và bong bóng khiên khi vẽ chân dung; trận thật không đổi (`PetBattleView.cs`).
+  - Chân dung được vẽ trên khúc sân rộng hơn (300 DIP cho trùm), rồi cắt sát theo vùng có hình (`PortraitBounds`).
+  - Chọn trang chỉ thay thẻ chi tiết và viền ô (`PetWindow.MonsterBook.cs`).
+  - Câu hướng dẫn nhạc trưởng: "mất máu và đánh hụt một lúc" (vi/en/ja).
+- **Commit:** (điền sau publish).
+- **Kiểm chứng:** script đầy đủ một lần: Python 67 + i18n 5, C# 4940, WPF 3200 đều đạt. Check mới:
+  - nút ‹ › rộng 32 DIP;
+  - chọn trang giữ vị trí cuộn (120 → 120);
+  - chân dung cờ hiệu, lò xo, bom (thường và tinh anh) không còn vòng (cờ hiệu 79 → 65 DIP);
+  - tâm hình bốn trùm 0,50–0,52.
+
+  Đã xem ảnh render của các chân dung và trang đội hình.
+- **Cần xem tay:** Sổ tay quái trong app thật: cuộn xuống rồi click quái, danh sách không nhảy; xem ảnh cờ hiệu, lò xo, bom, đội hình Kỵ binh và bốn trùm; nút ‹ › trên bản đồ chương.
+
 ## #77 — Nhãn trên biển nông trại bị cắt chữ khi bay lên gần cuối (12/11)
 - **Triệu chứng:** nhãn của vùng đang gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển nông trại, bay lên rồi bị cắt mất phần trên gần cuối.
 - **Nguyên nhân:** nhãn trên biển bắt đầu cách mép trên cửa sổ biển 8 DIP rồi bay lên 18 DIP, nên khoảng 10 DIP cuối vượt ra ngoài cửa sổ. Nhãn ruộng đặt theo ngọn cây cũng chỉ chặn ở 0, nên cây cao sát mép có thể bị y như vậy.

@@ -109,6 +109,11 @@ internal static class ChapterArtChecks
                 $"Chapter 2's map has the Download Dump banner ({window.AdventureMapScene})");
             check(window.AdventureShowChapter(-1) && window.AdventureMapScene == PetSceneKind.Adventure && window.AdventureShowChapter(1) && window.AdventureMapScene == PetSceneKind.Dump,
                 "Turning the chapters with ‹ › turns the banner too");
+            // 2026-11-13 (user's screenshot): the arrows are small square buttons, not 70 DIPs wide.
+            Find("Pet adventure")?.UpdateLayout();
+            var arrows = new[] { "mapPrevChapter", "mapNextChapter" }.Select(n => Field<System.Windows.Controls.Border>(window, n)).ToList();
+            check(arrows.All(a => a.ActualWidth is > 20 and <= 34),
+                $"The chapter arrows are small ({string.Join(", ", arrows.Select(a => a.ActualWidth.ToString("F0")))} DIPs wide)");
             Call(window, "CloseAdventureMap");
             check(window.OpenBattleHub() == null, "(setup) the hub opens");
             for (double t = 0; t < 0.3; t += 1.0 / 60) Call(window, "TickBattleHub", 1.0 / 60);

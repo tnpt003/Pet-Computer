@@ -177,6 +177,15 @@ internal static class BagChecks
             }
             else check(false, "Monster Book tiles reach the right edge (no hub window)");
             check(!window.SelectBookPage("rock") && window.BattleBookSelected == "slime", "A page not met cannot be opened");
+            // 2026-11-13: a click on a tile keeps the list where it was scrolled to.
+            var bookScroll = (ScrollViewer)FieldOf("bookScroll").GetValue(window)!;
+            bookScroll.ScrollToVerticalOffset(120);
+            bookScroll.UpdateLayout();
+            double scrolled = window.BattleBookScroll;
+            bool picked = window.SelectBookPage("spitter");
+            Find("Pet battle hub")?.UpdateLayout();
+            check(picked && scrolled > 0 && Math.Abs(window.BattleBookScroll - scrolled) < 0.5 && window.BattleBookText.Contains(data.Enemy("spitter").TipEn!),
+                $"Choosing a page keeps the book's scroll ({scrolled:F0} → {window.BattleBookScroll:F0})");
             check(window.SelectBookPage(MonsterBook.FormationPage("fortress")) && window.BattleBookText.Contains("Members: ") && window.BattleBookText.Contains(data.Formation("fortress")!.TipEn!),
                 "A formation's page: its members and its tip");
             Shot("Pet battle hub", "battle-book-formation-en.png");
@@ -191,6 +200,40 @@ internal static class BagChecks
                 encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(flyerPortrait));
                 using var file = File.Create(Path.Combine(portraitFolder, "book-flyer.png")); encoder.Save(file);
             }
+            // 2026-11-13 (user's screenshots): portraits carry no battle rings (flag aura, spring and blast
+            // rings) and are cut round what is drawn, so bosses sit in the middle.
+            System.Windows.Media.Imaging.BitmapSource Portrait(string id, bool elite = false)
+            {
+                var p = (System.Windows.Media.Imaging.BitmapSource)Call(window, "BookPortrait", data.Enemy(id), elite)!;
+                if (Environment.GetEnvironmentVariable("PET_RENDER_REVIEW") is string folder)
+                {
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+                    encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(p));
+                    using var file = File.Create(Path.Combine(folder, $"book-{id}{(elite ? "-elite" : "")}.png")); encoder.Save(file);
+                }
+                return p;
+            }
+            // Where its ink sits across the picture (0 left, 1 right).
+            static double Middle(System.Windows.Media.Imaging.BitmapSource p)
+            {
+                int w = p.PixelWidth, stride = w * 4; var px = new byte[stride * p.PixelHeight];
+                p.CopyPixels(px, stride, 0);
+                double sum = 0, mass = 0;
+                for (int i = 3; i < px.Length; i += 4) { sum += px[i] * ((i / 4) % w); mass += px[i]; }
+                return mass == 0 ? 0 : sum / mass / Math.Max(1, w - 1);
+            }
+            foreach (var id in new[] { "flagbearer", "springer", "bomber" })
+                foreach (bool elite in new[] { false, true })
+                {
+                    var shot = Portrait(id, elite);
+                    check(shot.PixelWidth / 2.0 < (id == "flagbearer" ? 72 : 120), $"The {id}{(elite ? " elite" : "")} portrait has no floor ring round it ({shot.PixelWidth / 2.0:F0} DIPs wide)");
+                }
+            foreach (var boss in data.EnemyTypes.Where(e => e.Boss && e.TipVi != null))
+            {
+                double middle = Middle(Portrait(boss.Id));
+                check(Math.Abs(middle - 0.5) < 0.12, $"The {boss.Id} portrait is centred ({middle:F2})");
+            }
+            foreach (var kind in data.EnemyTypes.Where(e => !e.Boss && e.TipVi != null)) Portrait(kind.Id);
             window.ShowMonsterBook(false);
             // Counted once per battle; custom battle data counts nothing.
             var met = new BattleSim(data, 0, 1000, seed: 1);

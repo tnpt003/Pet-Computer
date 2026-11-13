@@ -199,6 +199,7 @@ public sealed partial class PetWindow
         prevText.Text = "‹"; nextText.Text = "›";
         foreach (var arrow in new[] { prev, next })
         {
+            arrow.MinWidth = 0; // HudButton's own 70 would win over the width.
             arrow.Width = 32; arrow.Height = 32;
             arrow.Padding = new Thickness(0);
             arrow.VerticalAlignment = VerticalAlignment.Center;

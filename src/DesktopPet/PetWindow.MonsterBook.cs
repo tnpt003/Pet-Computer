@@ -27,6 +27,9 @@ public sealed partial class PetWindow
     private Border? hubBookButton, hubRewardsButton;
     private TextBlock? hubBookText;
     private Border? bookDetail;
+    private ScrollViewer? bookScroll;
+    private readonly Dictionary<string, Border> bookTiles = new();
+    public double BattleBookScroll => bookScroll?.VerticalOffset ?? 0;
     private HashSet<string> bookFresh = new();
     private static readonly Dictionary<(string Kind, bool Elite), ImageSource> BookPortraits = new();
     private static readonly Brush BookShape = PetUi.Frozen(Color.FromArgb(0xD0, 0x10, 0x10, 0x1C));
@@ -111,8 +114,20 @@ public sealed partial class PetWindow
     {
         if (!hubBookShown || !BookOpen(page)) return false;
         bookSelected = page;
-        FillMonsterBook();
+        // Only the page above and the tiles' rims change: rebuilding the list would scroll it back to the top.
+        if (hubBook == null || bookDetail == null || bookTiles.Count == 0) { FillMonsterBook(); return true; }
+        int at = hubBook.Children.IndexOf(bookDetail);
+        hubBook.Children.RemoveAt(at);
+        bookDetail = BagCard(BookDetail());
+        hubBook.Children.Insert(at, bookDetail);
+        foreach (var (key, tile) in bookTiles) MarkBookTile(tile, key == page);
         return true;
+    }
+
+    private static void MarkBookTile(Border tile, bool chosen)
+    {
+        tile.BorderBrush = chosen ? PetUi.Game.Gold : PetUi.Game.CardRim;
+        tile.BorderThickness = new Thickness(chosen ? 2 : 1.2);
     }
 
     private void RefreshMonsterBook()
@@ -125,6 +140,7 @@ public sealed partial class PetWindow
         if (hubBook == null) return;
         hubBookLanguage = preferences.Language;
         hubBook.Children.Clear();
+        bookTiles.Clear();
         bookDetail = BagCard(BookDetail());
         hubBook.Children.Add(bookDetail);
 
@@ -140,14 +156,14 @@ public sealed partial class PetWindow
             // Even columns across the whole width (fixed tiles in a WrapPanel left an empty strip on the
             // right); the last column's gap is pulled back so its tiles reach the edge.
             var tiles = new System.Windows.Controls.Primitives.UniformGrid { Columns = BookColumns, Margin = new Thickness(0, 0, -BookTileGap, 0) };
-            foreach (var page in pages) tiles.Children.Add(BookTile(page));
+            foreach (var page in pages) tiles.Children.Add(bookTiles[page] = BookTile(page));
             sections.Children.Add(titled);
             sections.Children.Add(tiles);
         }
         Section(L("Slime", "Slimes"), PetMotif.Mushroom, BookKinds(false).Select(e => e.Id).ToList());
         Section(L("Trùm", "Bosses"), PetMotif.Crown, BookKinds(true).Select(e => e.Id).ToList());
         Section(L("Đội hình phối hợp", "Formations"), PetMotif.Flag, BattleTuning.FormationList.Select(f => MonsterBook.FormationPage(f.Id)).ToList());
-        var scroll = new ScrollViewer { Content = sections, MaxHeight = 300, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 10, 0, 0), Focusable = false };
+        var scroll = bookScroll = new ScrollViewer { Content = sections, MaxHeight = 300, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Margin = new Thickness(0, 10, 0, 0), Focusable = false };
         hubBook.Children.Add(scroll);
     }
 
@@ -247,8 +263,7 @@ public sealed partial class PetWindow
     private ImageSource BookPortrait(EnemyType type, bool elite)
     {
         if (BookPortraits.TryGetValue((type.Id, elite), out var cached)) return cached;
-        const int W = 150, Top = 40;
-        int h = (int)BattleFieldView.FieldHeight;
+        int W = type.Boss ? 300 : 150, h = (int)BattleFieldView.FieldHeight;
         var sim = new BattleSim(BattleTuning, 0, W, new Random(1));
         var slime = sim.AddSlime(W / 2.0, type);
         slime.Set(SlimeState.Moving);
@@ -256,7 +271,7 @@ public sealed partial class PetWindow
         slime.Facing = -1;
         slime.Altitude = 0; // A flyer on the ground, where the strip draws it.
         if (elite) slime.Elite = type.Elite;
-        var view = new BattleFieldView(sim) { OriginX = 0, Language = preferences.Language };
+        var view = new BattleFieldView(sim) { OriginX = 0, Language = preferences.Language, Portrait = true };
         view.Measure(new Size(W, h));
         view.Arrange(new Rect(0, 0, W, h));
         var bitmap = new RenderTargetBitmap(W * 2, h * 2, 192, 192, PixelFormats.Pbgra32);
@@ -267,12 +282,34 @@ public sealed partial class PetWindow
             bitmap.Render(picture);
         }
         else bitmap.Render(view);
-        // Cut close around it by its size (room over its head for an elite's word), plain and elite alike.
-        double scale = type.Scale;
-        int cw = (int)Math.Clamp(BattleTuning.SlimeWidth * scale * 1.6 + 24, 56, W), ch = (int)Math.Clamp(BattleTuning.SlimeHeight * scale * 1.8 + 34, 48, h - Top);
-        var cropped = new CroppedBitmap(bitmap, new Int32Rect((W - cw), (h - ch) * 2, cw * 2, ch * 2));
+        // Cut close around what was drawn (a boss's odd shape, a small chest, an elite's word over its head),
+        // so the picture's middle is the slime's: the tile and the page centre it.
+        var cropped = new CroppedBitmap(bitmap, PortraitBounds(bitmap));
         cropped.Freeze();
         BookPortraits[(type.Id, elite)] = cropped;
         return cropped;
+    }
+
+    // The drawn part of a portrait (pixels with some alpha), with a little room round it.
+    internal static Int32Rect PortraitBounds(BitmapSource bitmap)
+    {
+        int w = bitmap.PixelWidth, h = bitmap.PixelHeight, stride = w * 4;
+        var pixels = new byte[stride * h];
+        bitmap.CopyPixels(pixels, stride, 0);
+        int left = w, right = -1, top = h, bottom = -1;
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                if (pixels[y * stride + x * 4 + 3] > 24)
+                {
+                    if (x < left) left = x;
+                    if (x > right) right = x;
+                    if (y < top) top = y;
+                    if (y > bottom) bottom = y;
+                }
+        if (right < 0) return new Int32Rect(0, 0, w, h);
+        const int Pad = 6;
+        left = Math.Max(0, left - Pad); top = Math.Max(0, top - Pad);
+        right = Math.Min(w - 1, right + Pad); bottom = Math.Min(h - 1, bottom + Pad);
+        return new Int32Rect(left, top, right - left + 1, bottom - top + 1);
     }
 }

@@ -13,7 +13,8 @@ Bản này tập trung vào cuộc sống của mèo ngoài trận: nông trại
   - **Bếp, Hồ, Chuồng gà:** nấu món cho mèo ăn, câu cá, nuôi gà lấy trứng.
   - **Xe hàng và mèo hàng xóm:** xe hàng ghé mua nông sản và bán đồ trang trí; mèo hàng xóm ghé xin đồ và tặng quà.
   - **Công cụ và phân bón:** nâng cấp cuốc và bình tưới để mèo làm được nhiều ô hơn mỗi chuyến.
-  - **Biển nông trại:** gập gọn từng vùng đất cho đỡ chiếm chỗ; đồng hồ cây vẫn chạy, mèo đi làm thì vùng tự hiện.
+  - **Biển nông trại:** gập gọn từng vùng đất cho đỡ chiếm chỗ; đồng hồ cây vẫn chạy, mèo đi làm thì vùng tự hiện. Menu chuột phải của biển chỉ có Mở tất cả vùng đất, Gập tất cả vùng đất, Di chuyển biển; việc của từng vùng nằm ở menu của chính vùng đó.
+  - **Lên cấp và thành tựu:** lên cấp nông trại có thẻ riêng (cấp, xu, thứ vừa mở khóa) và tiếng chuông ba nốt; thành tựu nông trại có thẻ nhỏ. Gặt hàng vàng có vòng sáng và sao; cây lay nhẹ khi có cơn gió.
 - **Mèo làm vườn cùng bạn:** mèo tự tưới, gặt, gieo lại, nấu ăn, câu cá và đuổi chim, bật/tắt trong Cài đặt → Thói quen. Mèo không làm khi đang ngủ, bị bế hay ở chế độ Yên lặng.
 - **Thời tiết giúp ruộng:** mưa tự tưới, nắng làm cây lớn nhanh hơn một chút.
 - **Giờ tập trung:** phiên 25 hoặc 50 phút ở menu chuột phải; mèo giữ yên lặng, hết giờ có chuông rồi nghỉ. Mỗi phiên hoàn thành cho hạt Hoa tập trung.
@@ -33,7 +34,7 @@ Bản này tập trung vào cuộc sống của mèo ngoài trận: nông trại
   - Chương 2: màn 3 thành màn bảo vệ giỏ cá (giỏ có máu, slime kéo tới đánh giỏ, đánh con nào thì con đó quay sang mèo). Các trận Kho cá ở Viễn chinh tuyến 2 cũng vậy. Mỗi màn bắt buộc mang các kỹ năng "Gợi ý mang", lời khuyên chỉ nhắc kỹ năng đang mang. Màn 1 có thêm Slime dỗi, màn 4 có Slime hẹn giờ.
   - Slime nhanh lao và boss lăn đi xuyên qua slime đồng minh (khó hơn một chút).
   - Vô tận và Viễn chinh báo "Quái mới" khi gặp loại chưa có trong Sổ tay quái. Sổ tay quái có ảnh gọn hơn, nút chương ‹ › rõ hơn.
-- Sửa lỗi: mèo chỉ giật mình vì con trỏ khi đang rảnh; nhãn nông trại không bị cắt khi bay lên; các cốc đều bấm được; trốn tìm không còn sót bụi cây; cần câu không bị cắt; giỏ có dòng "Cất giỏ".
+- Sửa lỗi: mèo chỉ giật mình vì con trỏ khi đang rảnh; nhãn nông trại không bị cắt khi bay lên; các cốc đều bấm được; trốn tìm không còn sót bụi cây; cần câu không bị cắt; giỏ có dòng "Cất giỏ"; xe hàng kéo được sang màn hình khác.
 - Điểm còn biết khi phát hành: giá, thời gian và XP nông trại là ước tính, chưa qua chơi thử dài. Chưa nghiệm thu đầy đủ DPI khác và nhiều màn hình. Câu tiếng Nhật mới chưa có người bản ngữ duyệt.
 
 ### English
@@ -47,7 +48,8 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - **Hearth, Pond and Coop:** cook for your pet, go fishing, keep hens for eggs.
   - **Stall and neighbor cat:** a cart comes to buy produce and sell decorations; a neighbor cat drops by to ask for things and leaves gifts.
   - **Tools and fertilizer:** better hoes and watering cans let the pet work more tiles per trip.
-  - **Farm sign:** fold lands away to save space; crops keep growing, and a land appears when the pet goes to work on it.
+  - **Farm sign:** fold lands away to save space; crops keep growing, and a land appears when the pet goes to work on it. The sign's right-click menu only has Open all land, Fold all land and Move the sign; each land's own tasks are in that land's menu.
+  - **Level ups and achievements:** a farm level up shows its own card (level, coins, what just unlocked) with a three-note chime; farm achievements get a small card. Golden harvests burst with a glow and stars, and crops sway when a gust of wind passes.
 - **Your pet helps out:** it waters, harvests, sows again, cooks, fishes and chases birds; switch these in Settings → Habits. It does nothing while asleep, held or in Quiet mode.
 - **Weather helps the field:** rain waters it, and sunshine makes crops grow a little faster.
 - **Focus time:** 25 or 50 minute sessions from the right-click menu; the pet keeps quiet, a bell rings at the end, then a break. Every finished session gives Focus bloom seeds.
@@ -67,7 +69,7 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - Chapter 2: stage 3 is now a fish basket defense (the basket has health, slimes come to hit it, and whichever one the pet hits turns on the pet). The Fish store fights on Expedition route 2 work the same way. Every stage requires its "Suggested" skills, and the advice only names skills the pet carries. Stage 1 adds the sulky slime, stage 4 the timer slime.
   - Quick slimes' dash and the boss roll pass through allied slimes (a little harder).
   - Infinity and the Expedition announce a "New foe" the first time you meet one not yet in the Monster Book. The Monster Book has tidier portraits and clearer ‹ › chapter buttons.
-- Fixes: the cursor only startles the pet while it is free; farm labels are no longer cut off as they rise; every cup can be clicked; hide-and-seek no longer leaves a bush behind; the feather wand is no longer clipped; the basket menu has "Put the basket away".
+- Fixes: the cursor only startles the pet while it is free; farm labels are no longer cut off as they rise; every cup can be clicked; hide-and-seek no longer leaves a bush behind; the feather wand is no longer clipped; the basket menu has "Put the basket away"; the cart can be dragged to another monitor.
 - Known at release: farm prices, times and XP are estimates, not yet tested over long play. Other DPI settings and multiple monitors have not been fully checked. New Japanese text has not been reviewed by a native speaker.
 
 ### 日本語
@@ -81,7 +83,8 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - **かまど、池、鶏小屋:** ペットに料理を作る、魚を釣る、鶏を飼って卵をとる。
   - **屋台とご近所の猫:** 屋台が作物を買い取り、飾りを売りに来ます。ご近所の猫はおねだりに来て、お礼を置いていきます。
   - **道具と肥料:** くわとじょうろを強化すると、ペットが一度に世話できるマスが増えます。
-  - **農場の看板:** 土地を折りたたんで場所を空けられます。作物は育ち続け、ペットが作業に行くと土地が現れます。
+  - **農場の看板:** 土地を折りたたんで場所を空けられます。作物は育ち続け、ペットが作業に行くと土地が現れます。看板の右クリックメニューは「土地をすべて開く」「土地をすべてたたむ」「看板を動かす」だけになり、土地ごとの作業はその土地のメニューにあります。
+  - **レベルアップと実績:** 農場のレベルアップでは専用のカード(レベル、コイン、新しく解放されたもの)と3音のチャイムが出ます。農場の実績には小さなカードが出ます。金色の作物を収穫すると光の輪と星が広がり、風が吹くと作物がそよぎます。
 - **ペットもお手伝い:** 水やり、収穫、種まき直し、料理、釣り、鳥追いをします。設定 → 習慣で切り替えられます。寝ているとき、持ち上げられているとき、静かモードのときは何もしません。
 - **天気が畑を助けます:** 雨は水やりになり、晴れると作物が少し早く育ちます。
 - **集中タイム:** 右クリックメニューから25分または50分。ペットは静かにして、終わるとベルが鳴り、休憩に入ります。セッションを終えるたびに集中の花の種がもらえます。
@@ -101,7 +104,7 @@ This release is about the pet's life outside battle: a farm, toys, a living corn
   - 第2章: ステージ3は魚かごを守るステージになりました(かごに体力があり、スライムがかごを攻撃しに来ます。ペットが攻撃したスライムはペットに向かってきます)。遠征ルート2の魚倉庫の戦いも同じです。各ステージでは「おすすめ」のスキルを必ず持っていきます。アドバイスは持っているスキルだけを挙げます。ステージ1にすねスライム、ステージ4にタイマースライムが加わりました。
   - すばやいスライムの突進とボスの転がりは、味方のスライムをすり抜けます(少し難しくなりました)。
   - 無限モードと遠征では、モンスター図鑑にまだない敵に初めて会うと「新しい敵」と表示します。モンスター図鑑の絵が見やすくなり、章の ‹ › ボタンがはっきりしました。
-- 修正: カーソルで驚くのはペットが手すきのときだけ。農場のラベルが上がるときに切れなくなりました。どのカップもクリックできます。かくれんぼで茂みが残らなくなりました。ねこじゃらしの羽根が途中で切れなくなりました。かごのメニューに「かごを片づける」があります。
+- 修正: カーソルで驚くのはペットが手すきのときだけ。農場のラベルが上がるときに切れなくなりました。どのカップもクリックできます。かくれんぼで茂みが残らなくなりました。ねこじゃらしの羽根が途中で切れなくなりました。かごのメニューに「かごを片づける」があります。屋台を別のモニターへ引っぱって移せるようになりました。
 - リリース時点の注意: 農場の価格、時間、経験値は見積もりで、長時間のプレイでは未確認です。他の DPI 設定や複数モニターの確認は完了していません。新しい日本語の文はネイティブの確認がまだです。
 
 ## 1.5.0 — Slime phản công (2026-11-07)

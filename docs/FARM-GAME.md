@@ -135,7 +135,7 @@ Giá 2.700 xu cho đủ 6 món sau 5 ngày ở mức 3 giờ/ngày, nhanh hơn m
 - Nhật ký có thẻ Nông trại khi nông trại đang bật, cả lúc tắt Python: cấp và XP, tổng đã gặt, số loại cây, số ô, đồ trang trí, xu, cá trong kho, tiến độ 5 thành tích. Nhật ký đang mở thì thẻ tự cập nhật.
 - 5 thành tích, không thưởng đồ: Mùa vàng (gặt tổng 100), Vườn đủ vị (gặt đủ 5 loại), Đủ sáu ô, Góc vườn xinh (đủ 6 đồ trang trí), Chủ nông trại (cấp 10). Hiện ở trang Phần thưởng cùng 20 thành tích trận và trong thẻ Nhật ký.
 - Tiến độ đọc thẳng từ `farm.json`, không cộng dồn, vẫn phiên bản 4. Số cá từng câu, số lần giao xe, số món đã nấu không được lưu nên không làm thành tích.
-- Lần đếm đầu sau khi nạp ruộng là im lặng: không nhãn, không tính "mới" ở trang Phần thưởng. Đạt khi đang chơi thì hiện nhãn "★ Thành tựu: …" 3 giây, chờ nhãn đang hiện xong rồi mới tới lượt; không có tiếng mới. Thành tích đã lưu ở `achievements.json` như thành tích trận.
+- Lần đếm đầu sau khi nạp ruộng là im lặng: không nhãn, không tính "mới" ở trang Phần thưởng. Đạt khi đang chơi thì hiện thẻ "★ Thành tựu: …" (từ 14/11, xem "Báo lên cấp"; trước đó là nhãn 3 giây), chờ nhãn đang hiện xong rồi mới tới lượt; không có tiếng mới. Thành tích đã lưu ở `achievements.json` như thành tích trận.
 - Lên cấp, câu được Cá vàng, giao xe có câu thoại do Python chọn (vi/en/ja, theo tính cách). Thứ tự khi trùng: Cá vàng, lên cấp, giao xe. Theo luật nói hiện có: không đánh thức mèo, không nói khi toàn màn hình hoặc tắt nói chuyện, quá 12 giây thì bỏ. Tắt Python thì chỉ còn các nhãn như cũ.
 
 ## Giai đoạn 4: làm giàu nông trại (duyệt 09/11)
@@ -206,6 +206,8 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 
 ### Góp ý 13/11 (duyệt 13/11)
 
+- Cây lay theo gió (bổ sung 14/11): cơn gió nhỏ 30–90 giây một lần nay có cả khi chưa có chong chóng; trong 1,6 giây đó cây trên ruộng nghiêng tối đa 7° quanh gốc, lắc ba nhịp rồi đứng yên, lần lượt từ trái sang; hạt mới gieo không lay, mầm lay ít hơn. Ruộng chỉ vẽ lại trong lúc có gió (tối đa 30 lần/giây), ruộng đang gập không vẽ. Pause đứng yên. Không đổi gì trong game.
+- Thu hoạch hàng vàng (bổ sung 14/11): thay chùm sao thường bằng vòng sáng vàng và 10 ngôi sao trên hai vòng (vòng ngoài to hơn), xoay nhẹ, 0,55 giây; gặt tay, "Gặt tất cả" và mèo gặt đều có. Chỉ phần hình.
 - Chong chóng (quà mèo hàng xóm) quay khi có gió: trời Phấn hoa hoặc Hoàng hôn thì quay đều; ở mọi thời tiết, cứ 30–90 giây có một cơn gió nhỏ (ba vệt gió lướt qua chỗ chong chóng, 1,6 giây) làm nó quay nhanh rồi chậm dần và dừng. Lúc đứng yên không vẽ lại; khi quay vẽ lại tối đa 30 lần/giây. Pause đứng yên. Không đổi gì trong game.
 - Ao cá: cứ 40–90 giây một con cá nhỏ nhảy lên khỏi mặt nước thành vòng cung rồi rơi xuống, có gợn nước chỗ nhảy và chỗ rơi, khoảng 1,1 giây. Không nhảy khi mèo đang câu hoặc ao đang nhấc; Pause đứng yên. Không có tiếng, không cho cá.
 - Mèo tự thu trứng: lượt mèo ghé chuồng (mỗi 10–15 phút, Luật Mốc 3) mà trong tổ có trứng thì mèo đi tới tổ, cúi nhặt (1,4 giây), toàn bộ trứng vào kho với XP như khi bạn tự thu, nhãn "+n trứng", tiếng "pop" theo khoảng cách tiếng việc vườn; lượt đó không vồ gà. Tổ trống thì vồ gà như cũ. Bạn thu tay trong lúc mèo đang đi thì mèo thôi. Chịu mọi khóa của việc làm vườn (ngủ, Quiet, Pause, nhấc đất, khác màn hình, công tắc "Mèo làm vườn cùng"). Menu "Thu trứng" giữ nguyên.
@@ -236,6 +238,7 @@ Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức 
 - Thẻ riêng trên ruộng, nền tối viền Game.Gold, bo CardRadius: dòng đầu "★ Nông trại lên cấp N! +X xu" (Heading, vàng), dòng hai "Mở khóa: …" (cây, cá, món, bù nhìn vàng, chuồng gà mở ở cấp đó; lên nhiều cấp một lúc thì gộp), cấp 10 không mở gì thì "Đã đạt cấp cao nhất". Nhãn thu hoạch của lần gặt đó vẫn hiện riêng.
 - Phình vào 0,3 giây (vượt nhẹ rồi về), đứng 4,5 giây tính cả 0,6 giây mờ dần. Không nhận click, không chạm mèo.
 - Trong lúc thẻ hiện, nhãn thời tiết, quà mèo hàng xóm và thành tựu chờ (tối đa 4 nhãn chờ), thẻ tắt rồi mới lần lượt hiện; không còn đè lên nhau. Nhãn thu hoạch không chờ.
+- Thành tựu nông trại (bổ sung 14/11, thay nhãn "★ Thành tựu: …" ở Luật D): dùng cùng thẻ, một dòng cỡ Title, viền Mint, 3,5 giây, không có tiếng; vẫn chờ nhãn thu hoạch và thẻ lên cấp xong mới hiện.
 - Tiếng "chime" (ba nốt chuông đi lên, tổng hợp như "sparkle") 0,8 giây sau khi lên cấp, theo mute/volume/cooldown chung, Pause hay toàn màn hình thì im.
 - Ruộng đang gập: thẻ hiện trên biển nông trại, và bảng Ruộng trên biển có ngôi sao vàng ở góc trái trên cho đến khi ruộng hiện ra lại (tự mở hay mèo mượn đều tính). Ngôi sao không lưu qua lần tắt app.
 

@@ -209,11 +209,11 @@ public sealed partial class PetWindow
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
             ((TranslateTransform)farmGain.RenderTransform).Y = -FarmGainRise * k;
         }
-        // A weather or gift label, then an achievement, waits for the label on show and for the level card.
+        // A weather or gift label, then an achievement's card, waits for the label on show and for the card.
         else if (farmGain != null && !FarmLevelCardShowing && farmNotices.TryDequeue(out var notice))
             ShowFarmLabel(PetFarm.TileCount / 2, notice, FarmLevelUpSeconds);
         else if (farmGain != null && !FarmLevelCardShowing && farmAchievementLabels.TryDequeue(out var achievement))
-            ShowFarmLabel(PetFarm.TileCount / 2, L("★ Thành tựu: ", "★ Achievement: ") + achievement.Name(preferences.Language), FarmLevelUpSeconds);
+            ShowFarmAchievement(achievement);
         StepFarmLevelCard(dt);
     }
 
@@ -651,7 +651,7 @@ public sealed partial class PetWindow
             case FarmStep.Harvest:
                 if (FarmHarvest(tile, out bool extra) is FarmCrop crop)
                 {
-                    StartFarmEffect(tile, FarmEffect.Harvest);
+                    StartFarmEffect(tile, farm.LastHarvestGold ? FarmEffect.Golden : FarmEffect.Harvest);
                     PlayFarmSound("sparkle");
                     ShowFarmGain(tile, crop, extra);
                 }

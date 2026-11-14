@@ -551,23 +551,31 @@ internal static class FarmChecks
         window.FarmClick(0);
         check(book.Has("farm_harvest_100") && !Label().Contains("Achievement") && Diary().Contains("✓ Golden harvest · Done") && Diary().Contains("Achievements · 2/5"),
             $"The hundredth harvest earns it, the open diary follows, and the harvest's own label stays ({Label()})");
+        check(!window.FarmLevelCardShowing, "The achievement's card waits for the harvest's label");
         tick(FarmHarvestLabelSeconds);
-        check(Label().Contains("Achievement: Golden harvest"), $"...then the achievement has its label ({Label()})");
+        var trophyCard = FarmDockChecks.LevelCard(window, "farmLevelField");
+        string trophyText = FarmDockChecks.LevelCardText(window, "farmLevelField");
+        check(window.FarmLevelCardShowing && trophyText == "★ Achievement: Golden harvest" && trophyCard.BorderBrush == PetUi.Mint,
+            $"...then the achievement has its own card, mint-rimmed, one line ({trophyText})");
         check(window.BattleRewardsNew == newBefore + 1, "...and is New on the Rewards page");
+        tick(0.5);
+        Render(Field<Window?>(window, "farmWindow")!, "farm-achievement-card.png");
         Render(Field<Window?>(window, "diaryWindow")!, "diary-farm-card.png");
-        var label = Field<Border?>(window, "farmGain")!;
+        // The card on the narrow sign is the tightest: every farm achievement fits there in two lines at most.
+        var title = (TextBlock)((StackPanel)trophyCard.Child).Children[0];
+        string titleBefore = title.Text;
         foreach (var language in new[] { "vi", "en", "ja" })
             foreach (var trophy in PetAchievements.All.Where(a => a.Farm))
             {
                 prefs.Language = language;
-                var words = (TextBlock)label.Child;
-                words.Text = window.L("★ Thành tựu: ", "★ Achievement: ") + trophy.Name(language);
-                label.UpdateLayout();
-                label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                check(label.DesiredSize.Width <= 200, $"The label fits its 200 DIP ({language}, {words.Text}: {label.DesiredSize.Width:F0})");
+                title.Text = window.L("★ Thành tựu: ", "★ Achievement: ") + trophy.Name(language);
+                trophyCard.Measure(new Size(PetFarmArt.DockLandWidth + PetFarmArt.Side * 2 - 16, double.PositiveInfinity));
+                check(trophyCard.DesiredSize.Height <= 56, $"The achievement card holds it in two lines on the sign ({language}, {title.Text}: {trophyCard.DesiredSize.Height:F0})");
             }
+        title.Text = titleBefore;
         prefs.Language = "en";
-        tick(3.2);
+        tick(PetWindow.FarmAchievementCardSeconds);
+        check(!window.FarmLevelCardShowing && trophyCard.Opacity < 0.05, "...and goes");
 
         prefs.Farm = false;
         Call(window, "RefreshDiary");
@@ -633,6 +641,37 @@ internal static class FarmChecks
         check(levelCard.Opacity < 0.05 && !window.FarmLevelCardShowing, "...and fades");
         check(((TextBlock)gain.Child).Text == "Test notice" && gain.Opacity == 1, $"Then the waiting notice has the label ({((TextBlock)gain.Child).Text})");
         for (double t = 0; t < 3.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+
+        // A golden crop bursts with stars of its own; a plain one keeps the small sparkle.
+        var art = Field<PetFarmArt>(window, "farmArt");
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        SetField(window, "farmGoldRandom", new GoldenRandom());
+        window.FarmClick(0);
+        check(farm.LastHarvestGold && art.Effects[0] == FarmEffect.Golden, "A golden harvest has its own burst");
+        for (double t = 0; t < 0.2; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        Render(Field<Window?>(window, "farmWindow")!, "farm-golden-burst.png");
+        SetField(window, "farmGoldRandom", null);
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
+        window.FarmClick(0);
+        check(!farm.LastHarvestGold && art.Effects[0] == FarmEffect.Harvest, "...a plain one the usual sparkle");
+        farm.GoldStock.Clear(); // The golden radish would count as goods for the orders checked later.
+        FarmDockChecks.EndLevelCard(window);
+        for (double t = 0; t < 1.5; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+
+        // The crops lean with the puff of wind, pinwheel or not, then stand still again.
+        farm.Tiles[0] = new FarmTile { Stage = FarmStage.Young, Crop = FarmCrop.Carrot };
+        farm.Tiles[1] = new FarmTile { Stage = FarmStage.Seed, Crop = FarmCrop.Carrot };
+        Call(window, "RefreshFarmArt");
+        check(!farm.ShowsDecor(FarmDecor.Pinwheel), "(no pinwheel on this field)");
+        SetField(window, "farmGustDue", 0.0);
+        for (double t = 0; t < 0.5; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        double lean = art.SwayAngle(0, FarmStage.Young);
+        check(art.GustAge > 0 && Math.Abs(lean) > 1 && Math.Abs(lean) <= PetFarmArt.SwayDegrees && art.SwayAngle(1, FarmStage.Seed) == 0,
+            $"A puff of wind leans the crop a few degrees; a seed stays put ({lean:F1}°)");
+        Render(Field<Window?>(window, "farmWindow")!, "farm-gust-sway.png");
+        for (double t = 0; t < 1.3; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        check(art.GustAge < 0 && art.SwayAngle(0, FarmStage.Young) == 0, "...and when it has gone the crop stands still, with nothing more to draw");
+        farm.Tiles[1] = new FarmTile();
 
         double width = Shop()!.ActualWidth;
         farm.Xp = 450;
@@ -1508,6 +1547,13 @@ internal static class FarmChecks
         farm.Hens = 0; farm.EggsInCoop = 0; farm.EggStock = 0; farm.NextEggAt = null; farm.CoopFractionX = null; farm.CoopMonitor = null;
         farm.Coins = coins; farm.Xp = xp;
         Call(window, "FarmChanged");
+    }
+
+    // Every roll comes up golden.
+    private sealed class GoldenRandom : Random
+    {
+        protected override double Sample() => 0;
+        public override double NextDouble() => 0;
     }
 
     private static void Render(Window panel, string name = "farm-shop.png")

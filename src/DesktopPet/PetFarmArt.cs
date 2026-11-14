@@ -8,7 +8,7 @@ namespace DesktopPet;
 // One tile as the art draws it (PetWindow.Farm.cs fills these from PetFarm).
 public readonly record struct FarmTileView(FarmStage Stage, FarmCrop? Crop, bool Wet, bool NeedsWater, double Progress, bool Locked = false, bool Fertilized = false);
 
-public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow }
+public enum FarmEffect { None, Till, Plant, Water, Harvest, Grow, Golden }
 
 // The little field on the desktop (1.5.1 M3), drawn by code: a bank of earth with a grass lip and
 // six beds, side on, standing on the floor. The window never moves up and down: the art lifts the
@@ -331,10 +331,13 @@ public sealed partial class PetFarmArt : FrameworkElement
         if (tile.Stage is FarmStage.Wild or FarmStage.Tilled) return;
         double pop = 1;
         if (Effects[index] is FarmEffect.Plant or FarmEffect.Grow) pop = 1 + 0.28 * Math.Sin(Math.Clamp(EffectAge[index], 0, 1) * Math.PI);
+        double sway = SwayAngle(index, tile.Stage);
         dc.PushTransform(new TranslateTransform(TileCenter(index), GroundY + 6));
+        if (sway != 0) dc.PushTransform(new RotateTransform(sway));
         if (pop != 1) dc.PushTransform(new ScaleTransform(pop, pop));
         DrawPlant(dc, tile.Stage, tile.Crop ?? FarmCrop.Carrot);
         if (pop != 1) dc.Pop();
+        if (sway != 0) dc.Pop();
         dc.Pop();
 
         if (tile.NeedsWater || tile.Stage == FarmStage.Ripe)
@@ -764,8 +767,40 @@ public sealed partial class PetFarmArt : FrameworkElement
                 }
                 dc.Pop();
                 break;
+            case FarmEffect.Golden:
+                // A golden crop: a ring of light and ten stars on two rings, the outer ones bigger, turning a little.
+                var heart = new Point(center, GroundY - 16);
+                dc.PushOpacity(1 - k);
+                dc.DrawEllipse(null, GoldenRing, heart, 6 + k * 30, 6 + k * 30);
+                dc.Pop();
+                dc.PushOpacity(1 - k * k);
+                for (int i = 0; i < 10; i++)
+                {
+                    bool outer = i % 2 == 0;
+                    double angle = i * Math.PI / 5 + 0.3 + k * 0.6, reach = outer ? 10 + k * 34 : 6 + k * 20, size = outer ? 1.3 : 0.8;
+                    dc.PushTransform(new MatrixTransform(size, 0, 0, size, heart.X + Math.Cos(angle) * reach, heart.Y + Math.Sin(angle) * reach));
+                    dc.DrawGeometry(outer ? PetUi.Game.Gold : GoldenSpark, InkThin, Star);
+                    dc.Pop();
+                }
+                dc.Pop();
+                break;
         }
     }
+
+    // A passing puff of wind (the one that spins the pinwheel), 0–1, or -1 for none.
+    public double GustAge { get; set; } = -1;
+    public const double SwayDegrees = 7;
+
+    // The plants lean with the puff from left to right, about their foot, then settle; a seed does not move.
+    public double SwayAngle(int index, FarmStage stage)
+    {
+        if (GustAge < 0 || stage is FarmStage.Seed or FarmStage.Wild or FarmStage.Tilled) return 0;
+        double local = Math.Clamp(GustAge * 1.3 - index * 0.05, 0, 1);
+        return SwayDegrees * Math.Sin(local * Math.PI) * Math.Sin(local * Math.PI * 3) * (stage == FarmStage.Sprout ? 0.6 : 1);
+    }
+
+    private static readonly Pen GoldenRing = PetUi.FrozenPen(PetUi.Game.Gold, 2.2);
+    private static readonly Brush GoldenSpark = PetUi.Hex("#FFF4C2");
 
     // A folded-paper bird beside the crop, its feet at the origin, turned towards the crop. It pecks on
     // the ground; in the air the wing beats and it fades as it gets away.

@@ -2,24 +2,22 @@ using System;
 
 namespace DesktopPet;
 
-// Small life on the farm that changes nothing in the game: the pinwheel turns in the wind and a fish
-// jumps in the pond now and then. Nothing is drawn again while they rest; Pause stops them (dt is 0).
+// Small life on the farm that changes nothing in the game: the crops lean and the pinwheel turns in
+// the wind, and a fish jumps in the pond now and then. Nothing is drawn again while they rest; Pause stops them (dt is 0).
 public sealed partial class PetWindow
 {
     private const double FarmGustSeconds = 1.6, FarmGustMinSeconds = 30, FarmGustMaxSeconds = 90;
     private const double FarmWindySpin = 300, FarmGustSpin = 720, FarmPinFrameSeconds = 1 / 30.0;
     public const double FarmLeapSeconds = 1.1, FarmLeapMinSeconds = 40, FarmLeapMaxSeconds = 90;
 
-    private double farmPinTurn, farmPinSpeed, farmPinClock, farmGustAge = -1, farmGustDue = FarmGustMinSeconds;
+    private double farmPinTurn, farmPinSpeed, farmPinClock, farmSwayClock, farmGustAge = -1, farmGustDue = FarmGustMinSeconds;
     private double farmLeapAge = -1, farmLeapDue = 20, farmLeapX;
     private int farmLeapSide = 1;
 
-    // The pinwheel turns steadily in windy weather (pollen, sunset leaves) and fast in a passing puff of wind.
-    private void StepFarmPinwheel(double dt)
+    // A puff of wind every 30–90 s: the crops lean with it, and the pinwheel, if there is one, spins fast.
+    private void StepFarmGust(double dt)
     {
-        var layer = farmDecorBack;
-        if (layer == null || farm?.ShowsDecor(FarmDecor.Pinwheel) != true) return;
-        bool windy = FarmWeather is WeatherKind.Pollen or WeatherKind.Sunset;
+        if (farm == null) return;
         farmGustDue -= dt;
         if (farmGustAge < 0 && farmGustDue <= 0)
         {
@@ -27,6 +25,23 @@ public sealed partial class PetWindow
             farmGustDue = FarmGustMinSeconds + featureRandom.NextDouble() * (FarmGustMaxSeconds - FarmGustMinSeconds);
         }
         if (farmGustAge >= 0 && (farmGustAge += dt / FarmGustSeconds) >= 1) farmGustAge = -1;
+        var art = farmArt;
+        if (art == null || (farmGustAge < 0 && art.GustAge < 0)) return;
+        // Up to 30 frames a second while it blows, and once more when it has gone; folded land is not drawn.
+        farmSwayClock += dt;
+        if (farmSwayClock < FarmPinFrameSeconds && (farmGustAge >= 0) == (art.GustAge >= 0)) return;
+        farmSwayClock = 0;
+        art.GustAge = farmGustAge;
+        if (farmFieldFold.Showing) art.InvalidateVisual();
+    }
+
+    // The pinwheel turns steadily in windy weather (pollen, sunset leaves) and fast in a passing puff of wind.
+    private void StepFarmPinwheel(double dt)
+    {
+        StepFarmGust(dt);
+        var layer = farmDecorBack;
+        if (layer == null || farm?.ShowsDecor(FarmDecor.Pinwheel) != true) return;
+        bool windy = FarmWeather is WeatherKind.Pollen or WeatherKind.Sunset;
         double target = farmGustAge >= 0 ? FarmGustSpin : windy ? FarmWindySpin : 0;
         // Quick to catch the wind, slow to wind down.
         farmPinSpeed += (target - farmPinSpeed) * Math.Min(1, dt * (target > farmPinSpeed ? 3 : 0.7));

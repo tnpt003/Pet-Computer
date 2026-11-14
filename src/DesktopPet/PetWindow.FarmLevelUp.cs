@@ -9,12 +9,12 @@ namespace DesktopPet;
 
 // The farm's level up (docs/FARM-GAME.md → Báo lên cấp): a card of its own over the field, or over
 // the sign when the field is folded, that says the new level, the coins and what it opened. It pops
-// in, stays a few seconds and no other label takes its place: weather, gift and achievement labels
-// wait for it. A star stays on the sign's field board until the field is out again. Words and a
+// in, stays a few seconds and no other label takes its place: weather and gift labels wait for it.
+// A farm achievement uses the same card, smaller and mint-rimmed, after the level up. A star stays on the sign's field board until the field is out again. Words and a
 // chime only: it takes no clicks and never touches the cat.
 public sealed partial class PetWindow
 {
-    public const double FarmLevelCardSeconds = 4.5;
+    public const double FarmLevelCardSeconds = 4.5, FarmAchievementCardSeconds = 3.5;
     private const double FarmLevelPopSeconds = 0.3, FarmLevelFadeSeconds = 0.6, FarmLevelChimeDelay = 0.8, FarmLevelPopFrom = 0.6;
     private const int FarmNoticeLimit = 4;
 
@@ -27,7 +27,7 @@ public sealed partial class PetWindow
     }
 
     private FarmLevelCard? farmLevelField, farmLevelDock, farmLevelShown;
-    private double farmLevelLeft, farmLevelChimeIn = -1;
+    private double farmLevelLeft, farmLevelTotal = FarmLevelCardSeconds, farmLevelChimeIn = -1;
     private bool farmLevelUnseen;
     private readonly Queue<string> farmNotices = new();
 
@@ -65,19 +65,29 @@ public sealed partial class PetWindow
         string opens = string.Join(", ", Enumerable.Range(first, gained).Select(FarmNextUnlockNames).Where(names => names.Length > 0));
         string line = opens.Length > 0 ? LF($"Mở khóa: {opens}", $"Unlocked: {opens}")
             : level >= PetFarm.MaxLevel ? L("Đã đạt cấp cao nhất", "Top level reached") : "";
-        bool field = farmFieldFold.Showing;
-        if (!field)
+        if (!farmFieldFold.Showing)
         {
             farmLevelUnseen = true;
             RefreshFarmDock();
         }
-        var card = field ? farmLevelField : farmLevelDock;
+        ShowFarmCard("★ " + LF($"Nông trại lên cấp {level}! +{coins} xu", $"Farm level {level}! +{coins} coins"), line, PetUi.Game.Gold, PetUi.HeadingSize, FarmLevelCardSeconds);
+        farmLevelChimeIn = FarmLevelChimeDelay; // After the harvest's own sparkle, which holds off the next cue.
+    }
+
+    // A farm achievement in the same card, smaller, with a mint rim and no sound of its own.
+    private void ShowFarmAchievement(AchievementSpec achievement) =>
+        ShowFarmCard(L("★ Thành tựu: ", "★ Achievement: ") + achievement.Name(preferences.Language), "", PetUi.Mint, PetUi.TitleSize, FarmAchievementCardSeconds);
+
+    private void ShowFarmCard(string title, string line, Brush rim, double size, double seconds)
+    {
+        var card = farmFieldFold.Showing ? farmLevelField : farmLevelDock;
         if (farmLevelShown != null && farmLevelShown != card) farmLevelShown.Card.Opacity = 0;
         farmLevelShown = card;
-        farmLevelLeft = FarmLevelCardSeconds;
-        farmLevelChimeIn = FarmLevelChimeDelay; // After the harvest's own sparkle, which holds off the next cue.
+        farmLevelLeft = farmLevelTotal = seconds;
         if (card == null) return;
-        card.Title.Text = "★ " + LF($"Nông trại lên cấp {level}! +{coins} xu", $"Farm level {level}! +{coins} coins");
+        card.Card.BorderBrush = rim;
+        card.Title.FontSize = size;
+        card.Title.Text = title;
         card.Unlocks.Text = line;
         card.Unlocks.Visibility = line.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         card.Card.Opacity = 1;
@@ -91,7 +101,7 @@ public sealed partial class PetWindow
         if (farmLevelLeft <= 0) return;
         farmLevelLeft = Math.Max(0, farmLevelLeft - dt);
         if (farmLevelShown is not { } card) return;
-        double pop = Math.Min(1, (FarmLevelCardSeconds - farmLevelLeft) / FarmLevelPopSeconds) - 1;
+        double pop = Math.Min(1, (farmLevelTotal - farmLevelLeft) / FarmLevelPopSeconds) - 1;
         double scale = FarmLevelPopFrom + (1 - FarmLevelPopFrom) * (1 + 2.70158 * pop * pop * pop + 1.70158 * pop * pop); // A small overshoot.
         card.Scale.ScaleX = card.Scale.ScaleY = scale;
         card.Card.Opacity = farmLevelLeft >= FarmLevelFadeSeconds ? 1 : farmLevelLeft / FarmLevelFadeSeconds;

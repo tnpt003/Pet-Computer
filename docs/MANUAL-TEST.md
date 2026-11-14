@@ -1517,7 +1517,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Nhấc, kéo, thả Ruộng, Bếp, Hồ, Chuồng, Biển; thử sang màn hình khác nếu có; tắt mở lại app đúng vị trí; mèo luôn vẽ trên kỷ vật, kỷ vật trên vùng đất
 - [ ] Biển: gập và mở từng vùng, Mở tất cả, Gập tất cả; phép có đẹp và đúng nhịp không; mèo tự đi làm thì vùng tự hiện rồi gập lại có khó chịu không
 - [ ] Nhật ký có thẻ Nông trại, thành tích không báo dồn, phần thưởng cấp 8–10 (dùng dữ liệu riêng), câu thoại lên cấp hiện đúng
-- [ ] Lên cấp: thẻ riêng nổi rõ (cấp, xu, thứ mở khóa), chuông ba nốt, nhãn khác không đè; ruộng gập thì thẻ trên biển và sao trên bảng Ruộng (mục "Thẻ báo nông trại lên cấp")
+- [ ] Lên cấp: thẻ riêng nổi rõ (cấp, xu, thứ mở khóa), chuông ba nốt, nhãn khác không đè; ruộng gập thì thẻ trên biển và sao trên bảng Ruộng (mục "Thẻ báo nông trại lên cấp"). Thẻ thành tựu viền mint, chùm sao hàng vàng, cây lay khi có gió (mục "Làm đẹp nông trại")
 - [ ] Giờ tập trung trọn một phiên 25 phút: nhãn đếm, chuông vừa tai, vươn vai, hạt Hoa tập trung, hoa lớn và gặt được
 
 **Đồ chơi, góc sống, mini-game (gộp 14/11)**
@@ -1831,3 +1831,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Đổi thời tiết hoặc nhận quà mèo hàng xóm đúng lúc thẻ hiện: nhãn đó chờ thẻ tắt rồi mới hiện, không đè lên thẻ. Lên cấp 10 cùng thành tựu: thẻ trước, nhãn thành tựu sau
 - [ ] Gập ruộng rồi lên cấp (mèo gặt hoặc giao hàng): thẻ hiện trên biển, không tràn ra ngoài biển (cả en/ja); bảng Ruộng có ngôi sao vàng cho đến khi mở ruộng
 - [ ] Đọc câu tiếng Nhật "農園レベル{N}！"
+
+## Làm đẹp nông trại: thẻ thành tựu, hàng vàng, cây lay gió (14/11)
+Đã kiểm bằng UiChecks và ảnh render; **chưa xem chuyển động trên desktop thật, chưa đo FPS thật.**
+- [ ] Đạt thành tựu nông trại (dữ liệu riêng gần mốc): thẻ một dòng viền xanh mint hiện sau nhãn thu hoạch, khoảng 3,5 giây, không có tiếng; lên cấp cùng lúc thì thẻ lên cấp trước
+- [ ] Gặt được hàng vàng (★): vòng sáng và chùm sao vàng to hơn gặt thường, dễ nhận ra; Gặt tất cả và mèo gặt cũng có
+- [ ] Chờ cơn gió (30–90 giây): cây lắc nhẹ từ trái sang rồi đứng yên, không giật, không che nhãn khó chịu; ruộng chưa có chong chóng cũng lay. FPS lúc có gió không tụt rõ

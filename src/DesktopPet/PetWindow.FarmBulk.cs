@@ -71,7 +71,8 @@ public sealed partial class PetWindow
                 if (extra) extras++;
                 if (farm.LastHarvestGold) golden++;
             }
-            StartFarmEffect(tile, step == FarmStep.Till ? FarmEffect.Till : step == FarmStep.Water ? FarmEffect.Water : FarmEffect.Harvest);
+            StartFarmEffect(tile, step == FarmStep.Till ? FarmEffect.Till : step == FarmStep.Water ? FarmEffect.Water
+                : picked != null && farm.LastHarvestGold ? FarmEffect.Golden : FarmEffect.Harvest);
         }
         PlayPetSound(step == FarmStep.Till ? "ball_tap" : step == FarmStep.Water ? "swoosh" : "sparkle");
         if (picked is FarmCrop crop) ShowFarmBulkGain(tiles, crop, extras, golden);

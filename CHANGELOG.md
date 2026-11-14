@@ -1,6 +1,6 @@
 # Nhật ký thay đổi
 
-## 1.5.1 — Đời sống ngoài trận
+## 1.5.1 — Đời sống ngoài trận (2026-11-14)
 
 ### Tiếng Việt
 

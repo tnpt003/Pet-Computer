@@ -1319,6 +1319,45 @@ internal static class FarmChecks
         check(window.TryFarmStall() && Math.Abs(X() - chosen) < 0.5, "Next visit it comes to the place the user chose");
         frames(FarmStall.RollSeconds + 0.1);
 
+        // Across monitors (asked 14/11), on a made-up second monitor at 150% to the right of the real one.
+        string Where() => Field<string?>(window, "farmCartMonitor") ?? "";
+        var real = ((IReadOnlyList<FarmMonitor>)Call(window, "FarmMonitors")!).First(m => m.Name == Where());
+        var other = new FarmMonitor("CART2", new Area(real.Bounds.Right, 0, real.Bounds.Right + 1920, 1080), new Area(real.Bounds.Right, 0, real.Bounds.Right + 1920, 1020), 1.5, false);
+        var tiny = new FarmMonitor("TINY", new Area(real.Bounds.Left - 100, 0, real.Bounds.Left, 1080), new Area(real.Bounds.Left - 100, 0, real.Bounds.Left, 1020), 1, false);
+        SetField(window, "farmMonitorsProbe", new Func<IReadOnlyList<FarmMonitor>>(() => new[] { real, other, tiny }));
+        turned = wheels.Rolled;
+        setCursor(new Point((chosen + 10) * scale, 0));
+        Call(window, "PressFarmCart");
+        setCursor(new Point(other.Bounds.Left + 400 * other.Scale, 300));
+        Call(window, "MoveFarmCart");
+        check(Where() == "CART2" && Math.Abs(Field<double>(window, "farmCartScale") - 1.5) < 1e-9 && Math.Abs(X() - (other.WorkDips.Left + 390)) < 0.5,
+            $"Dragged onto another monitor, the cart goes over: its scale, its floor, still under the mouse ({Where()}, {X() - other.WorkDips.Left:F0})");
+        check(wheels.Rolled == turned, "...and the jump between the screens does not spin the wheels");
+        Call(window, "ReleaseFarmCart", true);
+        check(Where() == "CART2" && !window.FarmStallOpen && Field<string?>(window, "farmCartChosenMonitor") == "CART2",
+            $"Let go there, it stays there ({Where()}, {X():F0}, open {window.FarmStallOpen}, chosen {Field<string?>(window, "farmCartChosenMonitor")}, glide {Field<double?>(window, "farmCartGlideTo")})");
+        double across = X();
+        Call(window, "ResetFarmCart");
+        frames(0.02);
+        check(window.TryFarmStall() && Where() == "CART2" && Math.Abs(X() - across) < 0.5, $"Next visit it comes to that monitor and place ({Where()}, {X():F0})");
+        frames(FarmStall.RollSeconds + 0.1);
+
+        setCursor(new Point((X() + 10) * other.Scale, 300));
+        Call(window, "PressFarmCart");
+        setCursor(new Point(tiny.Bounds.Left + 50, 300));
+        Call(window, "MoveFarmCart");
+        check(Where() == "TINY", "(carried onto a monitor too narrow for it)");
+        Call(window, "ReleaseFarmCart", true);
+        check(Where() == "CART2" && Math.Abs(X() - across) < 0.5 && Field<double?>(window, "farmCartGlideTo") == null, $"No room there: straight back to where it stood, on its own monitor ({Where()}, {X():F0})");
+
+        setCursor(new Point((X() + 10) * other.Scale, 300));
+        Call(window, "PressFarmCart");
+        setCursor(new Point((chosen + 10) * scale, 0));
+        Call(window, "MoveFarmCart");
+        Call(window, "ReleaseFarmCart", true);
+        check(Where() == real.Name && Math.Abs(Field<double>(window, "farmCartScale") - scale) < 1e-9 && Math.Abs(X() - chosen) < 0.5, $"...and it can be brought back ({X():F0})");
+        SetField(window, "farmMonitorsProbe", null);
+
         SetField(window, "paused", true);
         Drag(X() + 10, X() + 80);
         check(Math.Abs(X() - chosen) < 0.5, "Pause: it cannot be moved");

@@ -5,6 +5,13 @@ Sổ ghi các lỗi đã sửa của Desktop Pet. Phần A: lỗi người dùng
 Mỗi mục: triệu chứng, nguyên nhân, cách sửa, kiểm chứng. Thêm lỗi mới: tạo mục số tiếp theo ở đầu phần A (hoặc một dòng ở phần B).
 
 # A. Lỗi người dùng phát hiện
+## #87 — Gian hàng lưu động không kéo sang màn hình khác được (14/11)
+- **Triệu chứng:** kéo xe hàng tới mép màn hình thì xe dừng lại, không sang màn hình bên cạnh như vùng đất, ruộng và đồ chơi.
+- **Nguyên nhân:** đúng luật góp ý 13/11 ("trượt dọc đáy màn hình xe đang đứng, không sang màn khác"): `MoveFarmCart` kẹp vị trí trong vùng làm việc của màn cũ và chỉ tính theo khoảng chuột đã đi, theo DPI màn cũ.
+- **Sửa (người dùng duyệt đổi luật 14/11):** `PetWindow.FarmStall.cs` — khi kéo, chuột sang màn khác (`FarmMonitorAt`) thì xe nhận màn đó, DPI và đáy màn đó, vị trí tính theo chỗ cầm nên vẫn dưới chuột; bánh không quay lúc chuyển màn. Thả ở màn không đủ chỗ thì xe về ngay chỗ cũ trên màn cũ. Lần xe đến sau trong phiên đến đúng màn và chỗ đã kéo nếu màn còn cắm và chỗ còn trống, không thì về màn của ruộng (`PickFarmCartArrival`). Luật: docs/FARM-GAME.md → Góp ý 13/11.
+- **Commit:** điền ở dòng ghi publish trong PROGRESS.md.
+- **Kiểm chứng:** check mới trong `FarmChecks.CartByHand` với màn giả 150% bên phải và màn hẹp 100 px: sang màn, theo DPI và dưới chuột, bánh không quay khi chuyển, thả lại ở đó, lần sau đến đúng chỗ, thả ở màn hẹp thì về chỗ cũ, kéo về được. Python 67 + i18n 5, C# 4968, WPF 3333 đạt (lần đầu 1 FAIL do màn giả trùng tên "FAKE2" với check vùng đất chạy trước; đã đổi tên).
+- [ ] Cần xem tay: kéo xe qua lại giữa hai màn hình thật (cả khi DPI hai màn khác nhau, cả màn xếp trên dưới), bấm mở bảng sau khi kéo, chờ xe đến lần sau.
 ## #85 — Úp cốc tìm cá: chỉ một cốc bấm chọn được (13/11)
 - **Triệu chứng:** đến lượt chọn, chỉ bấm được một cốc; hai cốc kia bấm không có tác dụng.
 - **Nguyên nhân:** `CupGameArt.DrawCup` tô bóng men và dải màu bằng `PushClip(Body)`. Sau lớp clip đó, hit-test của WPF chỉ còn nhận cốc vẽ đầu tiên (cốc số 0, đi theo nó qua các lần đổi chỗ); hai cốc vẽ sau vẫn hiện nhưng không nhận chuột. Test cũ gọi thẳng `PickCup(x)` nên không bắt được.

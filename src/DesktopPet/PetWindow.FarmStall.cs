@@ -32,7 +32,9 @@ public sealed partial class PetWindow
     // The user's hand on the cart (feedback 13/11): where the press was, where the cart stood then, and
     // whether it has moved past the click's slack. The place they chose is tried first next visit, this session only.
     private double? farmCartPress;
-    private double farmCartPressX;
+    private double farmCartPressX, farmCartPressScale = 1, farmCartGrab;
+    private string? farmCartPressMonitor;
+    private Area farmCartPressArea;
     private bool farmCartDragging;
     private double? farmCartChosenX;
     private string? farmCartChosenMonitor;
@@ -53,7 +55,7 @@ public sealed partial class PetWindow
     {
         if (farm == null || farmStall.Phase != FarmStallPhase.Away || !FarmVisible || FarmLandInAir
             || Blocking(AutoBlock.Paused | AutoBlock.AnyQuiet | AutoBlock.AnyBattle | AutoBlock.Away) != AutoBlock.None
-            || !PickFarmCartPlace(FindFarmMonitor(farmMonitor))) return false;
+            || !PickFarmCartArrival()) return false;
         farmStall.Arrive(farm.NewOffers(featureRandom), farm.NewDecors(featureRandom));
         ShowFarmCart();
         ShowFarmCartTip();
@@ -112,13 +114,33 @@ public sealed partial class PetWindow
         var area = monitor.WorkDips;
         var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
         double max = area.Right - width;
-        double? chosen = farmCartChosenMonitor == monitor.Name && farmCartChosenX is double at && at >= area.Left && at <= max
-            && Math.Abs(FarmLands.FreeSpot(at, width, taken, area.Left, max, FarmCartGap) - at) < 0.5 ? at : null;
-        if ((chosen ?? FarmLands.RandomFreeSpot(featureRandom, width, taken, area.Left, max, FarmCartGap)) is not double x) return false;
+        if ((FarmCartChosenSpot(monitor) ?? FarmLands.RandomFreeSpot(featureRandom, width, taken, area.Left, max, FarmCartGap)) is not double x) return false;
         (farmCartSide, farmCartRoom) = FarmLands.RollWay(x, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
         farmCartX = x;
         StoreFarmCartMonitor(monitor);
         return true;
+    }
+
+    // Where the user last left the cart, this session, if it is on this monitor and still free.
+    private double? FarmCartChosenSpot(FarmMonitor monitor)
+    {
+        if (farmCartChosenMonitor != monitor.Name || farmCartChosenX is not double at) return null;
+        double width = PetFarmStallArt.ArtWidth;
+        var area = monitor.WorkDips;
+        double max = area.Right - width;
+        var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
+        return at >= area.Left && at <= max && Math.Abs(FarmLands.FreeSpot(at, width, taken, area.Left, max, FarmCartGap) - at) < 0.5 ? at : null;
+    }
+
+    // A visit comes to the screen the user carried the cart to, if that place is still there and free;
+    // otherwise to the field's screen as before.
+    private bool PickFarmCartArrival()
+    {
+        if (farmCartChosenMonitor != null && farmCartChosenMonitor != farmMonitor
+            && FarmMonitors().FirstOrDefault(m => m.Name == farmCartChosenMonitor) is { Name: not null } chosen
+            && FarmCartChosenSpot(chosen) != null)
+            return PickFarmCartPlace(chosen);
+        return PickFarmCartPlace(FindFarmMonitor(farmMonitor));
     }
 
     private void StoreFarmCartMonitor(FarmMonitor monitor)
@@ -152,12 +174,17 @@ public sealed partial class PetWindow
 
     private void CloseFarmCart() => farmCartWindow?.Close();
 
-    // A press is a click until the mouse goes past the slack; then the cart slides along the floor of its screen.
+    // A press is a click until the mouse goes past the slack; then the cart slides along the floor of the
+    // screen under the mouse, and onto another screen's floor when the mouse goes there (asked 14/11).
     private void PressFarmCart()
     {
         if (farmCartWindow == null) return;
         farmCartPress = ScreenCursor().X / farmCartScale;
         farmCartPressX = farmCartX;
+        farmCartPressMonitor = farmCartMonitor;
+        farmCartPressArea = farmCartArea;
+        farmCartPressScale = farmCartScale;
+        farmCartGrab = farmCartPress.Value - farmCartX;
         farmCartDragging = false;
         farmCartWindow.CaptureMouse();
     }
@@ -165,15 +192,21 @@ public sealed partial class PetWindow
     private void MoveFarmCart()
     {
         if (farmCartPress is not double press || farmCartWindow == null) return;
-        double moved = ScreenCursor().X / farmCartScale - press;
+        var cursor = ScreenCursor();
         if (!farmCartDragging)
         {
-            if (Math.Abs(moved) < FarmCartDragStart || paused || farmStall.Phase != FarmStallPhase.Open || farmCartGlideTo != null) return;
+            if (Math.Abs(cursor.X / farmCartScale - press) < FarmCartDragStart || paused || farmStall.Phase != FarmStallPhase.Open || farmCartGlideTo != null) return;
             farmCartDragging = true;
         }
+        bool crossed = false;
+        if (FarmMonitorAt(cursor) is FarmMonitor over && over.Name != farmCartMonitor)
+        {
+            StoreFarmCartMonitor(over); // Its DIPs and floor from now on.
+            crossed = true;
+        }
         double was = farmCartX;
-        farmCartX = Math.Clamp(farmCartPressX + moved, farmCartArea.Left, Math.Max(farmCartArea.Left, farmCartArea.Right - PetFarmStallArt.ArtWidth));
-        RollFarmCartWheels(farmCartX - was);
+        farmCartX = Math.Clamp(cursor.X / farmCartScale - farmCartGrab, farmCartArea.Left, Math.Max(farmCartArea.Left, farmCartArea.Right - PetFarmStallArt.ArtWidth));
+        if (!crossed) RollFarmCartWheels(farmCartX - was); // A jump between screens is not a roll.
         PlaceFarmCart();
     }
 
@@ -196,7 +229,20 @@ public sealed partial class PetWindow
         double width = PetFarmStallArt.ArtWidth, max = area.Right - width;
         var taken = FarmLandsTaken(monitor.Name, null, withCart: false);
         double x = FarmLands.FreeSpot(farmCartX, width, taken, area.Left, max, FarmCartGap);
-        bool free = taken.All(land => x + width <= land.Left - FarmCartGap + 0.5 || x >= land.Right + FarmCartGap - 0.5);
+        bool free = x >= area.Left - 0.5 && x <= max + 0.5 && taken.All(land => x + width <= land.Left - FarmCartGap + 0.5 || x >= land.Right + FarmCartGap - 0.5);
+        if (!free && farmCartPressMonitor != null && farmCartPressMonitor != monitor.Name)
+        {
+            // No room on the screen it was carried to: straight back to where it stood, on its own screen.
+            farmCartMonitor = farmCartPressMonitor;
+            farmCartArea = farmCartPressArea;
+            farmCartScale = farmCartPressScale;
+            farmCartX = farmCartPressX;
+            (farmCartSide, farmCartRoom) = FarmLands.RollWay(farmCartX, width, FarmLandsTaken(farmCartMonitor, null, withCart: false), farmCartArea.Left, farmCartArea.Right - width, FarmCartGap, FarmCartRoll);
+            farmCartChosenX = farmCartX;
+            farmCartChosenMonitor = farmCartMonitor;
+            PlaceFarmCart();
+            return;
+        }
         double to = free ? x : farmCartPressX;
         (farmCartSide, farmCartRoom) = FarmLands.RollWay(to, width, taken, area.Left, max, FarmCartGap, FarmCartRoll);
         farmCartChosenX = to;

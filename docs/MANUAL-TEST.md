@@ -1510,7 +1510,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Người mới (dữ liệu riêng): nhãn chỉ bước ở ô đầu dẫn đủ cày → gieo → tưới → gặt, bán trong Kho, mở thêm ô
 - [ ] Nhịp mèo tự làm và ôm nông sản về giỏ: có vừa mắt không, có đi lại quá nhiều không, có bị quá ồn không
 - [ ] Bếp: mèo đổ nguyên liệu, khuấy, ăn; bị bế giữa chừng thì nồi giữ món. Hồ: mèo câu theo lệnh và tự câu, cá vào kho
-- [ ] Xe hàng đứng chỗ trống, không đè đất; lời mua, giao hàng, mua đồ trang trí, bật/tắt trong Kho đều đúng
+- [ ] Xe hàng đứng chỗ trống, không đè đất; lời mua, giao hàng, mua đồ trang trí, bật/tắt trong Kho đều đúng; có nhiều màn hình thì kéo xe sang màn khác được (#87)
 - [ ] Chuồng gà (cấp 3): mua, gà đi lại, thu trứng, 2 món trứng, mèo vồ gà không gây hại
 - [ ] Mùa vụ, công cụ, phân bón: đúng cây theo mùa trong menu gieo, đồ cầm đổi màu theo bậc, bón phân thấy hạt phân và cây lớn nhanh hơn
 - [ ] Mèo hàng xóm: đứng chỗ trống, bấm tặng đồ, có nhãn quà, không chạm hay đánh thức mèo
@@ -1837,3 +1837,9 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Đạt thành tựu nông trại (dữ liệu riêng gần mốc): thẻ một dòng viền xanh mint hiện sau nhãn thu hoạch, khoảng 3,5 giây, không có tiếng; lên cấp cùng lúc thì thẻ lên cấp trước
 - [ ] Gặt được hàng vàng (★): vòng sáng và chùm sao vàng to hơn gặt thường, dễ nhận ra; Gặt tất cả và mèo gặt cũng có
 - [ ] Chờ cơn gió (30–90 giây): cây lắc nhẹ từ trái sang rồi đứng yên, không giật, không che nhãn khó chịu; ruộng chưa có chong chóng cũng lay. FPS lúc có gió không tụt rõ
+
+## Kéo xe hàng sang màn hình khác (#87, 14/11, cần nhiều màn hình)
+Đã kiểm bằng UiChecks với màn hình giả; **chưa thử trên nhiều màn hình thật.**
+- [ ] Kéo xe sang màn bên cạnh: xe xuống đáy màn đó, vẫn dưới chuột, không nhảy lệch (thử cả hai màn khác DPI, cả màn xếp trên dưới); bánh không quay vọt lúc qua mép
+- [ ] Thả đè lên vùng đất ở màn mới: lăn tới chỗ trống; màn mới không còn chỗ: xe về chỗ cũ trên màn cũ
+- [ ] Bấm xe sau khi kéo vẫn mở bảng Gian hàng; Cho xe đi rồi chờ lần sau: xe đến đúng màn và chỗ đã kéo; rút màn đó ra thì xe về màn của ruộng

@@ -129,7 +129,11 @@ public sealed partial class PetWindow
             patch.Gain = gain;
             patch.Art = art;
             patch.Surface = surface;
-            if (patch.Kind == FarmPatchKind.Dock) AddFarmDockChip(surface);
+            if (patch.Kind == FarmPatchKind.Dock)
+            {
+                AddFarmDockChip(surface);
+                AddFarmLevelCard(surface, field: false);
+            }
             PetFarmArt.LandMagic? magic = null;
             UIElement content = patch.Kind == FarmPatchKind.Dock ? surface : FarmMagicStage(surface, patch.ArtWidth, patch.Width, out magic);
             patch.Magic = magic;
@@ -144,7 +148,8 @@ public sealed partial class PetWindow
             }
             art.LostMouseCapture += (_, _) => patch.Dragging = false;
             InitializeFarmPatchMenu(patch, art);
-            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Surface = null; patch.Magic = null; patch.Dragging = false; patch.GainLeft = 0; };
+            patch.Window.Closed += (_, _) => { patch.Window = null; patch.Art = null; patch.Decor = null; patch.Gain = null; patch.Surface = null; patch.Magic = null; patch.Dragging = false; patch.GainLeft = 0;
+                if (patch.Kind == FarmPatchKind.Dock) { if (farmLevelShown == farmLevelDock) farmLevelShown = null; farmLevelDock = null; } };
         }
     }
 

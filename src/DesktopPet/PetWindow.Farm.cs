@@ -209,9 +209,12 @@ public sealed partial class PetWindow
             farmGain.Opacity = k < 0.7 ? 1 : (1 - k) / 0.3;
             ((TranslateTransform)farmGain.RenderTransform).Y = -FarmGainRise * k;
         }
-        // An achievement waits for the label on show (a level up comes with some of them).
-        else if (farmGain != null && farmAchievementLabels.TryDequeue(out var achievement))
+        // A weather or gift label, then an achievement, waits for the label on show and for the level card.
+        else if (farmGain != null && !FarmLevelCardShowing && farmNotices.TryDequeue(out var notice))
+            ShowFarmLabel(PetFarm.TileCount / 2, notice, FarmLevelUpSeconds);
+        else if (farmGain != null && !FarmLevelCardShowing && farmAchievementLabels.TryDequeue(out var achievement))
             ShowFarmLabel(PetFarm.TileCount / 2, L("★ Thành tựu: ", "★ Achievement: ") + achievement.Name(preferences.Language), FarmLevelUpSeconds);
+        StepFarmLevelCard(dt);
     }
 
     private PetFarmArt.DecorLayer? farmDecorBack, farmDecorFront;
@@ -262,6 +265,7 @@ public sealed partial class PetWindow
         tipRow.Children.Add(tip);
         surface.Children.Add(tipRow);
         farmTip = tip; farmTipText = tipText;
+        AddFarmLevelCard(surface, field: true);
         farmSurface = surface;
 
         farmArt = art; farmChip = chip; farmChipText = chipText; farmGain = gain; farmGainText = gainText;
@@ -279,6 +283,7 @@ public sealed partial class PetWindow
         {
             farmWindow = null; farmArt = null; farmDecorBack = farmDecorFront = null; farmSurface = null; farmMagic = null; farmChip = farmGain = farmTip = null; farmChipText = farmGainText = farmTipText = null; farmTipShown = null;
             farmDragging = false; farmHover = farmPressTile = -1; farmChipShown = null; farmEffectsRunning = false; farmGainLeft = 0;
+            ForgetFarmLevelCard();
         };
     }
 
@@ -716,14 +721,6 @@ public sealed partial class PetWindow
         ((TranslateTransform)farmGain.RenderTransform).Y = 0;
         PlaceFarmLabel(row, tile, 30, FarmGainTop);
         farmGainLeft = farmGainTotal = seconds;
-    }
-
-    // Over the middle of the field, longer than a harvest's label.
-    private void ShowFarmLevelUp(int gained)
-    {
-        int level = farm!.Level, coins = Enumerable.Range(level - gained + 1, gained).Sum(PetFarm.LevelReward);
-        for (int i = 0; i < farm.OpenTiles; i++) StartFarmEffect(i, FarmEffect.Harvest);
-        ShowFarmLabel(PetFarm.TileCount / 2, LF($"Lên cấp {level}! +{coins} xu", $"Level {level}! +{coins} coins"), FarmLevelUpSeconds);
     }
 
     // The seeds, opened just above the tile.

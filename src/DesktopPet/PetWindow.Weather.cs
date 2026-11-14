@@ -82,7 +82,7 @@ public sealed partial class PetWindow
         if (announcedWeather == weather.Kind) return;
         bool first = announcedWeather == null;
         announcedWeather = weather.Kind;
-        if (!first && FarmVisible && farmWithCat) ShowFarmLabel(PetFarm.TileCount / 2, FarmWeatherText(weather.Kind), FarmLevelUpSeconds);
+        if (!first && FarmVisible && farmWithCat) ShowFarmNotice(FarmWeatherText(weather.Kind));
     }
 
     private string FarmWeatherText(WeatherKind kind) => kind switch

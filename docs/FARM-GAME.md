@@ -202,7 +202,7 @@ Người dùng duyệt cả sáu mốc, chưa phát hành, Mốc E (chuẩn bị
 - Vùng tự mở khi mèo tự đi làm không có tiếng, lúc tự gập cũng vậy; tiếng chỉ có khi người dùng bấm hoặc ra lệnh.
 - Xe hàng và mèo hàng xóm không liên quan tới việc gập: luôn đến và đứng dưới sàn như cũ, kể cả khi đã gập hết.
 - Hiệu ứng phép: mở 0,9 giây (vòng ký tự tím vàng trên sàn, đất trồi lên vượt cao một chút rồi nảy về, sao bay lên, tiếng "sparkle"), gập 0,6 giây là đảo ngược cảnh đó, đất chìm vào vòng sáng, sao bị hút xuống, tiếng "swoosh". Mở tất cả, Gập tất cả chạy lần lượt theo chiều từ trái sang, cách nhau 0,12 giây, một tiếng cho cả lượt. Vùng mở tạm cũng có phép. Mèo và các luật coi vùng đã mở/gập ngay từ lúc bấm, phép chỉ là phần hình. Khởi động app, thoát fullscreen, ra khỏi trận thì vùng hiện thẳng, không diễn. Pause giữ yên phép.
-- Nhãn của vùng gập (thu hoạch, lên cấp, thời tiết, quà) hiện trên biển. Bấm biển không chạm vào mèo: không đánh thức, không phá kéo thả hay cảm xúc.
+- Nhãn của vùng gập (thu hoạch, thời tiết, quà) và thẻ lên cấp hiện trên biển. Bấm biển không chạm vào mèo: không đánh thức, không phá kéo thả hay cảm xúc.
 
 ### Góp ý 13/11 (duyệt 13/11)
 
@@ -229,7 +229,15 @@ Luôn giữ: cây không héo, chim không gây hại, farm không cộng sức 
 - Thu hoạch tay hay mèo gặt đều được XP: Củ cải 2, Cà rốt 5, Cà chua 12, Bí ngô 30. Tối đa cấp 10; XP cộng dồn để lên cấp 2 đến 10: 25, 70, 150, 280, 450, 700, 1000, 1400, 2000.
 - Mở khóa: cấp 1 Củ cải, Cà rốt, Súp củ cải, 1 ô đơn hàng; cấp 2 Cà chua, Cà rốt hầm; cấp 3 Cà chua nhồi, ô đơn thứ 2; cấp 4 Bí ngô; cấp 5 Bánh bí ngô, ô đơn thứ 3. Mỗi lần lên cấp thưởng `cấp × 20` xu.
 - Thay luật Mốc 5: Cà chua và Bí ngô không còn mở sẵn. Hạt và món chưa mở thì mờ, có ghi cấp cần. Ruộng cũ được tính XP từ số đã thu hoạch, cây đang trồng vẫn lớn bình thường. `farm.json` lên phiên bản 3; bản app cũ chỉ đọc, không ghi đè.
-- Bảng "Kho & cửa hàng" hiện cấp, XP, thanh tiến độ và thứ cấp sau mở. Lên cấp thì ruộng lấp lánh và hiện nhãn "Lên cấp N! +X xu" 3 giây. Ô đơn hàng ghi ở trên có tác dụng từ Mốc C.
+- Bảng "Kho & cửa hàng" hiện cấp, XP, thanh tiến độ và thứ cấp sau mở. Lên cấp thì ruộng lấp lánh và hiện thẻ lên cấp (xem "Báo lên cấp" dưới đây; trước 14/11 là nhãn "Lên cấp N! +X xu" 3 giây). Ô đơn hàng ghi ở trên có tác dụng từ Mốc C.
+
+### Báo lên cấp (duyệt 14/11)
+
+- Thẻ riêng trên ruộng, nền tối viền Game.Gold, bo CardRadius: dòng đầu "★ Nông trại lên cấp N! +X xu" (Heading, vàng), dòng hai "Mở khóa: …" (cây, cá, món, bù nhìn vàng, chuồng gà mở ở cấp đó; lên nhiều cấp một lúc thì gộp), cấp 10 không mở gì thì "Đã đạt cấp cao nhất". Nhãn thu hoạch của lần gặt đó vẫn hiện riêng.
+- Phình vào 0,3 giây (vượt nhẹ rồi về), đứng 4,5 giây tính cả 0,6 giây mờ dần. Không nhận click, không chạm mèo.
+- Trong lúc thẻ hiện, nhãn thời tiết, quà mèo hàng xóm và thành tựu chờ (tối đa 4 nhãn chờ), thẻ tắt rồi mới lần lượt hiện; không còn đè lên nhau. Nhãn thu hoạch không chờ.
+- Tiếng "chime" (ba nốt chuông đi lên, tổng hợp như "sparkle") 0,8 giây sau khi lên cấp, theo mute/volume/cooldown chung, Pause hay toàn màn hình thì im.
+- Ruộng đang gập: thẻ hiện trên biển nông trại, và bảng Ruộng trên biển có ngôi sao vàng ở góc trái trên cho đến khi ruộng hiện ra lại (tự mở hay mèo mượn đều tính). Ngôi sao không lưu qua lần tắt app.
 
 ## Luật Mốc C (đã thay bằng Luật Mốc 4)
 

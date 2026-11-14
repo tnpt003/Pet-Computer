@@ -4,8 +4,9 @@ using System.Windows.Media;
 
 namespace DesktopPet;
 
-// One board on the farm sign: is that land out, how much waits there, or is it not bought yet.
-public readonly record struct FarmDockSlotView(bool Open, int Work, bool Locked);
+// One board on the farm sign: is that land out, how much waits there, or is it not bought yet;
+// Star marks a level up the user has not seen on the folded field yet.
+public readonly record struct FarmDockSlotView(bool Open, int Work, bool Locked, bool Star = false);
 
 public sealed partial class PetFarmArt
 {
@@ -67,6 +68,12 @@ public sealed partial class PetFarmArt
                 dc.DrawEllipse(PetUi.Game.Gold, InkThin, new Point(rect.Right - 3, rect.Top + 3), 5, 5);
                 dc.DrawLine(InkThin, new Point(rect.Right - 3, rect.Top + 0.6), new Point(rect.Right - 3, rect.Top + 3.4));
                 dc.DrawEllipse(PetUi.ArtInk, null, new Point(rect.Right - 3, rect.Top + 5.5), 0.8, 0.8);
+            }
+            if (view.Star)
+            {
+                dc.PushTransform(new MatrixTransform(0.95, 0, 0, 0.95, rect.Left + 2, rect.Top + 2));
+                dc.DrawGeometry(PetUi.Game.Gold, InkThin, Star);
+                dc.Pop();
             }
         }
 

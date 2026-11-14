@@ -65,8 +65,24 @@ internal static class FarmDockChecks
         check(dock.Gain.Margin.Top >= PetWindow.FarmGainRise && gainTop.Y >= 0,
             $"The sign's label stays inside its window all the way up (top {gainTop.Y:F1} DIPs near the end; it was cut off, #77)");
         frames(0.2);
+
+        // A level up of the folded field: its card on the sign, a star on the field's board until it is out.
+        Call(window, "ShowFarmLevelUp", 1);
+        var levelCard = LevelCard(window, "farmLevelDock");
+        check(levelCard.Opacity == 1 && window.FarmLevelUnseen && art.DockSlots[0].Star && !art.DockSlots[1].Star,
+            "A level up of the folded field shows its card on the sign and a star on the field's board");
+        frames(1);
+        levelCard.UpdateLayout();
+        var cardTop = levelCard.TranslatePoint(new Point(0, 0), dock.Surface!);
+        check(cardTop.X >= 0 && cardTop.X + levelCard.ActualWidth <= dock.Surface!.Width + 0.5 && cardTop.Y >= 0,
+            $"...inside the sign's window ({cardTop.X:F0}, {levelCard.ActualWidth:F0} of {dock.Surface!.Width:F0})");
+        Render(dock.Window!, "farm-level-dock.png", Brushes.WhiteSmoke);
+        Render(dock.Window!, "farm-level-dock-dark.png", new SolidColorBrush(Color.FromRgb(0x2A, 0x2F, 0x3A)));
+        frames(PetWindow.FarmLevelCardSeconds);
+        check(levelCard.Opacity < 0.05 && !window.FarmLevelCardShowing && art.DockSlots[0].Star, "The card goes; the star stays");
         window.FarmDockClick(0);
         Put();
+        check(!art.DockSlots[0].Star && !window.FarmLevelUnseen, "...until the field is out again");
 
         // Everything.
         check(window.FarmSetAllLands(false), "Fold all");
@@ -121,6 +137,30 @@ internal static class FarmDockChecks
         Call(window, "RefreshFarmDock");
         check(field.Amount == 1 && hearth.Amount == 1 && pond.Amount == 1, "...and the land is back");
         Render(dock.Window!, "farm-dock-open.png", Brushes.WhiteSmoke);
+    }
+
+    // The Border of one of the farm's level cards (a private holder in PetWindow).
+    internal static Border LevelCard(PetWindow window, string name)
+    {
+        var holder = Field<object?>(window, name)!;
+        return (Border)holder.GetType().GetProperty("Card")!.GetValue(holder)!;
+    }
+
+    // Ends a level card an earlier check left up, and drops the labels waiting for it.
+    internal static void EndLevelCard(PetWindow window)
+    {
+        if (window.FarmLevelCardShowing)
+        {
+            SetField(window, "farmLevelLeft", 1e-6);
+            Call(window, "StepFarmLevelCard", 1.0);
+        }
+        Field<Queue<string>>(window, "farmNotices").Clear();
+    }
+
+    internal static string LevelCardText(PetWindow window, string name)
+    {
+        var panel = (StackPanel)LevelCard(window, name).Child;
+        return string.Join(" / ", panel.Children.OfType<TextBlock>().Where(t => t.Visibility == Visibility.Visible).Select(t => t.Text));
     }
 
     private static void Render(Window source, string name, Brush background)

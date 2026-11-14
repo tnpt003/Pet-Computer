@@ -1291,7 +1291,7 @@ Các mục 1.5 phía trên viết theo từng mốc; đây là thứ tự chơi 
 - [ ] Mở bản mới với ruộng cũ: cấp và XP tính từ số đã thu hoạch, không có thưởng xu. Cây đang trồng dù chưa đủ cấp vẫn lớn và gặt được
 - [ ] Bảng "Kho & cửa hàng" có cấp, XP, thanh tiến độ, dòng "Cấp sau mở"; thu hoạch lúc bảng mở thì cập nhật ngay
 - [ ] Menu gieo và "Gieo tất cả": Cà chua, Bí ngô mờ và ghi cấp cần. Bảng Nấu ăn: món chưa mở ghi cấp cần
-- [ ] Thu hoạch tay và để mèo gặt đều có XP. Lên cấp: ruộng lấp lánh, nhãn "Lên cấp N! +X xu" hiện khoảng 3 giây, xu tăng đúng. Khởi động lại app vẫn còn cấp
+- [ ] Thu hoạch tay và để mèo gặt đều có XP. Lên cấp: ruộng lấp lánh, thẻ lên cấp hiện khoảng 4,5 giây (từ 14/11, xem "Thẻ báo nông trại lên cấp"), xu tăng đúng. Khởi động lại app vẫn còn cấp
 - [ ] Bảng đủ chữ, vừa màn hình ở vi/en/ja và DPI 100/125/150/200%
 - [ ] Chơi một lúc rồi góp ý nhịp lên cấp và XP từng cây
 
@@ -1491,7 +1491,7 @@ Muốn thử nhanh: đặt `PET_DATA_DIRECTORY` tới một thư mục riêng, s
 - [ ] Mèo đang ngủ: bấm biển không đánh thức; Pause thì không gập/mở được; app toàn màn hình và vào trận thì biển ẩn, ra lại đúng trạng thái
 - [ ] DPI 125/150%, nền sáng/tối: nhãn trên biển không bị cắt, tiếng Nhật/Anh dài vẫn đọc được
 
-## 1.5.1 — Test tay rút gọn trước khi phát hành (31 mục)
+## 1.5.1 — Test tay rút gọn trước khi phát hành (32 mục)
 
 Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, Chơi cùng sen, Góc sống, Mini-game và các mục sửa lỗi phía dưới (từ 14/11 các phần đó cũng thuộc 1.5.1). Mục nào lỗi thì mở mục chi tiết cùng tên để soi kỹ. Nên chơi trên dữ liệu thật của bạn; muốn thử mức cao hoặc chuồng gà ngay thì dùng `PET_DATA_DIRECTORY` riêng.
 
@@ -1517,6 +1517,7 @@ Làm danh sách này thay cho việc đi hết các mục 1.5.1, Nông trại, C
 - [ ] Nhấc, kéo, thả Ruộng, Bếp, Hồ, Chuồng, Biển; thử sang màn hình khác nếu có; tắt mở lại app đúng vị trí; mèo luôn vẽ trên kỷ vật, kỷ vật trên vùng đất
 - [ ] Biển: gập và mở từng vùng, Mở tất cả, Gập tất cả; phép có đẹp và đúng nhịp không; mèo tự đi làm thì vùng tự hiện rồi gập lại có khó chịu không
 - [ ] Nhật ký có thẻ Nông trại, thành tích không báo dồn, phần thưởng cấp 8–10 (dùng dữ liệu riêng), câu thoại lên cấp hiện đúng
+- [ ] Lên cấp: thẻ riêng nổi rõ (cấp, xu, thứ mở khóa), chuông ba nốt, nhãn khác không đè; ruộng gập thì thẻ trên biển và sao trên bảng Ruộng (mục "Thẻ báo nông trại lên cấp")
 - [ ] Giờ tập trung trọn một phiên 25 phút: nhãn đếm, chuông vừa tai, vươn vai, hạt Hoa tập trung, hoa lớn và gặt được
 
 **Đồ chơi, góc sống, mini-game (gộp 14/11)**
@@ -1822,3 +1823,11 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Màn 1 Cổng tải về đợt 2: Slime dỗi xuất hiện, bước guide "Slime dỗi" hiện đúng lúc; rê chuột qua lại thì nó cười bỏ đi; nếu chỉ để mèo đánh thì trận có kéo quá dài không (đặc biệt với Búa).
 - [ ] Màn 4 Đầm nhầy đợt 1: Slime hẹn giờ đứng yên, bước guide "Slime hẹn giờ" hiện; hết giờ gọi Bạt nhún hoặc Pháo đài, tối đa 2 lần; hạ sớm thì không gọi nữa. Màn có quá khó không.
 - [ ] Sổ tay quái: hạ Slime hẹn giờ ở màn 4 cộng vào trang Slime hẹn giờ; trận tự do chọn trang đó sinh Slime hẹn giờ thường (gọi đủ đội hình).
+
+## Thẻ báo nông trại lên cấp (14/11)
+Đã kiểm bằng UiChecks và ảnh render (ruộng mở, biển khi ruộng gập, nền sáng/tối); **chưa xem trên desktop thật, chưa thử DPI thật.**
+- [ ] Gặt lần làm lên cấp: thẻ viền vàng phình ra trên ruộng, ghi cấp, số xu, "Mở khóa: …" đúng thứ vừa mở; nhãn "+1 tên cây" vẫn hiện; khoảng 4,5 giây rồi mờ. Có che cây quá lâu hay gây khó chịu không
+- [ ] Tiếng chuông ba nốt sau tiếng gặt, nghe vừa tai; mute/volume 0 thì im
+- [ ] Đổi thời tiết hoặc nhận quà mèo hàng xóm đúng lúc thẻ hiện: nhãn đó chờ thẻ tắt rồi mới hiện, không đè lên thẻ. Lên cấp 10 cùng thành tựu: thẻ trước, nhãn thành tựu sau
+- [ ] Gập ruộng rồi lên cấp (mèo gặt hoặc giao hàng): thẻ hiện trên biển, không tràn ra ngoài biển (cả en/ja); bảng Ruộng có ngôi sao vàng cho đến khi mở ruộng
+- [ ] Đọc câu tiếng Nhật "農園レベル{N}！"

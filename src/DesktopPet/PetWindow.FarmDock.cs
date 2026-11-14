@@ -181,10 +181,11 @@ public sealed partial class PetWindow
     {
         if (farm == null || FarmDockPatch.Art is not { } art) return;
         bool changed = false;
+        if (farmFieldFold.Showing) farmLevelUnseen = false; // The field is out: its level up has been seen.
         foreach (var slot in FarmLandSlots)
         {
             bool owned = FarmLandOwned(slot);
-            var view = new FarmDockSlotView(owned && FarmFoldOf(slot).Showing, owned ? farm.LandWork(slot) : 0, !owned);
+            var view = new FarmDockSlotView(owned && FarmFoldOf(slot).Showing, owned ? farm.LandWork(slot) : 0, !owned, slot == FarmLandSlot.Field && farmLevelUnseen);
             if (art.DockSlots[(int)slot] == view) continue;
             art.DockSlots[(int)slot] = view;
             changed = true;

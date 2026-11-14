@@ -606,18 +606,33 @@ internal static class FarmChecks
         farm.Xp = 23;
         farm.Tiles[0] = new FarmTile { Stage = FarmStage.Ripe, Crop = FarmCrop.Radish };
         int coins = farm.Coins;
+        FarmDockChecks.EndLevelCard(window);
         window.FarmClick(0);
         var gain = Field<Border?>(window, "farmGain")!;
         check(farm.Level == 2 && farm.Coins == coins + 40, "A harvest reaches level 2 and pays");
-        check(((TextBlock)gain.Child).Text.Contains("Level 2") && ((TextBlock)gain.Child).Text.Contains("40"), $"The field says so ({((TextBlock)gain.Child).Text})");
+        var levelCard = FarmDockChecks.LevelCard(window, "farmLevelField");
+        string cardText = FarmDockChecks.LevelCardText(window, "farmLevelField");
+        check(levelCard.Opacity == 1 && cardText.Contains("Farm level 2") && cardText.Contains("40") && cardText.Contains("Unlocked: Tomato") && cardText.Contains("Carrot stew"),
+            $"The level up has its own card: level, coins and what it opened ({cardText})");
+        check(((TextBlock)gain.Child).Text.Contains("Radish"), $"...and the harvest keeps its own label ({((TextBlock)gain.Child).Text})");
         check(level.Text.Contains("Level 2") && fill.Width == 0, "The open shop follows at once");
         check(PetFarm.Load(path).Xp == 25, "XP is in the file");
         check(window.FarmSeedItems(0)[2].IsEnabled && !window.FarmSeedItems(0)[3].IsEnabled, "The tomato opens, not the pumpkin");
         NoTrophyLabels(window);
+        Call(window, "ShowFarmNotice", "Test notice");
+        check(((TextBlock)gain.Child).Text != "Test notice", "A weather or gift label waits while the card shows");
         for (double t = 0; t < 2; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
-        check(gain.Opacity > 0.5, "A new level stays up longer than a harvest's label");
-        for (double t = 0; t < 1.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
-        check(gain.Opacity < 0.05, "...and fades");
+        check(levelCard.Opacity > 0.99 && Math.Abs(((ScaleTransform)levelCard.RenderTransform).ScaleX - 1) < 0.01 && ((TextBlock)gain.Child).Text != "Test notice",
+            "The card has popped in and stays well past a harvest's label, still holding the notice back");
+        levelCard.UpdateLayout();
+        var cardAt = levelCard.TranslatePoint(new Point(0, 0), Field<Grid?>(window, "farmSurface")!);
+        check(cardAt.Y >= 0 && cardAt.X >= PetFarmArt.Side - 0.5 && cardAt.X + levelCard.ActualWidth <= PetFarmArt.ArtWidth - PetFarmArt.Side + 0.5,
+            $"...over the plot, inside the window ({cardAt.X:F0}, {cardAt.Y:F0}, {levelCard.ActualWidth:F0}x{levelCard.ActualHeight:F0})");
+        Render(Field<Window?>(window, "farmWindow")!, "farm-level-card.png");
+        for (double t = 0; t < PetWindow.FarmLevelCardSeconds - 2 + 0.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
+        check(levelCard.Opacity < 0.05 && !window.FarmLevelCardShowing, "...and fades");
+        check(((TextBlock)gain.Child).Text == "Test notice" && gain.Opacity == 1, $"Then the waiting notice has the label ({((TextBlock)gain.Child).Text})");
+        for (double t = 0; t < 3.1; t += 1.0 / 60) Call(window, "TickFarm", 1.0 / 60);
 
         double width = Shop()!.ActualWidth;
         farm.Xp = 450;
@@ -1192,6 +1207,7 @@ internal static class FarmChecks
         SetField(window, "announcedWeather", (WeatherKind?)WeatherKind.Rain);
         weather.SetKind(WeatherKind.Night);
         weather.Step(PetWeather.FadeSeconds, true, random);
+        FarmDockChecks.EndLevelCard(window); // The harvests above may have levelled up: its card would hold the label back.
         Call(window, "AnnounceWeather");
         var label = Field<Border?>(window, "farmGain")!;
         check(label.Opacity == 1 && ((TextBlock)label.Child).Text.Contains("golden"), $"A new sky says what it brings ({((TextBlock)label.Child).Text})");

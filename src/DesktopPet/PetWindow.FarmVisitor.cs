@@ -146,7 +146,7 @@ public sealed partial class PetWindow
         if (farm == null || paused || !farmVisitor.Here || !FarmShopAllowed) return null;
         if (farm.GiveVisitor(farmVisitor.Items, featureRandom) is not { } gift) return null;
         farmVisitor.Leave();
-        ShowFarmLabel(PetFarm.TileCount / 2, FarmGiftText(gift), FarmLevelUpSeconds);
+        ShowFarmNotice(FarmGiftText(gift));
         PlayPetSound("sparkle");
         FarmChanged();
         return gift;

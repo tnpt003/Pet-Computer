@@ -15,6 +15,8 @@ public static class PetSounds
     public static bool IsBattleEffect(string kind) => kind is "swoosh" or "squish" or "pop" or "sparkle" or "clank";
     // The elite cues mark rarer moments: a longer cooldown than the swing-paced foley.
     public static bool IsEliteCue(string kind) => kind is "sparkle" or "clank";
+    // The farm's level up: three rising bell notes, made like the foley but with the usual cue cooldown.
+    public static bool IsChime(string kind) => kind == "chime";
     // The slider's 0–1 as a sample gain that sounds even to the ear: half way is clearly quieter,
     // 0 is silent.
     public static double Gain(double volume) => Math.Pow(Math.Clamp(double.IsFinite(volume) ? volume : 0, 0, 1), 2);
@@ -23,7 +25,7 @@ public static class PetSounds
 
     public static byte[] CreateWave(string kind, int? seed = null)
     {
-        if (IsBattleEffect(kind))
+        if (IsBattleEffect(kind) || IsChime(kind))
         {
             if (seed.HasValue) return Synthesize(kind, seed.Value);
             int effectVariant;
@@ -92,7 +94,7 @@ public static class PetSounds
         const int rate = 22050;
         var random = new Random(seed);
         double pitch = 0.94 + random.NextDouble() * 0.12;
-        double duration = kind switch { "swoosh" => 0.11, "squish" => 0.15, "sparkle" => 0.22, "clank" => 0.14, _ => 0.2 };
+        double duration = kind switch { "swoosh" => 0.11, "squish" => 0.15, "sparkle" => 0.22, "clank" => 0.14, "chime" => 0.55, _ => 0.2 };
         int count = (int)(duration * rate);
         var samples = new short[count];
         double phase = 0, low = 0, band = 0;
@@ -130,6 +132,17 @@ public static class PetSounds
                     phase += 2 * Math.PI * frequency / rate;
                     double bell = Math.Sin(phase) + 0.25 * Math.Sin(phase * 2.01);
                     value = bell * Math.Min(1, local * 60) * Math.Exp(-local * 4.5) * (second ? 0.38 : 0.45);
+                    break;
+                }
+                case "chime":
+                {
+                    // Three bell notes rising (do-mi-sol), the last one ringing longest.
+                    int note = u < 0.22 ? 0 : u < 0.44 ? 1 : 2;
+                    double start = note * 0.22, span = note == 2 ? 0.56 : 0.22, local = (u - start) / span;
+                    double frequency = (note == 0 ? 1047 : note == 1 ? 1319 : 1568) * pitch;
+                    phase += 2 * Math.PI * frequency / rate;
+                    double bell = Math.Sin(phase) + 0.25 * Math.Sin(phase * 2.01);
+                    value = bell * Math.Min(1, local * 60) * Math.Exp(-local * (note == 2 ? 3.2 : 4.5)) * (note == 2 ? 0.42 : 0.36);
                     break;
                 }
                 case "clank":

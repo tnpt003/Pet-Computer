@@ -1843,3 +1843,6 @@ Màn 3 chương 2 "Giữ giỏ cá" và các trận Kho cá của Viễn chinh t
 - [ ] Kéo xe sang màn bên cạnh: xe xuống đáy màn đó, vẫn dưới chuột, không nhảy lệch (thử cả hai màn khác DPI, cả màn xếp trên dưới); bánh không quay vọt lúc qua mép
 - [ ] Thả đè lên vùng đất ở màn mới: lăn tới chỗ trống; màn mới không còn chỗ: xe về chỗ cũ trên màn cũ
 - [ ] Bấm xe sau khi kéo vẫn mở bảng Gian hàng; Cho xe đi rồi chờ lần sau: xe đến đúng màn và chỗ đã kéo; rút màn đó ra thì xe về màn của ruộng
+
+## Menu chuột phải của biển gọn lại (14/11)
+- [ ] Chuột phải biển: chỉ còn Mở tất cả vùng đất, Gập tất cả vùng đất, Di chuyển biển. Kho, Nấu ăn, Gian hàng, Câu cá, Thu trứng, Gặt/Tưới/Cày/Gieo tất cả vẫn có ở menu chuột phải của ruộng, bếp, hồ, chuồng; bấm xe vẫn mở Gian hàng

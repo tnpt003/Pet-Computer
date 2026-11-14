@@ -93,7 +93,8 @@ internal static class FarmDockChecks
         check(window.FarmHearth.Window!.IsVisible && window.FarmPond.Window!.IsVisible, "The windows stay; only what is in them goes");
         check(Headers(window.FarmPatchItems(dock)).Take(2).SequenceEqual(new[] { "Open all land", "Fold all land" }) && window.FarmPatchItems(dock)[0].IsEnabled && !window.FarmPatchItems(dock)[1].IsEnabled, "The sign's menu offers what is left to do");
         check(Headers(window.FarmPatchItems(dock)).Last() == "Move the sign", "...and moves the sign");
-        check(Headers(window.FarmPatchItems(dock)).Contains("Store & shop") && Headers(window.FarmPatchItems(dock)).Contains("Cook") && Headers(window.FarmPatchItems(dock)).Contains("Go fishing"), "The farm's jobs are all on it");
+        check(Headers(window.FarmPatchItems(dock)).SequenceEqual(new[] { "Open all land", "Fold all land", "Move the sign" }),
+            $"Only those three: the farm's jobs are on the menus of their own land ({string.Join(", ", Headers(window.FarmPatchItems(dock)))})");
 
         // Nothing while paused or with land in the air.
         SetField(window, "paused", true);

@@ -256,32 +256,9 @@ public sealed partial class PetWindow
         openAll.Click += (_, _) => FarmSetAllLands(true);
         var foldAll = new MenuItem { Header = L("Gập tất cả vùng đất", "Fold all land"), IsEnabled = !FarmLandInAir && FarmOwnedLands.Any(slot => FarmFoldOf(slot).Showing) };
         foldAll.Click += (_, _) => FarmSetAllLands(false);
-        var items = new List<MenuItem> { openAll, foldAll };
-        if (FarmShopAllowed)
-        {
-            var shop = new MenuItem { Header = L("Kho & cửa hàng", "Store & shop") };
-            shop.Click += (_, _) => OpenFarmShop();
-            var kitchen = new MenuItem { Header = L("Nấu ăn", "Cook") };
-            kitchen.Click += (_, _) => OpenFarmKitchen();
-            items.Add(shop);
-            items.Add(kitchen);
-            var stall = new MenuItem { Header = L("Gian hàng", "Stall"), IsEnabled = FarmStallHere };
-            stall.Click += (_, _) => OpenFarmStall();
-            var fish = new MenuItem { Header = L("Câu cá", "Go fishing"), IsEnabled = FarmCanFish };
-            fish.Click += (_, _) => FarmGoFish();
-            items.Add(stall);
-            items.Add(fish);
-            if (farm?.HasCoop == true)
-            {
-                int eggs = farm.EggsInCoop;
-                var collect = new MenuItem { Header = LF($"Thu trứng ({eggs})", $"Collect eggs ({eggs})"), IsEnabled = eggs > 0 };
-                collect.Click += (_, _) => FarmCollectEggs();
-                items.Add(collect);
-            }
-            items.AddRange(FarmBulkItems());
-        }
-        items.Add(move);
-        return items.ToArray();
+        // Only the sign's own jobs (asked 14/11): the store, cooking, fishing, eggs, the stall and the
+        // whole-field work are on the menus of the land they belong to.
+        return new[] { openAll, foldAll, move };
     }
 
     private void ResetFarmDock()

@@ -1,0 +1,30 @@
+Desktop Pet — Copyright (c) 2026 tnpt003. All rights reserved.
+Desktop Pet — Bản quyền (c) 2026 tnpt003. Giữ mọi quyền.
+
+English
+
+The Desktop Pet source code, artwork, sounds made for the project, text and data are owned by
+tnpt003. You may download, install and use the released app for free, personally, under EULA.txt.
+Without written permission from tnpt003 you may not copy, modify, redistribute, sell, rent or
+publish the app or any part of it (including its source code and artwork), make works based on
+it, or decompile, disassemble or otherwise reverse engineer it, except where the law allows this
+regardless of this notice.
+
+Releases 1.5.1 and earlier were published under the MIT License. Copies of those releases and of
+the source code published with them keep that license. It does not apply to later releases.
+
+Bundled third-party components keep their own licenses; see THIRD-PARTY-NOTICES.txt.
+
+Tiếng Việt
+
+Mã nguồn, hình vẽ, âm thanh làm cho dự án, chữ và dữ liệu của Desktop Pet thuộc quyền sở hữu
+của tnpt003. Bạn được tải, cài và dùng ứng dụng đã phát hành miễn phí cho cá nhân theo EULA.txt.
+Khi chưa có đồng ý bằng văn bản của tnpt003, bạn không được sao chép, sửa, phân phối lại, bán,
+cho thuê hay đăng lại ứng dụng hoặc bất kỳ phần nào của nó (kể cả mã nguồn và hình vẽ), làm sản
+phẩm dựa trên nó, hay dịch ngược, tháo rời hoặc tìm cách lấy lại mã nguồn, trừ khi pháp luật cho
+phép bất kể thông báo này.
+
+Các bản 1.5.1 trở về trước đã phát hành theo giấy phép MIT. Bản sao của các bản đó và mã nguồn
+công bố cùng chúng vẫn giữ giấy phép ấy. Giấy phép đó không áp dụng cho các bản sau.
+
+Các thành phần của bên thứ ba đi kèm giữ giấy phép riêng; xem THIRD-PARTY-NOTICES.txt.

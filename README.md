@@ -1,23 +1,27 @@
-# Desktop Pet — moved / đã chuyển
+# Desktop Pet — Chilo, a small world on your desktop
 
-**New home / Nơi mới: [github.com/tnpt003/Pet-desktop-share](https://github.com/tnpt003/Pet-desktop-share) · [chilolab.com/pet-desktop](https://chilolab.com/pet-desktop)**
+**[chilolab.com/pet-desktop · Giới thiệu & tải game](https://chilolab.com/pet-desktop)**
 
-Desktop Pet releases now live in **Pet-desktop-share**. This repository only keeps version 1.5.2, so pets installed with 1.5.1 or earlier can still update; after that they update from the new home by themselves.
+An animated cat that keeps you company on the Windows desktop, with a little adventure when you take a break.
+Một chú mèo hoạt hình ở trên desktop Windows của bạn, kèm một chuyến phiêu lưu nhỏ những lúc bạn nghỉ tay.
 
-Bản phát hành Desktop Pet nay ở **Pet-desktop-share**. Repo này chỉ giữ bản 1.5.2 để máy đã cài bản 1.5.1 trở về trước vẫn tự cập nhật được; sau đó mèo tự cập nhật từ nơi mới.
+Windows 10/11 · x64 · Free · English / Tiếng Việt / 日本語
 
 ## Download / Tải về
 
-Get the latest installer: **[PetComputer-win-Setup.exe](https://github.com/tnpt003/Pet-desktop-share/releases/latest/download/PetComputer-win-Setup.exe)** (no admin rights needed; if SmartScreen warns, **More info → Run anyway**).
+1. Download **[PetComputer-win-Setup.exe](https://github.com/tnpt003/Pet-Computer/releases/latest/download/PetComputer-win-Setup.exe)** and run it (no admin rights needed). / Tải **PetComputer-win-Setup.exe** rồi chạy (không cần quyền admin).
+2. If Windows SmartScreen says "Windows protected your PC": **More info → Run anyway** (the installer is not code-signed yet). / Nếu SmartScreen báo "Windows protected your PC": bấm **More info → Run anyway** (bản cài chưa được ký số).
+3. The installed app updates itself. / Bản đã cài tự cập nhật.
 
-Tải bản cài mới nhất: **[PetComputer-win-Setup.exe](https://github.com/tnpt003/Pet-desktop-share/releases/latest/download/PetComputer-win-Setup.exe)** (không cần quyền admin; nếu SmartScreen cảnh báo, bấm **More info → Run anyway**).
+A portable ZIP and every version's notes are on [Releases](https://github.com/tnpt003/Pet-Computer/releases). / Bản ZIP portable và ghi chú từng bản ở trang [Releases](https://github.com/tnpt003/Pet-Computer/releases).
 
-Your pet's data stays where it is when you update or reinstall. / Dữ liệu mèo được giữ nguyên khi cập nhật hoặc cài lại.
+## Feedback / Góp ý
+
+[Open an issue](https://github.com/tnpt003/Pet-Computer/issues) with the app version, Windows version and the steps to the problem. Remove personal information from screenshots and logs.
+[Mở issue](https://github.com/tnpt003/Pet-Computer/issues), ghi phiên bản game, phiên bản Windows và cách gặp lỗi. Xóa thông tin cá nhân khỏi ảnh chụp và log.
 
 ## License / Giấy phép
 
-This repository holds a release only; the source code is not public. Copyright (c) 2026 tnpt003, all rights reserved: see [LICENSE.txt](LICENSE.txt) and the EULA.txt inside the release. Releases 1.5.1 and earlier were published under the MIT License.
+This repository holds releases only; the source code is not public. Copyright (c) 2026 tnpt003, all rights reserved: see [LICENSE.txt](LICENSE.txt) and the EULA.txt inside each release. Releases 1.5.1 and earlier were published under the MIT License.
 
-Repo này chỉ chứa bản phát hành, không có mã nguồn. Bản quyền (c) 2026 tnpt003, giữ mọi quyền: xem [LICENSE.txt](LICENSE.txt) và EULA.txt trong bản phát hành. Các bản 1.5.1 trở về trước đã phát hành theo giấy phép MIT.
-
-<!-- Maintainers: do not create other releases here or mark another one Latest; installed 1.5.1 pets read this repository's latest release (docs/RELEASE.md → "Checklist chuyển repo"). -->
+Repo này chỉ chứa bản phát hành, không có mã nguồn. Bản quyền (c) 2026 tnpt003, giữ mọi quyền: xem [LICENSE.txt](LICENSE.txt) và EULA.txt trong mỗi bản phát hành. Các bản 1.5.1 trở về trước đã phát hành theo giấy phép MIT.
